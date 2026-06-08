@@ -12,8 +12,8 @@
 | 3 | Cost, Sales & Profit Engine | ✅ Complete (2026-06-08) | orchestrator + qa-reviewer | Formulas unit-verified; build passes |
 | 4 | Document Manager | ✅ Complete (2026-06-08) | orchestrator + qa-reviewer | Build passes (21 routes). Needs Supabase bucket `aims-documents` |
 | 5 | Shipment Kanban | ✅ Complete (2026-06-08) | orchestrator + qa-reviewer | Build passes (21 routes). @dnd-kit board |
-| 6 | Payments Tracker | ⬜ Not Started | — | — |
-| 7 | Analytics Dashboard | ⬜ Not Started | — | — |
+| 6 | Payments Tracker | ✅ Complete (2026-06-08) | orchestrator + qa-reviewer | Build passes (23 routes) |
+| 7 | Analytics Dashboard | ✅ Complete (2026-06-08) | orchestrator + qa-reviewer | Build passes (23 routes). Recharts |
 | 8 | Excel Import | ⬜ Not Started | — | — |
 | 9 | Polish, QA & Deploy | ⬜ Not Started | — | — |
 
@@ -89,24 +89,27 @@
 - [x] Click card → opens container detail (via card "open" button → detail page; viewers are read-only, no drag)
 
 ## Phase 6 — Payments Tracker Checklist
-- [ ] `app/(dashboard)/payments/page.tsx`
-- [ ] Table: Container No, BL No, Supplier, Amount Requested, Date, Status
-- [ ] Status: Pending / Partial / Paid (color badges)
-- [ ] Add payment request modal
-- [ ] Summary row: total outstanding, total paid
-- [ ] API routes for payments
+- [x] `app/(dashboard)/payments/page.tsx`
+- [x] Table: Container No, BL No, Supplier, Amount Requested, Paid, Outstanding, Due, Status
+- [x] Status: Pending / Partial / Paid (color badges) — auto-derived from amounts
+- [x] Add payment request modal (`PaymentForm`) — container, amount, currency, dates, ref/notes
+- [x] Summary cards: total outstanding, total paid, total requested (overdue due-dates flagged red)
+- [x] Record-payment + delete actions; API GET/POST `/api/payments`, PATCH/DELETE `/api/payments/[id]`
+- Note: summary totals are shown in USD (primary import currency); per-currency rollup deferred (most payments are USD/AED).
 
 ## Phase 7 — Analytics Dashboard Checklist
-- [ ] `app/(dashboard)/analytics/page.tsx`
-- [ ] KPI cards: Total Containers, Total Invoice Value, Total Profit, Avg Margin %, Pending Docs, Outstanding Payments
-- [ ] Chart 1: Profit by Container (horizontal bar, sorted)
-- [ ] Chart 2: Profit by Supplier (donut)
-- [ ] Chart 3: Containers by Port (stacked bar)
-- [ ] Chart 4: Monthly Volume (line)
-- [ ] Chart 5: Profit Trend (line)
-- [ ] Table: Top 5 profitable containers
-- [ ] Table: Bottom 5 / loss-making containers
-- [ ] Supplier summary table
+- [x] `app/(dashboard)/analytics/page.tsx`
+- [x] KPI cards: Total Containers, Total Invoice Value, Total Profit, Avg Margin %, Pending Docs, Outstanding Payments
+- [x] Chart 1: Profit by Container (horizontal bar, sorted, green/red by sign)
+- [x] Chart 2: Profit by Supplier (donut)
+- [x] Chart 3: Containers by Port (bar)
+- [x] Chart 4: Monthly Volume (line)
+- [x] Chart 5: Profit Trend (line)
+- [x] Table: Top 5 profitable containers
+- [x] Table: Bottom 5 / loss-making containers
+- [x] Supplier summary table (containers, total profit, avg margin)
+- Data layer `lib/data/analytics.ts` (single-pass JS aggregation); Recharts in
+  `AnalyticsCharts`; `KPICard`. tsconfig target bumped to ES2017.
 
 ## Phase 8 — Excel Import Checklist
 - [ ] Install `xlsx` (SheetJS) package
