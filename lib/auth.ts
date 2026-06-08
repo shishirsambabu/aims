@@ -35,64 +35,46 @@ export async function getSessionContext(): Promise<SessionContext | null> {
   const fullName = (meta.full_name as string) ?? null;
   const metaRole = (meta.role as Role) ?? "viewer";
 
-  try {
-    // Ensure the default organisation exists.
-    await prisma.organization.upsert({
-      where: { id: DEFAULT_ORG_ID },
-      update: {},
-      create: {
-        id: DEFAULT_ORG_ID,
-        name: DEFAULT_ORG_NAME,
-        city: "Kochi",
-        country: "India",
-      },
-    });
+  // Ensure the default organisation exists.
+  await prisma.organization.upsert({
+    where: { id: DEFAULT_ORG_ID },
+    update: {},
+    create: {
+      id: DEFAULT_ORG_ID,
+      name: DEFAULT_ORG_NAME,
+      city: "Kochi",
+      country: "India",
+    },
+  });
 
-    // Find or provision the app user profile for this auth identity.
-    const profile = await prisma.user.upsert({
-      where: { authId: user.id },
-      update: { email: user.email ?? undefined },
-      create: {
-        authId: user.id,
-        orgId: DEFAULT_ORG_ID,
-        email: user.email ?? `${user.id}@unknown.local`,
-        fullName,
-        role: metaRole,
-      },
-      select: {
-        id: true,
-        orgId: true,
-        email: true,
-        fullName: true,
-        role: true,
-      },
-    });
-
-    return {
-      userId: profile.id,
-      authId: user.id,
-      orgId: profile.orgId,
-      email: profile.email,
-      fullName: profile.fullName,
-      role: profile.role as Role,
-    };
-  } catch (err) {
-    // The database isn't reachable (e.g. DATABASE_URL not yet pointed at the
-    // Supabase pooler). Fall back to an auth-only context so pages render their
-    // graceful "database unreachable" states instead of crashing.
-    console.error(
-      "[auth] DB unreachable during session provisioning — using fallback context",
-      err
-    );
-    return {
-      userId: user.id,
+  // Find or provision the app user profile for this auth identity.
+  const profile = await prisma.user.upsert({
+    where: { authId: user.id },
+    update: { email: user.email ?? undefined },
+    create: {
       authId: user.id,
       orgId: DEFAULT_ORG_ID,
-      email: user.email ?? "",
+      email: user.email ?? `${user.id}@unknown.local`,
       fullName,
       role: metaRole,
-    };
-  }
+    },
+    select: {
+      id: true,
+      orgId: true,
+      email: true,
+      fullName: true,
+      role: true,
+    },
+  });
+
+  return {
+    userId: profile.id,
+    authId: user.id,
+    orgId: profile.orgId,
+    email: profile.email,
+    fullName: profile.fullName,
+    role: profile.role as Role,
+  };
 }
 
 /** Throws if there is no authenticated session. */

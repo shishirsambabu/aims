@@ -35,16 +35,6 @@ export function formatAED(value: number | null | undefined): string {
   }).format(value);
 }
 
-/** Format an amount in the given currency (USD, AED or INR). */
-export function formatMoney(
-  value: number | null | undefined,
-  currency: "USD" | "AED" | "INR"
-): string {
-  if (currency === "INR") return formatINR(value);
-  if (currency === "USD") return formatUSD(value);
-  return formatAED(value);
-}
-
 /** Profit margin colour rule: green > 10%, yellow 0–10%, red < 0%. */
 export function marginColor(marginPct: number | null | undefined): string {
   if (marginPct == null || Number.isNaN(marginPct)) return "text-muted-foreground";
