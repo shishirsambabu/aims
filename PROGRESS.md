@@ -11,7 +11,7 @@
 | 2 | Container Tracker Core | ✅ Complete (2026-06-08) | orchestrator + qa-reviewer | Build passes (17 routes). Runtime needs DB — see Blockers |
 | 3 | Cost, Sales & Profit Engine | ✅ Complete (2026-06-08) | orchestrator + qa-reviewer | Formulas unit-verified; build passes |
 | 4 | Document Manager | ✅ Complete (2026-06-08) | orchestrator + qa-reviewer | Build passes (21 routes). Needs Supabase bucket `aims-documents` |
-| 5 | Shipment Kanban | ⬜ Not Started | — | — |
+| 5 | Shipment Kanban | ✅ Complete (2026-06-08) | orchestrator + qa-reviewer | Build passes (21 routes). @dnd-kit board |
 | 6 | Payments Tracker | ⬜ Not Started | — | — |
 | 7 | Analytics Dashboard | ⬜ Not Started | — | — |
 | 8 | Excel Import | ⬜ Not Started | — | — |
@@ -81,12 +81,12 @@
 - **Supabase setup needed:** create Storage bucket `aims-documents` with policies allowing authenticated upload/read.
 
 ## Phase 5 — Shipment Kanban Checklist
-- [ ] `app/(dashboard)/shipments/page.tsx`
-- [ ] 8-column kanban (Booked → Fully Sold)
-- [ ] Container card: Container No, BL No, Supplier, Port, Item, Boxes
-- [ ] Drag-and-drop to update status (react-beautiful-dnd or @dnd-kit)
-- [ ] Filter by Port and Supplier
-- [ ] Click card → opens container detail modal
+- [x] `app/(dashboard)/shipments/page.tsx`
+- [x] 8-column kanban (Booked → Fully Sold)
+- [x] Container card: Container No, BL No, Supplier, Port, Item, Boxes (+ flag)
+- [x] Drag-and-drop to update status (@dnd-kit) — optimistic move + PATCH, reverts on error
+- [x] Filter by Port and Supplier
+- [x] Click card → opens container detail (via card "open" button → detail page; viewers are read-only, no drag)
 
 ## Phase 6 — Payments Tracker Checklist
 - [ ] `app/(dashboard)/payments/page.tsx`
