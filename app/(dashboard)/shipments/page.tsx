@@ -3,7 +3,8 @@ import { AlertTriangle } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ShipmentFilters } from "@/components/shipments/ShipmentFilters";
 import { KanbanBoard } from "@/components/shipments/KanbanBoard";
-import { requireSession, canWrite } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { listContainers, type ContainerListRow } from "@/lib/data/containers";
 
@@ -15,7 +16,7 @@ interface PageProps {
 
 export default async function ShipmentsPage({ searchParams }: PageProps) {
   const session = await requireSession();
-  const editable = canWrite(session.role);
+  const editable = can(session.role, "container.write");
 
   let rows: ContainerListRow[] = [];
   let suppliers: { id: string; name: string }[] = [];

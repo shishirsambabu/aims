@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { requireSession, canWrite } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/activity";
 import { updateDocumentSchema } from "@/lib/validations/document";
@@ -12,7 +13,7 @@ interface Params {
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
     const session = await requireSession();
-    if (!canWrite(session.role)) {
+    if (!can(session.role, "doc.verify")) {
       return NextResponse.json(
         { error: "You do not have permission to edit documents" },
         { status: 403 }
@@ -60,7 +61,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 export async function DELETE(_request: NextRequest, { params }: Params) {
   try {
     const session = await requireSession();
-    if (!canWrite(session.role)) {
+    if (!can(session.role, "doc.write")) {
       return NextResponse.json(
         { error: "You do not have permission to delete documents" },
         { status: 403 }

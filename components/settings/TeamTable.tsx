@@ -14,15 +14,18 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
+import type { Role } from "@/types";
+import { ALL_ROLES, ROLE_LABELS } from "@/lib/permissions";
+
 export interface TeamMember {
   id: string;
   email: string;
   fullName: string | null;
-  role: "admin" | "manager" | "viewer";
+  role: Role;
   isActive: boolean;
 }
 
-const ROLES = ["admin", "manager", "viewer"] as const;
+const ROLES = ALL_ROLES;
 
 export function TeamTable({
   members,
@@ -100,13 +103,13 @@ export function TeamTable({
                     >
                       {ROLES.map((r) => (
                         <option key={r} value={r}>
-                          {r}
+                          {ROLE_LABELS[r]}
                         </option>
                       ))}
                     </select>
                   ) : (
-                    <span className="inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium capitalize text-primary">
-                      {m.role}
+                    <span className="inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                      {ROLE_LABELS[m.role]}
                     </span>
                   )}
                 </TableCell>

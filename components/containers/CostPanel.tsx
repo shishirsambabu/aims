@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock, Unlock } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -43,15 +43,44 @@ export function CostPanel({
   noOfBoxes,
   cost,
   canEdit,
+  canFinalize,
+  canUnlock,
 }: {
   containerId: string;
   noOfBoxes: number | null;
   cost: Record<string, unknown> | null;
   canEdit: boolean;
+  canFinalize: boolean;
+  canUnlock: boolean;
 }) {
   const router = useRouter();
   const [form, setForm] = useState<FormState>(() => toForm(cost));
   const [saving, setSaving] = useState(false);
+
+  const finalized = cost?.finalized === true;
+  const editable = canEdit && !finalized;
+
+  async function setFinalized(next: boolean) {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/containers/${containerId}/costs`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ finalized: next }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(json.error ?? "Failed");
+        return;
+      }
+      toast.success(next ? "Cost sheet finalized & locked" : "Cost sheet unlocked");
+      router.refresh();
+    } catch {
+      toast.error("Network error");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   const inputs: CostInputs = useMemo(() => {
     const parse = (k: keyof CostInputs) => {
@@ -118,7 +147,7 @@ export function CostPanel({
                   type="number"
                   step="0.01"
                   inputMode="decimal"
-                  disabled={!canEdit || saving}
+                  disabled={!editable || saving}
                   value={form[field.key as string]}
                   onChange={(e) =>
                     set(field.key as string, e.target.value)
@@ -133,7 +162,7 @@ export function CostPanel({
               <Input
                 type="number"
                 step="0.0001"
-                disabled={!canEdit || saving}
+                disabled={!editable || saving}
                 value={form.exchangeRate}
                 onChange={(e) => set("exchangeRate", e.target.value)}
                 className="font-financial"
@@ -142,14 +171,39 @@ export function CostPanel({
             </div>
           </div>
 
-          {canEdit && (
-            <div className="mt-6 flex justify-end">
+          {finalized && (
+            <div className="mt-4 flex items-center gap-2 rounded-md border border-success/40 bg-success/10 p-2.5 text-xs text-success">
+              <Lock className="h-3.5 w-3.5" />
+              Cost sheet finalized &amp; locked. Unlock to make changes.
+            </div>
+          )}
+
+          <div className="mt-6 flex justify-end gap-2">
+            {!finalized && canEdit && (
               <Button onClick={save} disabled={saving}>
                 {saving && <Loader2 className="animate-spin" />}
                 Save Costs
               </Button>
-            </div>
-          )}
+            )}
+            {!finalized && canFinalize && cost && (
+              <Button
+                variant="outline"
+                onClick={() => setFinalized(true)}
+                disabled={saving}
+              >
+                <Lock className="h-4 w-4" /> Finalize
+              </Button>
+            )}
+            {finalized && canUnlock && (
+              <Button
+                variant="outline"
+                onClick={() => setFinalized(false)}
+                disabled={saving}
+              >
+                <Unlock className="h-4 w-4" /> Unlock
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
 

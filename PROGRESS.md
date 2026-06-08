@@ -22,7 +22,7 @@
 | Phase | Name | Status | Notes |
 |-------|------|--------|-------|
 | 10 | Workflow State Machine & Stage Gates | ✅ Complete (2026-06-08) | Guarded transitions gated on docs (BoE→Cleared, DO→In Warehouse) + sales; UI locks + Kanban enforced via API |
-| 11 | Approvals, Maker-Checker & Cost Lock | ⬜ Planned | Payment/cost approvals; lock finalized cost sheet; new roles; field-level perms |
+| 11 | Approvals, Maker-Checker & Cost Lock | ✅ Complete (2026-06-08) | New roles (clearing_agent/finance/auditor) + capability matrix; cost-sheet finalize/unlock; payment maker-checker; field-level financials gating |
 | 12 | Demurrage/Detention + Notifications Center | ⬜ Planned | Free-day countdowns, in-app alerts, loss-making review queue |
 | 13 | Reports Module | ⬜ Planned | Per-container P&L (print/PDF), period/supplier/port, AR/AP aging |
 | 14 | Master Data Management + Validation | ⬜ Planned | Suppliers/items/HS/ports/charge-heads CRUD; Container No/BL format rules |

@@ -1,6 +1,18 @@
 // Shared application types for AIMS.
 
-export type Role = "admin" | "manager" | "viewer";
+export type Role =
+  | "admin"
+  | "manager"
+  | "clearing_agent"
+  | "finance"
+  | "viewer"
+  | "auditor";
+
+export type ApprovalStatus =
+  | "Draft"
+  | "PendingApproval"
+  | "Approved"
+  | "Rejected";
 
 export type ContainerStatus =
   | "Booked"

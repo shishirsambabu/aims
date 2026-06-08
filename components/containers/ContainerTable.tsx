@@ -24,7 +24,13 @@ import { StatusBadge } from "@/components/containers/StatusBadge";
 import { cn, formatINR, marginColor } from "@/lib/utils";
 import type { ContainerListRow } from "@/lib/data/containers";
 
-export function ContainerTable({ data }: { data: ContainerListRow[] }) {
+export function ContainerTable({
+  data,
+  showFinancials = true,
+}: {
+  data: ContainerListRow[];
+  showFinancials?: boolean;
+}) {
   const router = useRouter();
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -100,45 +106,49 @@ export function ContainerTable({ data }: { data: ContainerListRow[] }) {
           );
         },
       },
-      {
-        accessorKey: "profit",
-        header: "Profit",
-        cell: ({ row }) => {
-          const { profit, marginPct } = row.original;
-          if (profit == null)
-            return <span className="text-muted-foreground">—</span>;
-          const up = profit >= 0;
-          return (
-            <div className="flex flex-col">
-              <span
-                className={cn(
-                  "font-financial inline-flex items-center gap-1 font-medium",
-                  up ? "text-success" : "text-danger"
-                )}
-              >
-                {up ? (
-                  <TrendingUp className="h-3.5 w-3.5" />
-                ) : (
-                  <TrendingDown className="h-3.5 w-3.5" />
-                )}
-                {formatINR(profit)}
-              </span>
-              {marginPct != null && (
-                <span
-                  className={cn(
-                    "font-financial text-xs",
-                    marginColor(marginPct)
-                  )}
-                >
-                  {marginPct.toFixed(1)}%
-                </span>
-              )}
-            </div>
-          );
-        },
-      },
+      ...(showFinancials
+        ? [
+            {
+              accessorKey: "profit",
+              header: "Profit",
+              cell: ({ row }) => {
+                const { profit, marginPct } = row.original;
+                if (profit == null)
+                  return <span className="text-muted-foreground">—</span>;
+                const up = profit >= 0;
+                return (
+                  <div className="flex flex-col">
+                    <span
+                      className={cn(
+                        "font-financial inline-flex items-center gap-1 font-medium",
+                        up ? "text-success" : "text-danger"
+                      )}
+                    >
+                      {up ? (
+                        <TrendingUp className="h-3.5 w-3.5" />
+                      ) : (
+                        <TrendingDown className="h-3.5 w-3.5" />
+                      )}
+                      {formatINR(profit)}
+                    </span>
+                    {marginPct != null && (
+                      <span
+                        className={cn(
+                          "font-financial text-xs",
+                          marginColor(marginPct)
+                        )}
+                      >
+                        {marginPct.toFixed(1)}%
+                      </span>
+                    )}
+                  </div>
+                );
+              },
+            } as ColumnDef<ContainerListRow>,
+          ]
+        : []),
     ],
-    []
+    [showFinancials]
   );
 
   const table = useReactTable({

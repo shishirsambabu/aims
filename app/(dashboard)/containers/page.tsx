@@ -7,6 +7,7 @@ import { ContainerFilters } from "@/components/containers/ContainerFilters";
 import { ContainerTable } from "@/components/containers/ContainerTable";
 import { ExportButton } from "@/components/containers/ExportButton";
 import { requireSession } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { listContainers, type ContainerListRow } from "@/lib/data/containers";
 import type { ContainerStatus } from "@/types";
@@ -25,7 +26,9 @@ interface PageProps {
 }
 
 export default async function ContainersPage({ searchParams }: PageProps) {
-  const { orgId } = await requireSession();
+  const session = await requireSession();
+  const orgId = session.orgId;
+  const showFinancials = can(session.role, "financials.view");
 
   let rows: ContainerListRow[] = [];
   let suppliers: { id: string; name: string }[] = [];
@@ -59,7 +62,7 @@ export default async function ContainersPage({ searchParams }: PageProps) {
         description="Every import container — Container No and BL No, costs, status and profit."
         actions={
           <div className="flex items-center gap-2">
-            <ExportButton rows={rows} />
+            {showFinancials && <ExportButton rows={rows} />}
             <Button asChild>
               <Link href="/containers/new">
                 <Plus className="h-4 w-4" /> New Container
@@ -89,7 +92,7 @@ export default async function ContainersPage({ searchParams }: PageProps) {
             <p className="text-sm text-muted-foreground">
               {rows.length} container{rows.length === 1 ? "" : "s"}
             </p>
-            <ContainerTable data={rows} />
+            <ContainerTable data={rows} showFinancials={showFinancials} />
           </>
         )}
       </div>

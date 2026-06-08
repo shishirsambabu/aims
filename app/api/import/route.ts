@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { requireSession, canWrite } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/activity";
 import { computeCost, computeProfit } from "@/lib/finance";
@@ -16,7 +17,7 @@ interface ImportResult {
 export async function POST(request: NextRequest) {
   try {
     const session = await requireSession();
-    if (!canWrite(session.role)) {
+    if (!can(session.role, "import")) {
       return NextResponse.json(
         { error: "You do not have permission to import data" },
         { status: 403 }

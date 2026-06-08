@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { requireSession, canWrite } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/activity";
 import { updatePaymentSchema } from "@/lib/validations/payment";
@@ -13,12 +14,9 @@ interface Params {
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
     const session = await requireSession();
-    if (!canWrite(session.role)) {
-      return NextResponse.json(
-        { error: "You do not have permission to update payments" },
-        { status: 403 }
-      );
-    }
+    const body = (await request.json()) as Record<string, unknown> & {
+      action?: "approve" | "reject";
+    };
 
     const existing = await prisma.payment.findFirst({
       where: { id: params.id, orgId: session.orgId },
@@ -27,7 +25,59 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const parsed = updatePaymentSchema.safeParse(await request.json());
+    // --- Maker-checker approval path ---
+    if (body.action === "approve" || body.action === "reject") {
+      if (!can(session.role, "payment.approve")) {
+        return NextResponse.json(
+          { error: "You do not have permission to approve payments" },
+          { status: 403 }
+        );
+      }
+      // A maker cannot approve their own request.
+      if (
+        body.action === "approve" &&
+        existing.requestedById &&
+        existing.requestedById === session.userId
+      ) {
+        return NextResponse.json(
+          { error: "You can't approve a payment you raised — needs a second approver" },
+          { status: 409 }
+        );
+      }
+      const payment = await prisma.payment.update({
+        where: { id: params.id },
+        data: {
+          approvalStatus: body.action === "approve" ? "Approved" : "Rejected",
+          approvedById: session.userId,
+          approvedAt: new Date(),
+        },
+      });
+      await logActivity({
+        orgId: session.orgId,
+        userId: session.userId,
+        action: `payment_${body.action}d`,
+        entityType: "container",
+        entityId: existing.containerId,
+        summary: `Payment ${body.action === "approve" ? "approved" : "rejected"} (${existing.currency} ${Number(existing.amountRequested).toLocaleString()})`,
+      });
+      return NextResponse.json({ data: payment });
+    }
+
+    // --- Record-payment path (requires an approved request) ---
+    if (!can(session.role, "payment.pay")) {
+      return NextResponse.json(
+        { error: "You do not have permission to record payments" },
+        { status: 403 }
+      );
+    }
+    if (existing.approvalStatus !== "Approved") {
+      return NextResponse.json(
+        { error: "Payment must be approved before it can be paid" },
+        { status: 409 }
+      );
+    }
+
+    const parsed = updatePaymentSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Validation failed", issues: parsed.error.flatten() },
@@ -71,7 +121,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 export async function DELETE(_request: NextRequest, { params }: Params) {
   try {
     const session = await requireSession();
-    if (!canWrite(session.role)) {
+    if (!can(session.role, "payment.write")) {
       return NextResponse.json(
         { error: "You do not have permission to delete payments" },
         { status: 403 }

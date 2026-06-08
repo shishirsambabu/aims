@@ -3,7 +3,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
-import type { Currency, PaymentStatus } from "@/types";
+import type { ApprovalStatus, Currency, PaymentStatus } from "@/types";
 
 export interface PaymentFilters {
   q?: string;
@@ -22,6 +22,9 @@ export interface PaymentRow {
   outstanding: number;
   currency: Currency;
   status: PaymentStatus;
+  approvalStatus: ApprovalStatus;
+  requestedById: string | null;
+  approvedById: string | null;
   requestDate: string | null;
   dueDate: string | null;
   paidDate: string | null;
@@ -79,6 +82,9 @@ export async function listPayments(
       outstanding: Math.max(requested - paid, 0),
       currency: r.currency as Currency,
       status: r.status as PaymentStatus,
+      approvalStatus: r.approvalStatus as ApprovalStatus,
+      requestedById: r.requestedById,
+      approvedById: r.approvedById,
       requestDate: r.requestDate ? r.requestDate.toISOString() : null,
       dueDate: r.dueDate ? r.dueDate.toISOString() : null,
       paidDate: r.paidDate ? r.paidDate.toISOString() : null,

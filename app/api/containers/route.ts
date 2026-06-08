@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { Prisma } from "@prisma/client";
 
-import { requireSession, canWrite } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/activity";
 import { listContainers, nextSlNo } from "@/lib/data/containers";
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await requireSession();
-    if (!canWrite(session.role)) {
+    if (!can(session.role, "container.write")) {
       return NextResponse.json(
         { error: "You do not have permission to create containers" },
         { status: 403 }

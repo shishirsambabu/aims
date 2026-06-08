@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { requireSession, canWrite } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/activity";
 import { listPayments } from "@/lib/data/payments";
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await requireSession();
-    if (!canWrite(session.role)) {
+    if (!can(session.role, "payment.write")) {
       return NextResponse.json(
         { error: "You do not have permission to add payments" },
         { status: 403 }
@@ -68,6 +69,9 @@ export async function POST(request: NextRequest) {
         reference: input.reference,
         notes: input.notes,
         status: "Pending",
+        // Maker-checker: the raiser is the maker; a different checker approves.
+        approvalStatus: "PendingApproval",
+        requestedById: session.userId,
       },
     });
 

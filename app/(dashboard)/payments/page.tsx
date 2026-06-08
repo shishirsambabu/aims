@@ -5,7 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PaymentFilters } from "@/components/payments/PaymentFilters";
 import { PaymentForm } from "@/components/payments/PaymentForm";
 import { PaymentsTable } from "@/components/payments/PaymentsTable";
-import { requireSession, canWrite } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import {
   listPayments,
   paymentSummary,
@@ -24,7 +25,13 @@ interface PageProps {
 
 export default async function PaymentsPage({ searchParams }: PageProps) {
   const session = await requireSession();
-  const editable = canWrite(session.role);
+  const perms = {
+    canCreate: can(session.role, "payment.write"),
+    canPay: can(session.role, "payment.pay"),
+    canApprove: can(session.role, "payment.approve"),
+    userId: session.userId,
+  };
+  const editable = perms.canCreate;
   const filters = {
     q: searchParams.q,
     status: searchParams.status as PaymentStatus | undefined,
@@ -102,7 +109,12 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
               {rows.length} payment request{rows.length === 1 ? "" : "s"} ·
               totals shown in USD
             </p>
-            <PaymentsTable data={rows} canEdit={editable} />
+            <PaymentsTable
+              data={rows}
+              canPay={perms.canPay}
+              canApprove={perms.canApprove}
+              currentUserId={perms.userId}
+            />
           </>
         )}
       </div>

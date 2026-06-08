@@ -18,7 +18,17 @@ datasource db {
 enum Role {
   admin
   manager
+  clearing_agent
+  finance
   viewer
+  auditor
+}
+
+enum ApprovalStatus {
+  Draft
+  PendingApproval
+  Approved
+  Rejected
 }
 
 enum ContainerStatus {
@@ -203,6 +213,10 @@ model ContainerCost {
   totalCost         Decimal? @map("total_cost") @db.Decimal(14, 2)
   ratePerBoxLanding Decimal? @map("rate_per_box_landing") @db.Decimal(14, 2)
   ratePerBox        Decimal? @map("rate_per_box") @db.Decimal(14, 2)
+  // Maker-checker: a finalized cost sheet is locked from further edits.
+  finalized         Boolean  @default(false)
+  finalizedAt       DateTime? @map("finalized_at")
+  finalizedById     String?  @map("finalized_by_id")
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 
@@ -246,6 +260,11 @@ model Payment {
   dueDate         DateTime?     @map("due_date")
   paidDate        DateTime?     @map("paid_date")
   status          PaymentStatus @default(Pending)
+  // Maker-checker approval: maker raises the request, a different checker approves.
+  approvalStatus  ApprovalStatus @default(PendingApproval) @map("approval_status")
+  requestedById   String?       @map("requested_by_id")
+  approvedById    String?       @map("approved_by_id")
+  approvedAt      DateTime?     @map("approved_at")
   reference       String?
   notes           String?
   createdAt       DateTime      @default(now()) @map("created_at")

@@ -4,7 +4,8 @@ import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { ImportWizard } from "@/components/settings/ImportWizard";
-import { requireSession, canWrite } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function ImportPage() {
   const session = await requireSession();
 
-  if (!canWrite(session.role)) {
+  if (!can(session.role, "import")) {
     return (
       <div>
         <PageHeader title="Import" description="Bulk-load from your tracker sheet." />

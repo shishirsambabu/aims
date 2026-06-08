@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { requireSession, canWrite } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/activity";
 import { costSchema } from "@/lib/validations/finance";
@@ -14,7 +15,7 @@ interface Params {
 export async function PUT(request: NextRequest, { params }: Params) {
   try {
     const session = await requireSession();
-    if (!canWrite(session.role)) {
+    if (!can(session.role, "cost.write")) {
       return NextResponse.json(
         { error: "You do not have permission to edit costs" },
         { status: 403 }
@@ -23,10 +24,21 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
     const container = await prisma.container.findFirst({
       where: { id: params.id, orgId: session.orgId },
-      select: { id: true, noOfBoxes: true, containerNo: true },
+      select: {
+        id: true,
+        noOfBoxes: true,
+        containerNo: true,
+        cost: { select: { finalized: true } },
+      },
     });
     if (!container) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    if (container.cost?.finalized) {
+      return NextResponse.json(
+        { error: "Cost sheet is finalized — unlock it before editing" },
+        { status: 409 }
+      );
     }
 
     const parsed = costSchema.safeParse(await request.json());
@@ -84,6 +96,67 @@ export async function PUT(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
     console.error("[api/containers/:id/costs]", err);
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+  }
+}
+
+/** Finalize (lock) or unlock a cost sheet — the maker-checker control. */
+export async function PATCH(request: NextRequest, { params }: Params) {
+  try {
+    const session = await requireSession();
+    const body = (await request.json()) as { finalized?: boolean };
+    const finalize = body.finalized !== false;
+
+    const cap = finalize ? "cost.finalize" : "cost.unlock";
+    if (!can(session.role, cap)) {
+      return NextResponse.json(
+        {
+          error: finalize
+            ? "You do not have permission to finalize cost sheets"
+            : "Only a manager or admin can unlock a finalized cost sheet",
+        },
+        { status: 403 }
+      );
+    }
+
+    const container = await prisma.container.findFirst({
+      where: { id: params.id, orgId: session.orgId },
+      select: { id: true, containerNo: true, cost: { select: { id: true } } },
+    });
+    if (!container) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    if (!container.cost) {
+      return NextResponse.json(
+        { error: "Enter and save costs before finalizing" },
+        { status: 409 }
+      );
+    }
+
+    const cost = await prisma.containerCost.update({
+      where: { containerId: container.id },
+      data: {
+        finalized: finalize,
+        finalizedAt: finalize ? new Date() : null,
+        finalizedById: finalize ? session.userId : null,
+      },
+    });
+
+    await logActivity({
+      orgId: session.orgId,
+      userId: session.userId,
+      action: finalize ? "finalized_costs" : "unlocked_costs",
+      entityType: "container",
+      entityId: container.id,
+      summary: `${finalize ? "Finalized" : "Unlocked"} cost sheet for ${container.containerNo}`,
+    });
+
+    return NextResponse.json({ data: cost });
+  } catch (err) {
+    if (err instanceof Error && err.message === "UNAUTHENTICATED") {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    console.error("[api/containers/:id/costs PATCH]", err);
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }

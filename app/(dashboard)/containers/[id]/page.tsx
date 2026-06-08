@@ -6,7 +6,8 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/containers/StatusBadge";
 import { ContainerDetail } from "@/components/containers/ContainerDetail";
-import { requireSession, canWrite } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import {
   getContainerById,
   getContainerActivity,
@@ -87,7 +88,15 @@ export default async function ContainerDetailPage({ params }: PageProps) {
       <ContainerDetail
         container={data}
         activity={activityData}
-        canEdit={canWrite(session.role)}
+        perms={{
+          container: can(session.role, "container.write"),
+          cost: can(session.role, "cost.write"),
+          finalize: can(session.role, "cost.finalize"),
+          unlock: can(session.role, "cost.unlock"),
+          sale: can(session.role, "sale.write"),
+          docs: can(session.role, "doc.write"),
+          financials: can(session.role, "financials.view"),
+        }}
         orgId={session.orgId}
       />
     </div>

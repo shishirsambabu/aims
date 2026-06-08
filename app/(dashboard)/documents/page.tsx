@@ -4,7 +4,8 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { DocumentFilters } from "@/components/documents/DocumentFilters";
 import { DocumentsTable } from "@/components/documents/DocumentsTable";
 import { DocumentUpload } from "@/components/documents/DocumentUpload";
-import { requireSession, canWrite } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import {
   listDocuments,
   containerOptions,
@@ -26,7 +27,7 @@ interface PageProps {
 
 export default async function DocumentsPage({ searchParams }: PageProps) {
   const session = await requireSession();
-  const editable = canWrite(session.role);
+  const editable = can(session.role, "doc.write");
 
   let rows: DocumentRow[] = [];
   let containers: Awaited<ReturnType<typeof containerOptions>> = [];

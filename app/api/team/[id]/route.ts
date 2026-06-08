@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/activity";
 
 const schema = z.object({
-  role: z.enum(["admin", "manager", "viewer"]).optional(),
+  role: z.enum(["admin", "manager", "clearing_agent", "finance", "viewer", "auditor"]).optional(),
   isActive: z.boolean().optional(),
 });
 

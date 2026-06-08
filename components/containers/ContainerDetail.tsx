@@ -87,15 +87,25 @@ function num(v: unknown): number | null {
   return Number.isNaN(n) ? null : n;
 }
 
+export interface DetailPerms {
+  container: boolean; // edit container / change status
+  cost: boolean; // edit costs
+  finalize: boolean; // finalize cost sheet
+  unlock: boolean; // unlock cost sheet
+  sale: boolean; // edit sales
+  docs: boolean; // upload documents
+  financials: boolean; // see cost / profit / payment figures
+}
+
 export function ContainerDetail({
   container,
   activity,
-  canEdit,
+  perms,
   orgId,
 }: {
   container: DetailData;
   activity: ActivityRow[];
-  canEdit: boolean;
+  perms: DetailPerms;
   orgId: string;
 }) {
   return (
@@ -104,47 +114,61 @@ export function ContainerDetail({
         <TabsList className="w-full">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="customs">Customs &amp; Invoice</TabsTrigger>
-          <TabsTrigger value="costs">Costs &amp; Landing</TabsTrigger>
-          <TabsTrigger value="sales">Sales &amp; Profit</TabsTrigger>
+          {perms.financials && (
+            <>
+              <TabsTrigger value="costs">Costs &amp; Landing</TabsTrigger>
+              <TabsTrigger value="sales">Sales &amp; Profit</TabsTrigger>
+            </>
+          )}
           <TabsTrigger value="documents">Documents</TabsTrigger>
-          <TabsTrigger value="payments">Payments</TabsTrigger>
+          {perms.financials && (
+            <TabsTrigger value="payments">Payments</TabsTrigger>
+          )}
           <TabsTrigger value="activity">Activity Log</TabsTrigger>
         </TabsList>
 
         <div className="pt-6">
           <TabsContent value="overview">
-            <OverviewTab container={container} canEdit={canEdit} />
+            <OverviewTab container={container} canEdit={perms.container} />
           </TabsContent>
           <TabsContent value="customs">
             <CustomsTab item={container.shipmentItem} />
           </TabsContent>
-          <TabsContent value="costs">
-            <CostPanel
-              containerId={container.id}
-              noOfBoxes={container.noOfBoxes}
-              cost={container.cost}
-              canEdit={canEdit}
-            />
-          </TabsContent>
-          <TabsContent value="sales">
-            <SalesPanel
-              containerId={container.id}
-              totalCost={num(container.cost?.totalCost)}
-              sale={container.sale}
-              canEdit={canEdit}
-            />
-          </TabsContent>
+          {perms.financials && (
+            <>
+              <TabsContent value="costs">
+                <CostPanel
+                  containerId={container.id}
+                  noOfBoxes={container.noOfBoxes}
+                  cost={container.cost}
+                  canEdit={perms.cost}
+                  canFinalize={perms.finalize}
+                  canUnlock={perms.unlock}
+                />
+              </TabsContent>
+              <TabsContent value="sales">
+                <SalesPanel
+                  containerId={container.id}
+                  totalCost={num(container.cost?.totalCost)}
+                  sale={container.sale}
+                  canEdit={perms.sale}
+                />
+              </TabsContent>
+            </>
+          )}
           <TabsContent value="documents">
             <DocumentsTab
               documents={container.documents}
               containerId={container.id}
               orgId={orgId}
-              canEdit={canEdit}
+              canEdit={perms.docs}
             />
           </TabsContent>
-          <TabsContent value="payments">
-            <PaymentsTab payments={container.payments} />
-          </TabsContent>
+          {perms.financials && (
+            <TabsContent value="payments">
+              <PaymentsTab payments={container.payments} />
+            </TabsContent>
+          )}
           <TabsContent value="activity">
             <ActivityTab activity={activity} />
           </TabsContent>

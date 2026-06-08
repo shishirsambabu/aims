@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Wallet, Trash2 } from "lucide-react";
+import { Wallet, Trash2, Check, X } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -17,15 +17,52 @@ import { PaymentStatusBadge } from "@/components/containers/StatusBadge";
 import { formatMoney, formatDate, cn, expiryLevel } from "@/lib/utils";
 import type { PaymentRow } from "@/lib/data/payments";
 
+const APPROVAL_STYLE: Record<string, string> = {
+  PendingApproval: "bg-warning/20 text-[#9A6212]",
+  Approved: "bg-success/15 text-success",
+  Rejected: "bg-danger/10 text-danger",
+  Draft: "bg-slate-100 text-slate-700",
+};
+const APPROVAL_LABEL: Record<string, string> = {
+  PendingApproval: "Pending Approval",
+  Approved: "Approved",
+  Rejected: "Rejected",
+  Draft: "Draft",
+};
+
 export function PaymentsTable({
   data,
-  canEdit,
+  canPay,
+  canApprove,
+  currentUserId,
 }: {
   data: PaymentRow[];
-  canEdit: boolean;
+  canPay: boolean;
+  canApprove: boolean;
+  currentUserId: string;
 }) {
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
+
+  async function decide(id: string, action: "approve" | "reject") {
+    setBusyId(id);
+    try {
+      const res = await fetch(`/api/payments/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      if (!res.ok) {
+        const j = await res.json();
+        toast.error(j.error ?? "Failed");
+        return;
+      }
+      toast.success(action === "approve" ? "Payment approved" : "Payment rejected");
+      router.refresh();
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   async function record(p: PaymentRow) {
     const input = window.prompt(
@@ -86,6 +123,7 @@ export function PaymentsTable({
             <TableHead className="text-right">Paid</TableHead>
             <TableHead className="text-right">Outstanding</TableHead>
             <TableHead>Due</TableHead>
+            <TableHead>Approval</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -93,7 +131,7 @@ export function PaymentsTable({
         <TableBody>
           {data.length === 0 ? (
             <TableRow className="hover:bg-transparent">
-              <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">
+              <TableCell colSpan={10} className="h-32 text-center text-muted-foreground">
                 No payment requests yet.
               </TableCell>
             </TableRow>
@@ -136,21 +174,57 @@ export function PaymentsTable({
                     </span>
                   </TableCell>
                   <TableCell>
+                    <span
+                      className={cn(
+                        "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium",
+                        APPROVAL_STYLE[p.approvalStatus]
+                      )}
+                    >
+                      {APPROVAL_LABEL[p.approvalStatus]}
+                    </span>
+                  </TableCell>
+                  <TableCell>
                     <PaymentStatusBadge status={p.status} />
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-1">
-                      {canEdit && p.status !== "Paid" && (
-                        <button
-                          onClick={() => record(p)}
-                          disabled={busyId === p.id}
-                          className="rounded p-1.5 text-muted-foreground hover:bg-surface-alt hover:text-success disabled:opacity-50"
-                          title="Record payment"
-                        >
-                          <Wallet className="h-4 w-4" />
-                        </button>
-                      )}
-                      {canEdit && (
+                      {/* Checker approves/rejects a pending request (not their own) */}
+                      {canApprove &&
+                        p.approvalStatus === "PendingApproval" &&
+                        p.requestedById !== currentUserId && (
+                          <>
+                            <button
+                              onClick={() => decide(p.id, "approve")}
+                              disabled={busyId === p.id}
+                              className="rounded p-1.5 text-muted-foreground hover:bg-surface-alt hover:text-success disabled:opacity-50"
+                              title="Approve"
+                            >
+                              <Check className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => decide(p.id, "reject")}
+                              disabled={busyId === p.id}
+                              className="rounded p-1.5 text-muted-foreground hover:bg-surface-alt hover:text-danger disabled:opacity-50"
+                              title="Reject"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
+                      {/* Pay only once approved */}
+                      {canPay &&
+                        p.approvalStatus === "Approved" &&
+                        p.status !== "Paid" && (
+                          <button
+                            onClick={() => record(p)}
+                            disabled={busyId === p.id}
+                            className="rounded p-1.5 text-muted-foreground hover:bg-surface-alt hover:text-success disabled:opacity-50"
+                            title="Record payment"
+                          >
+                            <Wallet className="h-4 w-4" />
+                          </button>
+                        )}
+                      {canPay && (
                         <button
                           onClick={() => remove(p.id)}
                           disabled={busyId === p.id}
