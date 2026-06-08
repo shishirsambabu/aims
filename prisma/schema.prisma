@@ -1,0 +1,310 @@
+// AIMS — Aeden Import Management System
+// Prisma schema. All tables carry org_id for multi-tenancy (RLS in Supabase
+// is a backup; app-level org scoping is primary).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  admin
+  manager
+  viewer
+}
+
+enum ContainerStatus {
+  Booked
+  InTransit
+  AtPort
+  CustomsClearance
+  Cleared
+  InWarehouse
+  PartiallySold
+  FullySold
+}
+
+enum DocumentType {
+  BillOfLading
+  CommercialInvoice
+  PackingList
+  BillOfEntry
+  CertificateOfOrigin
+  PhytosanitaryCertificate
+  Insurance
+  DeliveryOrder
+  Other
+}
+
+enum DocumentStatus {
+  Pending
+  Received
+  Verified
+  Expired
+}
+
+enum PaymentStatus {
+  Pending
+  Partial
+  Paid
+}
+
+enum Currency {
+  USD
+  AED
+  INR
+}
+
+// ---------------------------------------------------------------------------
+// Core models
+// ---------------------------------------------------------------------------
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  city      String?
+  country   String?  @default("India")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users       User[]
+  suppliers   Supplier[]
+  containers  Container[]
+  documents   Document[]
+  payments    Payment[]
+  activityLog ActivityLog[]
+
+  @@map("organizations")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  // Supabase auth.users id — links the app profile to the auth identity.
+  authId    String?  @unique @map("auth_id")
+  orgId     String   @map("org_id")
+  email     String   @unique
+  fullName  String?  @map("full_name")
+  role      Role     @default(viewer)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  organization Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  activityLog  ActivityLog[]
+
+  @@index([orgId])
+  @@map("users")
+}
+
+model Supplier {
+  id          String   @id @default(uuid())
+  orgId       String   @map("org_id")
+  name        String
+  country     String?
+  contactName String?  @map("contact_name")
+  email       String?
+  phone       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  containers   Container[]
+
+  @@index([orgId])
+  @@map("suppliers")
+}
+
+model Container {
+  id            String          @id @default(uuid())
+  orgId         String          @map("org_id")
+  slNo          Int?            @map("sl_no")
+  // Both identifiers are always present and searchable.
+  containerNo   String          @map("container_no")
+  blNo          String          @map("bl_no")
+  supplierId    String?         @map("supplier_id")
+  customer      String?
+  port          String?
+  portCode      String?         @map("port_code")
+  item          String?
+  variety       String?
+  noOfBoxes     Int?            @map("no_of_boxes")
+  status        ContainerStatus @default(Booked)
+  etd           DateTime?
+  eta           DateTime?
+  bookingDate   DateTime?       @map("booking_date")
+  remarks       String?
+  flagged       Boolean         @default(false)
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  organization  Organization    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  supplier      Supplier?       @relation(fields: [supplierId], references: [id])
+  shipmentItem  ShipmentItem?
+  cost          ContainerCost?
+  sale          Sale?
+  documents     Document[]
+  payments      Payment[]
+
+  @@unique([orgId, containerNo])
+  @@index([orgId])
+  @@index([containerNo])
+  @@index([blNo])
+  @@index([status])
+  @@map("containers")
+}
+
+model ShipmentItem {
+  id              String    @id @default(uuid())
+  orgId           String    @map("org_id")
+  containerId     String    @unique @map("container_id")
+  invoiceNo       String?   @map("invoice_no")
+  invoiceDate     DateTime? @map("invoice_date")
+  invoiceValue    Decimal?  @map("invoice_value") @db.Decimal(14, 2)
+  invoiceCurrency Currency  @default(USD) @map("invoice_currency")
+  beNo            String?   @map("be_no")
+  beDate          DateTime? @map("be_date")
+  hsCode          String?   @map("hs_code")
+  netWeightKg     Decimal?  @map("net_weight_kg") @db.Decimal(12, 2)
+  grossWeightKg   Decimal?  @map("gross_weight_kg") @db.Decimal(12, 2)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  container Container @relation(fields: [containerId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("shipment_items")
+}
+
+model ContainerCost {
+  id                String   @id @default(uuid())
+  orgId             String   @map("org_id")
+  containerId       String   @unique @map("container_id")
+  // All local costs in INR.
+  beInvoiceValueInr Decimal? @map("be_invoice_value_inr") @db.Decimal(14, 2)
+  exchangeRate      Decimal? @map("exchange_rate") @db.Decimal(12, 4)
+  customsDuty       Decimal? @map("customs_duty") @db.Decimal(14, 2)
+  clearingCharges   Decimal? @map("clearing_charges") @db.Decimal(14, 2)
+  linerCharges      Decimal? @map("liner_charges") @db.Decimal(14, 2)
+  detention         Decimal? @db.Decimal(14, 2)
+  chaCharges        Decimal? @map("cha_charges") @db.Decimal(14, 2)
+  transport         Decimal? @db.Decimal(14, 2)
+  ohProportion      Decimal? @map("oh_proportion") @db.Decimal(14, 2)
+  claimDeduction    Decimal? @map("claim_deduction") @db.Decimal(14, 2)
+  otherCharges      Decimal? @map("other_charges") @db.Decimal(14, 2)
+  // Cached computed values (recomputed by the finance engine on write).
+  totalCost         Decimal? @map("total_cost") @db.Decimal(14, 2)
+  ratePerBoxLanding Decimal? @map("rate_per_box_landing") @db.Decimal(14, 2)
+  ratePerBox        Decimal? @map("rate_per_box") @db.Decimal(14, 2)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  container Container @relation(fields: [containerId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("container_costs")
+}
+
+model Sale {
+  id              String   @id @default(uuid())
+  orgId           String   @map("org_id")
+  containerId     String   @unique @map("container_id")
+  soldQty         Int?     @map("sold_qty")
+  avgPrice        Decimal? @map("avg_price") @db.Decimal(14, 2)
+  saleValue       Decimal? @map("sale_value") @db.Decimal(14, 2)
+  damageQty       Int?     @map("damage_qty")
+  damageValue     Decimal? @map("damage_value") @db.Decimal(14, 2)
+  // Cached computed values.
+  profit          Decimal? @db.Decimal(14, 2)
+  profitPerBox    Decimal? @map("profit_per_box") @db.Decimal(14, 2)
+  marginPct       Decimal? @map("margin_pct") @db.Decimal(6, 2)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  container Container @relation(fields: [containerId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("sales")
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  orgId           String        @map("org_id")
+  containerId     String        @map("container_id")
+  supplierName    String?       @map("supplier_name")
+  amountRequested Decimal       @map("amount_requested") @db.Decimal(14, 2)
+  amountPaid      Decimal       @default(0) @map("amount_paid") @db.Decimal(14, 2)
+  currency        Currency      @default(USD)
+  requestDate     DateTime?     @map("request_date")
+  dueDate         DateTime?     @map("due_date")
+  paidDate        DateTime?     @map("paid_date")
+  status          PaymentStatus @default(Pending)
+  reference       String?
+  notes           String?
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  container    Container    @relation(fields: [containerId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([containerId])
+  @@index([status])
+  @@map("payments")
+}
+
+model Document {
+  id          String         @id @default(uuid())
+  orgId       String         @map("org_id")
+  containerId String         @map("container_id")
+  type        DocumentType
+  docNo       String?        @map("doc_no")
+  // Denormalised for fast filtering — kept in sync with the container.
+  containerNo String?        @map("container_no")
+  blNo        String?        @map("bl_no")
+  supplierName String?       @map("supplier_name")
+  issueDate   DateTime?      @map("issue_date")
+  expiryDate  DateTime?      @map("expiry_date")
+  status      DocumentStatus @default(Pending)
+  fileUrl     String?        @map("file_url")
+  filePath    String?        @map("file_path")
+  fileName    String?        @map("file_name")
+  fileSize    Int?           @map("file_size")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  container    Container    @relation(fields: [containerId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([containerId])
+  @@index([type])
+  @@index([expiryDate])
+  @@map("documents")
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  orgId      String   @map("org_id")
+  userId     String?  @map("user_id")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String?  @map("entity_id")
+  summary    String?
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id])
+
+  @@index([orgId])
+  @@index([entityType, entityId])
+  @@map("activity_log")
+}

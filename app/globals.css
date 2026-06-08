@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3%;
+
+    /* Salesforce blue #0070D2 */
+    --primary: 208 100% 41%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 95%;
+    --secondary-foreground: 0 0% 9%;
+
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 43%;
+
+    --accent: 208 100% 96%;
+    --accent-foreground: 208 100% 35%;
+
+    /* Loss red #C23934 */
+    --destructive: 2 53% 49%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 30 4% 86%;
+    --input: 30 4% 86%;
+    --ring: 208 100% 41%;
+
+    --radius: 0.375rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-surface-alt text-foreground font-sans antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  /* All financial figures render in JetBrains Mono */
+  .font-financial {
+    font-family: var(--font-jetbrains), ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-black/15 rounded-full;
+  }
+}

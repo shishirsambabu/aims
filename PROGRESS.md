@@ -7,9 +7,9 @@
 
 | Phase | Name | Status | Completed By | Notes |
 |-------|------|--------|--------------|-------|
-| 1 | Foundation (Setup + Auth + Layout) | ⬜ Not Started | — | — |
-| 2 | Container Tracker Core | ⬜ Not Started | — | — |
-| 3 | Cost, Sales & Profit Engine | ⬜ Not Started | — | — |
+| 1 | Foundation (Setup + Auth + Layout) | ✅ Complete (2026-06-08) | orchestrator + qa-reviewer | Build passes. Live DB migration blocked — see Blockers |
+| 2 | Container Tracker Core | ✅ Complete (2026-06-08) | orchestrator + qa-reviewer | Build passes (17 routes). Runtime needs DB — see Blockers |
+| 3 | Cost, Sales & Profit Engine | ✅ Complete (2026-06-08) | orchestrator + qa-reviewer | Formulas unit-verified; build passes |
 | 4 | Document Manager | ⬜ Not Started | — | — |
 | 5 | Shipment Kanban | ⬜ Not Started | — | — |
 | 6 | Payments Tracker | ⬜ Not Started | — | — |
@@ -18,47 +18,54 @@
 | 9 | Polish, QA & Deploy | ⬜ Not Started | — | — |
 
 ## Phase 1 — Foundation Checklist
-- [ ] `npx create-next-app@14` with TypeScript + Tailwind
-- [ ] Install and init Shadcn/ui
-- [ ] Install: prisma, @prisma/client, @supabase/supabase-js, zustand, @tanstack/react-table, recharts
-- [ ] Create `.env.local` with Supabase credentials
-- [ ] Write full `prisma/schema.prisma` (all 9 tables)
-- [ ] Run `prisma migrate dev --name init`
-- [ ] Create `lib/supabase.ts` and `lib/prisma.ts`
-- [ ] Build login page (`app/(auth)/login/page.tsx`)
-- [ ] Build signup/invite page
-- [ ] Supabase auth middleware (`middleware.ts`)
-- [ ] Build layout shell: sidebar + topnav (`app/(dashboard)/layout.tsx`)
-- [ ] `components/layout/Sidebar.tsx` — dark navy, nav items with icons
-- [ ] `components/layout/TopNav.tsx` — breadcrumb, global search, user menu
-- [ ] Dashboard home placeholder (`app/(dashboard)/page.tsx`)
+- [x] `npx create-next-app@14` with TypeScript + Tailwind
+- [x] Install and init Shadcn/ui (components hand-authored under `components/ui/`)
+- [x] Install: prisma, @prisma/client, @supabase/supabase-js, zustand, @tanstack/react-table, recharts (+ @supabase/ssr, react-hook-form, zod, sonner, @dnd-kit, xlsx)
+- [x] Create `.env.local` with Supabase credentials (gitignored)
+- [x] Write full `prisma/schema.prisma` (all 10 tables incl. activity_log)
+- [~] Run `prisma migrate dev --name init` — **BLOCKED** (DB unreachable from sandbox, IPv6-only). Migration SQL generated & committed under `prisma/migrations/`; apply with `prisma migrate deploy` once a reachable connection string is set.
+- [x] Create `lib/supabase/{client,server,middleware}.ts` and `lib/prisma.ts`
+- [x] Build login page (`app/(auth)/login/page.tsx`) — password + magic link
+- [x] Build signup/invite page (+ forgot-password)
+- [x] Supabase auth middleware (`middleware.ts` + `lib/supabase/middleware.ts`)
+- [x] Build layout shell: sidebar + topnav (`app/(dashboard)/layout.tsx`)
+- [x] `components/layout/Sidebar.tsx` — dark navy (#16325C), nav items with icons
+- [x] `components/layout/TopNav.tsx` — breadcrumb, global search (Container No + BL No), user menu
+- [x] Dashboard home placeholder (`app/(dashboard)/page.tsx`) — KPI cards
+- [x] Routable placeholders for all nav modules (containers/shipments/documents/payments/analytics/settings)
 
 ## Phase 2 — Container Tracker Checklist
-- [ ] `app/(dashboard)/containers/page.tsx` — full TanStack table
-- [ ] Columns: Sl No, Container No, BL No, Supplier, Port, Status, Profit, Actions
-- [ ] Filter bar: Port, Supplier, Status, Date range
-- [ ] Global search: by Container No AND BL No simultaneously
-- [ ] Row-click → navigate to detail
-- [ ] `app/(dashboard)/containers/[id]/page.tsx` — 7-tab detail
-- [ ] Tab 1: Overview (container identity fields)
-- [ ] Tab 2: Customs & Invoice (BE, invoice fields)
-- [ ] Tab 3: Costs & Landing (duty, clearing, liner, detention, CHA, transport, totals)
-- [ ] Tab 4: Sales & Profit (sold qty, margin, color-coded)
-- [ ] Tab 5: Documents (list + upload)
-- [ ] Tab 6: Payments (requests + status)
-- [ ] Tab 7: Activity Log (timeline)
-- [ ] `app/(dashboard)/containers/new/page.tsx` — add container form
-- [ ] `components/containers/StatusBadge.tsx`
-- [ ] API routes: GET/POST/PATCH `/api/containers`
+- [x] `app/(dashboard)/containers/page.tsx` — full TanStack table (sortable, alternating rows)
+- [x] Columns: Sl No, Container No, BL No, Supplier, Port, Status, Profit (Actions = row-click)
+- [x] Filter bar: Port, Supplier, Status, Date range (URL-driven via `ContainerFilters`)
+- [x] Global search: by Container No AND BL No simultaneously (filter bar + TopNav)
+- [x] Row-click → navigate to detail
+- [x] `app/(dashboard)/containers/[id]/page.tsx` — 7-tab detail (`ContainerDetail`)
+- [x] Tab 1: Overview (identity fields + inline status change w/ PATCH)
+- [x] Tab 2: Customs & Invoice (invoice + BE fields, weights)
+- [x] Tab 3: Costs & Landing (duty, clearing, liner, detention, CHA, transport, totals — display; engine in Phase 3)
+- [x] Tab 4: Sales & Profit (KPI cards, margin colour-coded; engine in Phase 3)
+- [x] Tab 5: Documents (X/9 completeness checklist + list; upload in Phase 4)
+- [x] Tab 6: Payments (requests + status; full flow in Phase 6)
+- [x] Tab 7: Activity Log (timeline)
+- [x] `app/(dashboard)/containers/new/page.tsx` — add container form (react-hook-form)
+- [x] `components/containers/StatusBadge.tsx` (container + document + payment variants)
+- [x] API routes: GET/POST `/api/containers`, GET/PATCH `/api/containers/[id]` — org-scoped, Zod-validated, activity-logged, role-gated
+- [x] Data layer `lib/data/containers.ts`, `lib/auth.ts` (session/org context), `lib/activity.ts`, `lib/validations/container.ts`
 
 ## Phase 3 — Cost & Finance Checklist
-- [ ] Auto-calculate total cost from individual cost fields
-- [ ] Rate Per Box = (Total Cost + OH Proportion - Claim Deduction) / No of Boxes
-- [ ] Profit Per Container = Sale Value - Total Cost - Damage Value
-- [ ] Profit Per Box = Profit Per Container / Sold Qty
-- [ ] Profit Margin % = (Profit / Sale Value) × 100
-- [ ] Color code: green (>10%), yellow (0-10%), red (<0%)
-- [ ] API routes for costs and sales
+- [x] Auto-calculate total cost from individual cost fields (`lib/finance.ts` `computeCost`)
+- [x] Rate Per Box — Landing = Total Cost / Boxes; Final = Landing + OH − Claim (per finance-engine.md)
+- [x] Profit Per Container = Sale Value − Damage Value − Total Cost
+- [x] Profit Per Box = Profit / Sold Qty
+- [x] Profit Margin % = (Profit / Sale Value) × 100
+- [x] Color code: green (>10%), yellow (0-10%), red (<0%) — `marginColor`/`marginClass`
+- [x] API routes for costs and sales — PUT `/api/containers/[id]/costs` & `/sales` (upsert + recompute, cost edit re-syncs cached profit)
+- [x] Editable `CostPanel` & `SalesPanel` on tabs 3 & 4 with live client-side recalculation
+- [x] Formulas unit-verified (total cost, rate/box, profit, margin)
+- Note: Total Cost includes **BE Invoice Value INR** per finance-engine.md — added
+  `be_invoice_value_inr` + `exchange_rate` + `rate_per_box_landing` to `container_costs`;
+  init migration regenerated (still unapplied — DB blocker).
 
 ## Phase 4 — Document Manager Checklist
 - [ ] `app/(dashboard)/documents/page.tsx` — master doc list
@@ -125,9 +132,35 @@
 
 ## Discovered Issues / Blockers
 <!-- Agents append here when they hit a problem -->
+- **[Phase 1] Live DB migration blocked.** The Supabase *direct* connection host
+  `db.qxugdiydxxlxnmgnnwyq.supabase.co:5432` resolves to an IPv6-only address and
+  this build sandbox has no IPv6 egress (`P1001: can't reach database server`).
+  General HTTPS egress works (Supabase REST reachable over IPv4). The `init`
+  migration SQL is generated and committed under `prisma/migrations/`.
+  **To apply:** set `DATABASE_URL` to the Supabase **Supavisor pooler** string
+  (`postgresql://postgres.<ref>:<pwd>@aws-0-<region>.pooler.supabase.com:6543/postgres?pgbouncer=true`)
+  or enable the IPv4 add-on, then run `npm run db:deploy`. Auth already works at
+  runtime (Supabase Auth is reached over HTTPS), so login/signup are unaffected.
+- **[Phase 1] `.env.local.txt` contains live secrets and is committed to the repo**
+  (from the initial setup commit, pre-dating this session). The working
+  `.env.local` is gitignored. Recommend rotating these keys and removing
+  `.env.local.txt` from version control.
 
 ## Architecture Decisions Log
 <!-- Agents append here when they make a significant decision -->
 - Using @dnd-kit for kanban drag-and-drop (lighter than react-beautiful-dnd, maintained)
 - Supabase Row Level Security enabled — org_id on every table
 - Prisma for type-safe queries; Supabase client only for auth and file storage
+- [Phase 1] App lives at the repo root (not a `fruitgate-pro/` subdir) — the Next.js
+  app, `app/`, `components/`, `lib/`, `prisma/` sit alongside the existing `agents/`,
+  `rules/` and project-memory files.
+- [Phase 1] Pinned **Prisma to ^6** (not 7). Prisma 7 removed `url = env()` from the
+  datasource and the classic `prisma migrate dev` flow this project is built around;
+  v6 keeps the documented workflow intact.
+- [Phase 1] Auth uses **@supabase/ssr** (`createBrowserClient`/`createServerClient`)
+  rather than the deprecated `@supabase/auth-helpers-nextjs`. Cookie-based session
+  refresh runs in `middleware.ts`.
+- [Phase 1] shadcn/ui primitives are hand-authored under `components/ui/` (Radix +
+  CVA) instead of via the interactive `shadcn` CLI, for reproducible non-interactive
+  builds. Design tokens live as HSL CSS vars in `app/globals.css`; brand colours
+  (#16325C sidebar, #0070D2 primary, #2E844A/#C23934 profit-loss) in `tailwind.config.ts`.
