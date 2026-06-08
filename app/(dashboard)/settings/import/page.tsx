@@ -1,0 +1,55 @@
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+
+import { PageHeader } from "@/components/layout/PageHeader";
+import { Button } from "@/components/ui/button";
+import { ImportWizard } from "@/components/settings/ImportWizard";
+import { requireSession, canWrite } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
+
+export default async function ImportPage() {
+  const session = await requireSession();
+
+  if (!canWrite(session.role)) {
+    return (
+      <div>
+        <PageHeader title="Import" description="Bulk-load from your tracker sheet." />
+        <p className="p-6 text-sm text-muted-foreground">
+          Only managers and admins can import data.
+        </p>
+      </div>
+    );
+  }
+
+  let existingNos: string[] = [];
+  try {
+    const rows = await prisma.container.findMany({
+      where: { orgId: session.orgId },
+      select: { containerNo: true },
+    });
+    existingNos = rows.map((r) => r.containerNo);
+  } catch (err) {
+    console.error("[settings/import] load failed", err);
+  }
+
+  return (
+    <div>
+      <PageHeader
+        title="Excel Import"
+        description="Upload your existing tracker sheet — columns are auto-mapped, duplicates skipped."
+        actions={
+          <Button asChild variant="outline">
+            <Link href="/settings">
+              <ArrowLeft className="h-4 w-4" /> Settings
+            </Link>
+          </Button>
+        }
+      />
+      <div className="mx-auto max-w-4xl p-6">
+        <ImportWizard existingNos={existingNos} />
+      </div>
+    </div>
+  );
+}

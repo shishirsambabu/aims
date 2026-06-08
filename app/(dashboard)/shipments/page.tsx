@@ -1,11 +1,78 @@
-import { ComingSoon } from "@/components/layout/ComingSoon";
+import { AlertTriangle } from "lucide-react";
 
-export default function ShipmentsPage() {
+import { PageHeader } from "@/components/layout/PageHeader";
+import { ShipmentFilters } from "@/components/shipments/ShipmentFilters";
+import { KanbanBoard } from "@/components/shipments/KanbanBoard";
+import { requireSession, canWrite } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { listContainers, type ContainerListRow } from "@/lib/data/containers";
+
+export const dynamic = "force-dynamic";
+
+interface PageProps {
+  searchParams: { port?: string; supplierId?: string };
+}
+
+export default async function ShipmentsPage({ searchParams }: PageProps) {
+  const session = await requireSession();
+  const editable = canWrite(session.role);
+
+  let rows: ContainerListRow[] = [];
+  let suppliers: { id: string; name: string }[] = [];
+  let loadError = false;
+
+  try {
+    [rows, suppliers] = await Promise.all([
+      listContainers(session.orgId, {
+        port: searchParams.port,
+        supplierId: searchParams.supplierId,
+      }),
+      prisma.supplier.findMany({
+        where: { orgId: session.orgId },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
+    ]);
+  } catch (err) {
+    console.error("[shipments/page] load failed", err);
+    loadError = true;
+  }
+
   return (
-    <ComingSoon
-      title="Shipments"
-      description="Drag-and-drop pipeline from Booked to Fully Sold."
-      phase="Phase 5"
-    />
+    <div className="flex h-full flex-col">
+      <PageHeader
+        title="Shipments"
+        description="Drag containers across the pipeline — Booked to Fully Sold."
+      />
+
+      <div className="flex flex-1 flex-col gap-4 overflow-hidden p-6">
+        <div className="flex items-center justify-between">
+          <ShipmentFilters suppliers={suppliers} />
+          {!loadError && (
+            <p className="text-sm text-muted-foreground">
+              {rows.length} container{rows.length === 1 ? "" : "s"}
+              {!editable && " · view only"}
+            </p>
+          )}
+        </div>
+
+        {loadError ? (
+          <div className="flex items-start gap-3 rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[#9A6212]" />
+            <div>
+              <p className="font-medium">Couldn&apos;t load shipments</p>
+              <p className="text-muted-foreground">
+                The database isn&apos;t reachable from this environment. Set a
+                reachable <code>DATABASE_URL</code> and apply migrations.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 overflow-hidden">
+            <KanbanBoard rows={rows} canEdit={editable} />
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
