@@ -24,7 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { mapRows, type MappedRow } from "@/lib/import/mapping";
+import { mapSheetRows, type MappedRow } from "@/lib/import/mapping";
 
 interface ImportResult {
   imported: number;
@@ -50,18 +50,30 @@ export function ImportWizard({ existingNos }: { existingNos: string[] }) {
           type: "binary",
           cellDates: true,
         });
-        const sheet = wb.Sheets[wb.SheetNames[0]];
-        const raw = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
-          defval: null,
-        });
-        const mapped = mapRows(raw);
-        if (mapped.length === 0) {
-          toast.error("No data rows found in the sheet");
+
+        // Pick the sheet that actually has a "Container No" header (the data
+        // sheet may not be the first), parsing each as an array-of-arrays.
+        let best: { rows: MappedRow[]; sheet: string } | null = null;
+        for (const name of wb.SheetNames) {
+          const aoa = XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets[name], {
+            header: 1,
+            defval: null,
+            raw: false,
+            blankrows: false,
+          });
+          const mapped = mapSheetRows(aoa as unknown[][]);
+          if (!best || mapped.length > best.rows.length) {
+            best = { rows: mapped, sheet: name };
+          }
+        }
+
+        if (!best || best.rows.length === 0) {
+          toast.error("No container rows found — check the sheet has a 'Container No' column");
           return;
         }
-        setRows(mapped);
-        setFileName(file.name);
-        toast.success(`Parsed ${mapped.length} rows from ${file.name}`);
+        setRows(best.rows);
+        setFileName(`${file.name} · ${best.sheet}`);
+        toast.success(`Parsed ${best.rows.length} containers from ${file.name}`);
       } catch (err) {
         console.error(err);
         toast.error("Couldn't parse that file — is it a valid .xlsx?");

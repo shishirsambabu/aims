@@ -22,6 +22,11 @@ import {
   DOCUMENT_TYPE_LABELS,
   REQUIRED_DOC_TYPES,
 } from "@/lib/constants";
+import {
+  canTransition,
+  stageRequirement,
+  type WorkflowContext,
+} from "@/lib/workflow";
 import type { ContainerStatus, DocumentType } from "@/types";
 
 // Loose shape — Decimal/Date fields arrive JSON-serialised as strings.
@@ -208,6 +213,16 @@ function OverviewTab({
   const [status, setStatus] = useState<ContainerStatus>(container.status);
   const [saving, setSaving] = useState(false);
 
+  // Workflow context for stage-gating.
+  const ctx: WorkflowContext = {
+    presentDocTypes: container.documents.map((d) => d.type),
+    hasSales: num(container.sale?.saleValue as unknown) != null,
+  };
+  const nextStage =
+    CONTAINER_STATUSES[CONTAINER_STATUSES.indexOf(status) + 1];
+  const nextReq = nextStage ? stageRequirement(nextStage) : null;
+  const presentSet = new Set(ctx.presentDocTypes);
+
   async function changeStatus(next: ContainerStatus) {
     setSaving(true);
     setStatus(next);
@@ -284,12 +299,48 @@ function OverviewTab({
               }
               className="h-10 w-full max-w-xs rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
             >
-              {CONTAINER_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {CONTAINER_STATUS_LABELS[s]}
-                </option>
-              ))}
+              {CONTAINER_STATUSES.map((s) => {
+                const blocked = !canTransition(status, s, ctx).ok;
+                return (
+                  <option key={s} value={s} disabled={blocked}>
+                    {CONTAINER_STATUS_LABELS[s]}
+                    {blocked ? " 🔒" : ""}
+                  </option>
+                );
+              })}
             </select>
+            {nextStage &&
+              nextReq &&
+              (nextReq.docs.length > 0 || nextReq.needsSales) &&
+              !canTransition(status, nextStage, ctx).ok && (
+                <div className="rounded-md border border-warning/40 bg-warning/10 p-2.5 text-xs">
+                  <p className="font-medium text-[#9A6212]">
+                    To advance to {CONTAINER_STATUS_LABELS[nextStage]}:
+                  </p>
+                  <ul className="mt-1 space-y-0.5 text-muted-foreground">
+                    {nextReq.docs.map((d) => (
+                      <li key={d} className="flex items-center gap-1.5">
+                        {presentSet.has(d) ? (
+                          <CheckCircle2 className="h-3 w-3 text-success" />
+                        ) : (
+                          <Circle className="h-3 w-3 text-muted-foreground/50" />
+                        )}
+                        {DOCUMENT_TYPE_LABELS[d]}
+                      </li>
+                    ))}
+                    {nextReq.needsSales && (
+                      <li className="flex items-center gap-1.5">
+                        {ctx.hasSales ? (
+                          <CheckCircle2 className="h-3 w-3 text-success" />
+                        ) : (
+                          <Circle className="h-3 w-3 text-muted-foreground/50" />
+                        )}
+                        Sales recorded
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
             {!canEdit && (
               <p className="text-xs text-muted-foreground">
                 Viewers can&apos;t change status.

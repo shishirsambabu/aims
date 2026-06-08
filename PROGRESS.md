@@ -17,6 +17,27 @@
 | 8 | Excel Import | ✅ Complete (2026-06-08) | orchestrator + qa-reviewer | Build passes (25 routes). SheetJS |
 | 9 | Polish, QA & Deploy | ✅ Code complete (2026-06-08) | orchestrator + qa-reviewer | Build passes (26 routes). Vercel deploy = user (DEPLOY.md) |
 
+## IDMS Expansion (Phases 10+)
+
+| Phase | Name | Status | Notes |
+|-------|------|--------|-------|
+| 10 | Workflow State Machine & Stage Gates | ✅ Complete (2026-06-08) | Guarded transitions gated on docs (BoE→Cleared, DO→In Warehouse) + sales; UI locks + Kanban enforced via API |
+| 11 | Approvals, Maker-Checker & Cost Lock | ⬜ Planned | Payment/cost approvals; lock finalized cost sheet; new roles; field-level perms |
+| 12 | Demurrage/Detention + Notifications Center | ⬜ Planned | Free-day countdowns, in-app alerts, loss-making review queue |
+| 13 | Reports Module | ⬜ Planned | Per-container P&L (print/PDF), period/supplier/port, AR/AP aging |
+| 14 | Master Data Management + Validation | ⬜ Planned | Suppliers/items/HS/ports/charge-heads CRUD; Container No/BL format rules |
+| 15 | Landed-Cost Accuracy & Multi-Currency | ⬜ Planned | Forex, GST/cess, per-currency rollups |
+| 16 | Global Search, Bulk Ops & Audit Viewer | ⬜ Planned | Cross-entity search, bulk status/edit, audit log page, soft-delete |
+| 17 | Security Hardening | ⬜ Planned | Supabase RLS, private bucket + signed URLs, rate limiting, access logging |
+| 18 | Integrations & OCR | ⬜ Planned | Carrier/ICEGATE/Tally + email-to-doc + OCR (needs provider keys) |
+| 19 | Mobile / PWA | ⬜ Planned | Installable, offline-friendly, photo capture for ops |
+
+### Phase 10 — Workflow State Machine (done)
+- [x] `lib/workflow.ts` — `canTransition`/`allowedTransitions`/`stageRequirement`
+- [x] Stage gates: Customs Clearance←BoL, Cleared←Bill of Entry, In Warehouse←Delivery Order, Partially/Fully Sold←sales recorded; backward = logged correction
+- [x] Server enforcement in PATCH `/api/containers/[id]` (409 + reason); Kanban inherits it
+- [x] Detail UI: status dropdown locks blocked stages (🔒) + live "to advance…" checklist
+
 ## Phase 1 — Foundation Checklist
 - [x] `npx create-next-app@14` with TypeScript + Tailwind
 - [x] Install and init Shadcn/ui (components hand-authored under `components/ui/`)

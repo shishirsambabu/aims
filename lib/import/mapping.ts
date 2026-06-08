@@ -74,7 +74,6 @@ const HEADER_MAP: Record<string, keyof MappedRow> = {
   salevalue: "saleValue",
   damageqty: "damageQty",
   damagevalue: "damageValue",
-  profitpercontainer: "saleValue", // reserved; not overwriting computed profit
   amountrequested: "amountRequested",
   requesteddate: "requestDate",
 };
@@ -110,7 +109,17 @@ function toDate(v: unknown): string | null {
     const d = new Date(ms);
     return Number.isNaN(d.getTime()) ? null : d.toISOString();
   }
-  const d = new Date(String(v));
+  const s = String(v).trim();
+  // Indian day-first formats: DD/MM/YYYY or DD-MM-YY(YY).
+  const m = s.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})$/);
+  if (m) {
+    const day = Number(m[1]);
+    const month = Number(m[2]);
+    const year = m[3].length === 2 ? 2000 + Number(m[3]) : Number(m[3]);
+    const d = new Date(Date.UTC(year, month - 1, day));
+    return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  }
+  const d = new Date(s);
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
 
@@ -151,8 +160,9 @@ export function mapRow(
     }
   }
 
+  // BL No is optional on import — this tracker keys on Container No; the API
+  // defaults BL No to the Container No when the sheet has no BL column.
   if (!out.containerNo) out.errors.push("Missing Container No");
-  if (!out.blNo) out.errors.push("Missing BL No");
 
   return out;
 }
@@ -165,4 +175,75 @@ export function mapRows(raws: Record<string, unknown>[]): MappedRow[] {
         r.containerNo ||
         Object.values(r).some((v) => v != null && v !== "" && v !== r.rowNumber)
     );
+}
+
+/* ------------------------------------------------------------------ */
+/* Real-world sheet parsing: pick the data sheet, find the header row, */
+/* merge two-row headers (grouped columns), then map.                 */
+/* ------------------------------------------------------------------ */
+
+function clean(v: unknown): string {
+  return v == null ? "" : String(v).replace(/\s+/g, " ").trim();
+}
+
+/** Index of the row that contains a "Container No" header (scans top 15). */
+export function detectHeaderRow(aoa: unknown[][]): number {
+  for (let i = 0; i < Math.min(15, aoa.length); i++) {
+    const row = aoa[i] ?? [];
+    if (row.some((c) => normalize(clean(c)) === "containerno")) return i;
+  }
+  return 0;
+}
+
+/**
+ * Build the effective header for each column. When the row below the header is
+ * itself a header (grouped columns like "PAYMENT UPDATIONS" → "Amount
+ * Requested"), the more specific sub-label wins.
+ */
+function buildHeaders(aoa: unknown[][], hdr: number): string[] {
+  const top = aoa[hdr] ?? [];
+  const sub = aoa[hdr + 1] ?? [];
+
+  const containerCol = top.findIndex(
+    (c) => normalize(clean(c)) === "containerno"
+  );
+  // If the next row has a value in the Container-No column, it's data, not a
+  // secondary header.
+  const secondIsHeader =
+    containerCol >= 0 && clean(sub[containerCol]) === "";
+
+  const width = Math.max(top.length, sub.length);
+  const headers: string[] = [];
+  for (let c = 0; c < width; c++) {
+    headers[c] = secondIsHeader
+      ? clean(sub[c]) || clean(top[c])
+      : clean(top[c]);
+  }
+  return headers;
+}
+
+/** Parse a sheet (array-of-arrays) into mapped, filtered rows. */
+export function mapSheetRows(aoa: unknown[][]): MappedRow[] {
+  const hdr = detectHeaderRow(aoa);
+  const headers = buildHeaders(aoa, hdr);
+  const containerCol = (aoa[hdr] ?? []).findIndex(
+    (c) => normalize(clean(c)) === "containerno"
+  );
+  const secondIsHeader =
+    containerCol >= 0 && clean((aoa[hdr + 1] ?? [])[containerCol]) === "";
+  const firstDataRow = hdr + (secondIsHeader ? 2 : 1);
+
+  const out: MappedRow[] = [];
+  for (let r = firstDataRow; r < aoa.length; r++) {
+    const row = aoa[r] ?? [];
+    const raw: Record<string, unknown> = {};
+    for (let c = 0; c < headers.length; c++) {
+      const h = headers[c];
+      if (!h) continue;
+      raw[h] = row[c] ?? null;
+    }
+    const mapped = mapRow(raw, r + 1);
+    if (mapped.containerNo) out.push(mapped);
+  }
+  return out;
 }

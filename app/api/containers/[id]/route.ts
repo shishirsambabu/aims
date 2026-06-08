@@ -6,7 +6,9 @@ import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/activity";
 import { getContainerById } from "@/lib/data/containers";
 import { updateContainerSchema } from "@/lib/validations/container";
+import { canTransition } from "@/lib/workflow";
 import { PORTS } from "@/lib/constants";
+import type { ContainerStatus, DocumentType } from "@/types";
 
 interface Params {
   params: { id: string };
@@ -53,6 +55,32 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
 
     const input = parsed.data;
+
+    // Enforce the workflow state machine on status changes.
+    if (input.status && input.status !== existing.status) {
+      const [docs, sale] = await Promise.all([
+        prisma.document.findMany({
+          where: { containerId: existing.id },
+          select: { type: true },
+        }),
+        prisma.sale.findUnique({
+          where: { containerId: existing.id },
+          select: { saleValue: true },
+        }),
+      ]);
+      const check = canTransition(
+        existing.status as ContainerStatus,
+        input.status as ContainerStatus,
+        {
+          presentDocTypes: docs.map((d) => d.type as DocumentType),
+          hasSales: sale?.saleValue != null,
+        }
+      );
+      if (!check.ok) {
+        return NextResponse.json({ error: check.reason }, { status: 409 });
+      }
+    }
+
     const portCode =
       input.portCode ??
       (input.port ? PORTS.find((p) => p.name === input.port)?.code : undefined);
