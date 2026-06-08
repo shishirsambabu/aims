@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { ContainerFilters } from "@/components/containers/ContainerFilters";
 import { ContainerTable } from "@/components/containers/ContainerTable";
+import { ExportButton } from "@/components/containers/ExportButton";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { listContainers, type ContainerListRow } from "@/lib/data/containers";
@@ -57,11 +58,14 @@ export default async function ContainersPage({ searchParams }: PageProps) {
         title="Containers"
         description="Every import container — Container No and BL No, costs, status and profit."
         actions={
-          <Button asChild>
-            <Link href="/containers/new">
-              <Plus className="h-4 w-4" /> New Container
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <ExportButton rows={rows} />
+            <Button asChild>
+              <Link href="/containers/new">
+                <Plus className="h-4 w-4" /> New Container
+              </Link>
+            </Button>
+          </div>
         }
       />
 

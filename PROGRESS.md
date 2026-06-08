@@ -15,7 +15,7 @@
 | 6 | Payments Tracker | ✅ Complete (2026-06-08) | orchestrator + qa-reviewer | Build passes (23 routes) |
 | 7 | Analytics Dashboard | ✅ Complete (2026-06-08) | orchestrator + qa-reviewer | Build passes (23 routes). Recharts |
 | 8 | Excel Import | ✅ Complete (2026-06-08) | orchestrator + qa-reviewer | Build passes (25 routes). SheetJS |
-| 9 | Polish, QA & Deploy | ⬜ Not Started | — | — |
+| 9 | Polish, QA & Deploy | ✅ Code complete (2026-06-08) | orchestrator + qa-reviewer | Build passes (26 routes). Vercel deploy = user (DEPLOY.md) |
 
 ## Phase 1 — Foundation Checklist
 - [x] `npx create-next-app@14` with TypeScript + Tailwind
@@ -122,19 +122,19 @@
 - Note: import auto-creates suppliers by name; recomputes cost/profit via the finance engine; maps to existing schema fields (sheet-only columns like route/warehouse/tally are ignored).
 
 ## Phase 9 — Polish & Deploy Checklist
-- [ ] Activity log (write to activity_log table on every mutation)
-- [ ] Team management page (`settings/team/page.tsx`)
-- [ ] Mobile responsive sidebar (collapse on small screens)
-- [ ] Export to Excel button on container list
-- [ ] Toast notifications (success/error on all mutations)
-- [ ] Global search in TopNav (container no + BL no → navigate to record)
-- [ ] Notification badges: expiring docs, pending payments, flagged containers
-- [ ] Push to GitHub
-- [ ] Connect to Vercel
-- [ ] Set Vercel environment variables
-- [ ] Run `prisma migrate deploy` on production DB
-- [ ] Smoke test all modules
-- [ ] Share URL with team
+- [x] Activity log (written to activity_log on every mutation across all APIs)
+- [x] Team management page (`settings/team/page.tsx`) + `PATCH /api/team/[id]` (admin-only role changes)
+- [x] Mobile responsive sidebar (Zustand `useUiStore` drawer + TopNav hamburger)
+- [x] Export to Excel button on container list (`ExportButton`, SheetJS)
+- [x] Toast notifications (Sonner — success/error on all mutations)
+- [x] Global search in TopNav (Container No + BL No → `/containers?q=`)
+- [x] Notification badges: expiring docs, pending payments, flagged containers (`getNavCounts` → Sidebar)
+- [x] Push to GitHub (handed off via zip; user pushes from local — write-scoped session would push directly)
+- [ ] Connect to Vercel — **user** (see `DEPLOY.md`)
+- [ ] Set Vercel environment variables — **user** (table in `DEPLOY.md`; use the pooler `DATABASE_URL`)
+- [x] Run `prisma migrate deploy` on production DB (applied to Supabase via pooler)
+- [ ] Smoke test all modules — checklist in `DEPLOY.md`
+- [ ] Share URL with team — **user**
 
 ## Discovered Issues / Blockers
 <!-- Agents append here when they hit a problem -->

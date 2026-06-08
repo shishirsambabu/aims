@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Search, LogOut, ChevronRight } from "lucide-react";
+import { Search, LogOut, ChevronRight, Menu } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/actions/auth";
+import { useUiStore } from "@/store/useUiStore";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -33,6 +34,7 @@ function initials(name: string | null, email: string) {
 export function TopNav({ user }: TopNavProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const toggleMobileSidebar = useUiStore((s) => s.toggleMobileSidebar);
   const [query, setQuery] = useState("");
 
   const segments = pathname.split("/").filter(Boolean);
@@ -47,9 +49,18 @@ export function TopNav({ user }: TopNavProps) {
   }
 
   return (
-    <header className="flex h-16 shrink-0 items-center gap-4 border-b border-border bg-surface px-6">
+    <header className="flex h-16 shrink-0 items-center gap-4 border-b border-border bg-surface px-4 md:px-6">
+      {/* Mobile menu toggle */}
+      <button
+        onClick={toggleMobileSidebar}
+        className="rounded-md p-1.5 text-muted-foreground hover:bg-surface-alt md:hidden"
+        aria-label="Open menu"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1 text-sm text-muted-foreground">
+      <nav className="hidden items-center gap-1 text-sm text-muted-foreground sm:flex">
         {crumbs.map((c, i) => (
           <span key={i} className="flex items-center gap-1">
             {i > 0 && <ChevronRight className="h-3.5 w-3.5" />}

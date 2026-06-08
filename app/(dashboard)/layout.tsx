@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopNav } from "@/components/layout/TopNav";
+import { getSessionContext } from "@/lib/auth";
+import { getNavCounts, type NavCounts } from "@/lib/data/notifications";
 
 export default async function DashboardLayout({
   children,
@@ -26,9 +28,18 @@ export default async function DashboardLayout({
     role: (meta.role as string) ?? "viewer",
   };
 
+  // Notification badge counts (safe-fails to zeros if the DB is unreachable).
+  let counts: NavCounts = {
+    expiringDocs: 0,
+    pendingPayments: 0,
+    flaggedContainers: 0,
+  };
+  const ctx = await getSessionContext();
+  if (ctx) counts = await getNavCounts(ctx.orgId);
+
   return (
     <div className="flex h-screen overflow-hidden bg-surface-alt">
-      <Sidebar />
+      <Sidebar counts={counts} />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopNav user={profile} />
         <main className="flex-1 overflow-y-auto scrollbar-thin">{children}</main>
