@@ -13,6 +13,8 @@ import {
 } from "@/components/containers/StatusBadge";
 import { CostPanel } from "@/components/containers/CostPanel";
 import { SalesPanel } from "@/components/containers/SalesPanel";
+import { DocumentUpload } from "@/components/documents/DocumentUpload";
+import { Button } from "@/components/ui/button";
 import { cn, formatUSD, formatDate } from "@/lib/utils";
 import {
   CONTAINER_STATUSES,
@@ -52,7 +54,7 @@ interface DocRow {
   docNo: string | null;
   issueDate: string | null;
   expiryDate: string | null;
-  status: "Pending" | "Received" | "Verified" | "Expired";
+  status: "Pending" | "Uploaded" | "Verified" | "Expired";
 }
 
 interface PaymentRow {
@@ -84,10 +86,12 @@ export function ContainerDetail({
   container,
   activity,
   canEdit,
+  orgId,
 }: {
   container: DetailData;
   activity: ActivityRow[];
   canEdit: boolean;
+  orgId: string;
 }) {
   return (
     <div className="p-6">
@@ -126,7 +130,12 @@ export function ContainerDetail({
             />
           </TabsContent>
           <TabsContent value="documents">
-            <DocumentsTab documents={container.documents} />
+            <DocumentsTab
+              documents={container.documents}
+              containerId={container.id}
+              orgId={orgId}
+              canEdit={canEdit}
+            />
           </TabsContent>
           <TabsContent value="payments">
             <PaymentsTab payments={container.payments} />
@@ -351,13 +360,41 @@ function CustomsTab({ item }: { item: Record<string, unknown> | null }) {
   );
 }
 
-function DocumentsTab({ documents }: { documents: DocRow[] }) {
+function DocumentsTab({
+  documents,
+  containerId,
+  orgId,
+  canEdit,
+}: {
+  documents: DocRow[];
+  containerId: string;
+  orgId: string;
+  canEdit: boolean;
+}) {
   const presentTypes = new Set(documents.map((d) => d.type));
   const score = REQUIRED_DOC_TYPES.filter((t) => presentTypes.has(t)).length;
 
   return (
     <div className="space-y-6">
-      <SectionCard title={`Document Completeness — ${score}/9`}>
+      <div className="flex items-center justify-between">
+        <h3 className="font-heading text-base font-semibold">
+          Document Completeness — {score}/9
+        </h3>
+        {canEdit && (
+          <DocumentUpload
+            orgId={orgId}
+            containers={[]}
+            presetContainerId={containerId}
+            trigger={
+              <Button size="sm">
+                <FileText className="h-4 w-4" /> Upload Document
+              </Button>
+            }
+          />
+        )}
+      </div>
+
+      <SectionCard title="Checklist">
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {REQUIRED_DOC_TYPES.map((t) => {
             const has = presentTypes.has(t);
@@ -384,7 +421,7 @@ function DocumentsTab({ documents }: { documents: DocRow[] }) {
         title="Uploaded Documents"
         empty={
           documents.length === 0
-            ? "No documents uploaded yet. Upload flow arrives in Phase 4."
+            ? "No documents uploaded yet. Use Upload Document to add one."
             : undefined
         }
       >

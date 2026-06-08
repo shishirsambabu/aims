@@ -43,6 +43,41 @@ export function marginColor(marginPct: number | null | undefined): string {
   return "text-danger";
 }
 
+/** Days until expiry (negative if already expired); null when no date. */
+export function daysUntil(value: string | Date | null | undefined): number | null {
+  if (!value) return null;
+  const d = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(d.getTime())) return null;
+  const ms = d.getTime() - Date.now();
+  return Math.ceil(ms / (1000 * 60 * 60 * 24));
+}
+
+export type ExpiryLevel = "expired" | "critical" | "warning" | "ok" | "none";
+
+/** Expiry banding: expired, critical (≤7d), warning (≤30d), ok, or none. */
+export function expiryLevel(
+  value: string | Date | null | undefined
+): ExpiryLevel {
+  const days = daysUntil(value);
+  if (days === null) return "none";
+  if (days < 0) return "expired";
+  if (days <= 7) return "critical";
+  if (days <= 30) return "warning";
+  return "ok";
+}
+
+export function formatBytes(bytes: number | null | undefined): string {
+  if (!bytes) return "—";
+  const units = ["B", "KB", "MB", "GB"];
+  let v = bytes;
+  let i = 0;
+  while (v >= 1024 && i < units.length - 1) {
+    v /= 1024;
+    i++;
+  }
+  return `${v.toFixed(v >= 10 || i === 0 ? 0 : 1)} ${units[i]}`;
+}
+
 export function formatDate(value: string | Date | null | undefined): string {
   if (!value) return "—";
   const d = typeof value === "string" ? new Date(value) : value;

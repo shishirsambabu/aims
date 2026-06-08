@@ -46,7 +46,7 @@ enum DocumentType {
 
 enum DocumentStatus {
   Pending
-  Received
+  Uploaded
   Verified
   Expired
 }

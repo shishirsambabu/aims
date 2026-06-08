@@ -78,6 +78,29 @@ export function ContainerTable({ data }: { data: ContainerListRow[] }) {
         cell: ({ row }) => <StatusBadge status={row.original.status} />,
       },
       {
+        accessorKey: "docScore",
+        header: "Docs",
+        cell: ({ row }) => {
+          const s = row.original.docScore;
+          const tone =
+            s === 0
+              ? "bg-danger/10 text-danger"
+              : s < 5
+                ? "bg-warning/20 text-[#9A6212]"
+                : "bg-success/15 text-success";
+          return (
+            <span
+              className={cn(
+                "font-financial inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
+                tone
+              )}
+            >
+              {s}/9
+            </span>
+          );
+        },
+      },
+      {
         accessorKey: "profit",
         header: "Profit",
         cell: ({ row }) => {

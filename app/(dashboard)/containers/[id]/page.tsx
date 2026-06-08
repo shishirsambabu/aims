@@ -88,6 +88,7 @@ export default async function ContainerDetailPage({ params }: PageProps) {
         container={data}
         activity={activityData}
         canEdit={canWrite(session.role)}
+        orgId={session.orgId}
       />
     </div>
   );

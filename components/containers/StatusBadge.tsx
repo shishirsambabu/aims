@@ -36,7 +36,7 @@ export function StatusBadge({
 
 const DOC_STATUS_STYLES: Record<DocumentStatus, string> = {
   Pending: "bg-slate-100 text-slate-700",
-  Received: "bg-sky-100 text-sky-800",
+  Uploaded: "bg-sky-100 text-sky-800",
   Verified: "bg-success/15 text-success",
   Expired: "bg-danger/10 text-danger",
 };

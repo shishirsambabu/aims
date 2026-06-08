@@ -84,6 +84,17 @@ export const PORTS = [
 
 export const CUSTOMERS = ["AEDEN", "NKA"];
 
+// Supabase Storage bucket for document files.
+export const STORAGE_BUCKET = "aims-documents";
+
+// Max upload size (25 MB) and accepted file types.
+export const MAX_FILE_SIZE = 25 * 1024 * 1024;
+export const ACCEPTED_FILE_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+];
+
 export const SUPPLIERS = [
   "COSMOS GROUP",
   "BASSTION FRUIT",

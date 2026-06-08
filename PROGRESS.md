@@ -10,7 +10,7 @@
 | 1 | Foundation (Setup + Auth + Layout) | ✅ Complete (2026-06-08) | orchestrator + qa-reviewer | Build passes. Live DB migration blocked — see Blockers |
 | 2 | Container Tracker Core | ✅ Complete (2026-06-08) | orchestrator + qa-reviewer | Build passes (17 routes). Runtime needs DB — see Blockers |
 | 3 | Cost, Sales & Profit Engine | ✅ Complete (2026-06-08) | orchestrator + qa-reviewer | Formulas unit-verified; build passes |
-| 4 | Document Manager | ⬜ Not Started | — | — |
+| 4 | Document Manager | ✅ Complete (2026-06-08) | orchestrator + qa-reviewer | Build passes (21 routes). Needs Supabase bucket `aims-documents` |
 | 5 | Shipment Kanban | ⬜ Not Started | — | — |
 | 6 | Payments Tracker | ⬜ Not Started | — | — |
 | 7 | Analytics Dashboard | ⬜ Not Started | — | — |
@@ -68,15 +68,17 @@
   init migration regenerated (still unapplied — DB blocker).
 
 ## Phase 4 — Document Manager Checklist
-- [ ] `app/(dashboard)/documents/page.tsx` — master doc list
-- [ ] Columns: Type, Doc No, Container No, BL No, Supplier, Issue Date, Expiry Date, Status
-- [ ] Filter: Doc Type, Status, Container, Expiry (next 30 days)
-- [ ] Red highlight: docs expiring within 30 days
-- [ ] Upload flow: select container (by No or BL), doc type, dates, file
-- [ ] Supabase Storage integration for PDF/image upload
-- [ ] Document completeness score per container (X/9)
-- [ ] Missing doc checklist on container detail Tab 5
-- [ ] API routes for documents
+- [x] `app/(dashboard)/documents/page.tsx` — master doc list
+- [x] Columns: Type, Doc No, Container No, BL No, Supplier, Issue Date, Expiry Date, Status
+- [x] Filter: Doc Type, Status, Container (search/containerId param), Expiry (≤30 days toggle)
+- [x] Red highlight: expiring ≤30d (amber row), ≤7d/expired (red row + "Expiring Soon"/"Expired" badge)
+- [x] Upload flow: select container (by Container No or BL No), doc type, doc no, dates, file
+- [x] Supabase Storage integration — client upload to `aims-documents`, path `{org}/{container}/{type}/{file}`, PDF/JPG/PNG ≤25MB
+- [x] Document completeness score per container (X/9) — container list column (red 0 / yellow <5 / green) + detail Tab 5
+- [x] Missing doc checklist on container detail Tab 5 (+ inline upload button)
+- [x] API routes: GET/POST `/api/documents`, PATCH(verify)/DELETE `/api/documents/[id]`
+- Note: status enum value `Received` → `Uploaded` (aligns with doc-manager flow Pending→Uploaded→Verified); init migration regenerated.
+- **Supabase setup needed:** create Storage bucket `aims-documents` with policies allowing authenticated upload/read.
 
 ## Phase 5 — Shipment Kanban Checklist
 - [ ] `app/(dashboard)/shipments/page.tsx`

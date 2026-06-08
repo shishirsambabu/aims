@@ -29,6 +29,7 @@ export interface ContainerListRow {
   profit: number | null;
   marginPct: number | null;
   flagged: boolean;
+  docScore: number; // distinct document types present (out of 9)
 }
 
 function dec(value: Prisma.Decimal | null | undefined): number | null {
@@ -80,6 +81,7 @@ export async function listContainers(
       flagged: true,
       supplier: { select: { name: true } },
       sale: { select: { saleValue: true, profit: true, marginPct: true } },
+      documents: { select: { type: true } },
     },
   });
 
@@ -98,6 +100,7 @@ export async function listContainers(
     profit: dec(r.sale?.profit),
     marginPct: dec(r.sale?.marginPct),
     flagged: r.flagged,
+    docScore: new Set(r.documents.map((d) => d.type)).size,
   }));
 }
 

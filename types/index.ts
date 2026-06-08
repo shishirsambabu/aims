@@ -23,7 +23,7 @@ export type DocumentType =
   | "DeliveryOrder"
   | "Other";
 
-export type DocumentStatus = "Pending" | "Received" | "Verified" | "Expired";
+export type DocumentStatus = "Pending" | "Uploaded" | "Verified" | "Expired";
 
 export type PaymentStatus = "Pending" | "Partial" | "Paid";
 
