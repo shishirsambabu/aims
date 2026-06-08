@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npx prisma *)",
+      "Bash(npx create-next-app *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(npx vercel *)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(DROP TABLE *)",
+      "Bash(npx prisma migrate reset)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[FruitGate] File modified: checking TypeScript...' && npx tsc --noEmit 2>&1 | head -20 || true"
+          }
+        ]
+      }
+    ]
+  },
+  "autoUpdaterStatus": "disabled",
+  "theme": "dark"
+}
