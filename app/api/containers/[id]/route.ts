@@ -86,6 +86,14 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       input.portCode ??
       (input.port ? PORTS.find((p) => p.name === input.port)?.code : undefined);
 
+    // Recompute free time from ETA + free days when not explicitly provided.
+    let lastFreeDate = input.lastFreeDate;
+    if (lastFreeDate === undefined && input.eta && input.freeDays) {
+      const d = new Date(input.eta);
+      d.setDate(d.getDate() + input.freeDays);
+      lastFreeDate = d;
+    }
+
     const container = await prisma.container.update({
       where: { id: params.id },
       data: {
@@ -95,15 +103,26 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         customer: input.customer,
         port: input.port,
         portCode,
+        pol: input.pol,
+        origin: input.origin,
+        line: input.line,
+        vessel: input.vessel,
+        transhipment: input.transhipment,
         item: input.item,
         variety: input.variety,
+        packageType: input.packageType,
+        perPackageWeight: input.perPackageWeight,
         noOfBoxes: input.noOfBoxes,
+        transitTime: input.transitTime,
         status: input.status,
         etd: input.etd,
         eta: input.eta,
+        ata: input.ata,
         bookingDate: input.bookingDate,
+        doUpto: input.doUpto,
+        emptyReturnDate: input.emptyReturnDate,
         freeDays: input.freeDays,
-        lastFreeDate: input.lastFreeDate,
+        lastFreeDate,
         remarks: input.remarks,
       },
     });

@@ -21,7 +21,9 @@ import {
   CONTAINER_STATUS_LABELS,
   CUSTOMERS,
   PORTS,
+  STORAGE_BUCKET,
 } from "@/lib/constants";
+import { createClient } from "@/lib/supabase/client";
 
 interface SupplierOption {
   id: string;
@@ -34,25 +36,41 @@ interface FormValues {
   supplierId: string;
   customer: string;
   port: string;
+  pol: string;
+  origin: string;
+  line: string;
+  vessel: string;
+  transhipment: string;
   item: string;
   variety: string;
+  packageType: string;
+  perPackageWeight: string;
   noOfBoxes: string;
+  transitTime: string;
   status: string;
   bookingDate: string;
   etd: string;
   eta: string;
+  ata: string;
+  doUpto: string;
+  emptyReturnDate: string;
   freeDays: string;
   lastFreeDate: string;
+  shipperInvoiceNo: string;
+  packingListNo: string;
   remarks: string;
 }
 
 export function ContainerForm({
   suppliers,
+  orgId,
 }: {
   suppliers: SupplierOption[];
+  orgId: string;
 }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
+  const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
   const {
     register,
     handleSubmit,
@@ -74,8 +92,44 @@ export function ContainerForm({
         toast.error(json.error ?? "Failed to create container");
         return;
       }
+      const containerId = json.data.id as string;
+
+      // Upload the shipper invoice (if provided) as a Commercial Invoice doc.
+      if (invoiceFile) {
+        try {
+          const supabase = createClient();
+          const safe = invoiceFile.name.replace(/[^\w.\-]+/g, "_");
+          const path = `${orgId}/${containerId}/CommercialInvoice/${Date.now()}_${safe}`;
+          const { error: upErr } = await supabase.storage
+            .from(STORAGE_BUCKET)
+            .upload(path, invoiceFile, {
+              upsert: true,
+              contentType: invoiceFile.type,
+            });
+          if (upErr) {
+            toast.warning(`Container created, but invoice upload failed: ${upErr.message}`);
+          } else {
+            await fetch("/api/documents", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                containerId,
+                type: "CommercialInvoice",
+                docNo: values.shipperInvoiceNo,
+                filePath: path,
+                fileName: invoiceFile.name,
+                fileSize: invoiceFile.size,
+                status: "Uploaded",
+              }),
+            });
+          }
+        } catch {
+          toast.warning("Container created, but the invoice upload failed.");
+        }
+      }
+
       toast.success(`Container ${json.data.containerNo} created`);
-      router.push(`/containers/${json.data.id}`);
+      router.push(`/containers/${containerId}`);
       router.refresh();
     } catch {
       toast.error("Network error — please try again");
@@ -141,7 +195,7 @@ export function ContainerForm({
           <CardTitle>Shipment Details</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
-          <Field label="Port">
+          <Field label="Port of Discharge (Arrival)">
             <select
               {...register("port")}
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -153,6 +207,42 @@ export function ContainerForm({
                 </option>
               ))}
             </select>
+          </Field>
+
+          <Field label="Port of Loading (POL)">
+            <Input {...register("pol")} placeholder="Hamburg, Cape Town…" />
+          </Field>
+          <Field label="Origin (Country)">
+            <Input {...register("origin")} placeholder="Poland, South Africa…" />
+          </Field>
+          <Field label="Shipping Line">
+            <Input {...register("line")} placeholder="HAPAG, CMA CGM…" />
+          </Field>
+          <Field label="Vessel & Voyage">
+            <Input {...register("vessel")} placeholder="HMM COLOMBO 0148E" />
+          </Field>
+          <Field label="Transhipment">
+            <Input {...register("transhipment")} placeholder="Colombo…" />
+          </Field>
+          <Field label="Package Type">
+            <Input {...register("packageType")} placeholder="Carton, Box, Wooden…" />
+          </Field>
+          <Field label="Per-Package Weight (KG)">
+            <Input
+              type="number"
+              step="0.001"
+              {...register("perPackageWeight")}
+              placeholder="13"
+              className="font-financial"
+            />
+          </Field>
+          <Field label="Transit Time (days)">
+            <Input
+              type="number"
+              {...register("transitTime")}
+              placeholder="34"
+              className="font-financial"
+            />
           </Field>
 
           <Field label="Status">
@@ -196,22 +286,72 @@ export function ContainerForm({
             </Field>
           </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="ATA (Actual Arrival)">
+              <Input type="date" {...register("ata")} />
+            </Field>
+            <Field label="Empty Return">
+              <Input type="date" {...register("emptyReturnDate")} />
+            </Field>
+          </div>
+
           <Field label="Free Days">
             <Input
               type="number"
               {...register("freeDays")}
-              placeholder="e.g. 7"
+              placeholder="e.g. 10"
               className="font-financial"
             />
           </Field>
-          <Field label="Last Free Date (demurrage deadline)">
+          <Field label="Last Free Date (auto from ETA + Free Days)">
             <Input type="date" {...register("lastFreeDate")} />
           </Field>
+          <Field label="DO Valid Upto">
+            <Input type="date" {...register("doUpto")} />
+          </Field>
+          <div />
 
           <div className="sm:col-span-2">
             <Field label="Remarks">
               <Textarea {...register("remarks")} placeholder="Notes…" />
             </Field>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Shipper Invoice</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <Field label="Shipper Invoice No">
+            <Input
+              {...register("shipperInvoiceNo")}
+              placeholder="2026-05-000012-EX"
+              className="font-financial"
+            />
+          </Field>
+          <Field label="Shipping / Packing List No">
+            <Input
+              {...register("packingListNo")}
+              placeholder="PKG-…"
+              className="font-financial"
+            />
+          </Field>
+          <div className="sm:col-span-2">
+            <Field label="Upload Shipper Invoice (PDF/JPG/PNG)">
+              <Input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={(e) => setInvoiceFile(e.target.files?.[0] ?? null)}
+                className="cursor-pointer file:mr-3 file:rounded file:border-0 file:bg-surface-alt file:px-3 file:py-1 file:text-sm"
+              />
+            </Field>
+            {invoiceFile && (
+              <p className="font-financial mt-1 text-xs text-muted-foreground">
+                {invoiceFile.name}
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>

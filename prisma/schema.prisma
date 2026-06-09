@@ -153,6 +153,18 @@ model Container {
   // Demurrage / detention free-day deadline. Charges accrue after this date.
   freeDays      Int?            @map("free_days")
   lastFreeDate  DateTime?       @map("last_free_date")
+  pol           String?         // Port of Loading
+  origin        String?         // country of origin
+  line          String?         // shipping line
+  vessel        String?
+  transhipment  String?
+  perPackageWeight Decimal?     @map("per_package_weight") @db.Decimal(10, 3)
+  packageType   String?         @map("package_type")
+  doUpto        DateTime?       @map("do_upto")
+  emptyReturnDate DateTime?     @map("empty_return_date")
+  transitTime   Int?            @map("transit_time")
+  ata           DateTime?       // Actual Time of Arrival
+  originalEta   DateTime?       @map("original_eta")
   remarks       String?
   flagged       Boolean         @default(false)
   deletedAt     DateTime?       @map("deleted_at")
@@ -180,6 +192,7 @@ model ShipmentItem {
   orgId           String    @map("org_id")
   containerId     String    @unique @map("container_id")
   invoiceNo       String?   @map("invoice_no")
+  packingListNo   String?   @map("packing_list_no")
   invoiceDate     DateTime? @map("invoice_date")
   invoiceValue    Decimal?  @map("invoice_value") @db.Decimal(14, 2)
   invoiceCurrency Currency  @default(USD) @map("invoice_currency")

@@ -51,9 +51,11 @@ export function ImportWizard({ existingNos }: { existingNos: string[] }) {
           cellDates: true,
         });
 
-        // Pick the sheet that actually has a "Container No" header (the data
-        // sheet may not be the first), parsing each as an array-of-arrays.
-        let best: { rows: MappedRow[]; sheet: string } | null = null;
+        // Merge rows from EVERY sheet that has container data (the arrival
+        // workbook has one tab per port). De-duplicate by Container No.
+        const merged: MappedRow[] = [];
+        const seenNos = new Set<string>();
+        const usedSheets: string[] = [];
         for (const name of wb.SheetNames) {
           const aoa = XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets[name], {
             header: 1,
@@ -62,18 +64,25 @@ export function ImportWizard({ existingNos }: { existingNos: string[] }) {
             blankrows: false,
           });
           const mapped = mapSheetRows(aoa as unknown[][]);
-          if (!best || mapped.length > best.rows.length) {
-            best = { rows: mapped, sheet: name };
+          if (mapped.length === 0) continue;
+          usedSheets.push(name);
+          for (const r of mapped) {
+            const key = r.containerNo?.toUpperCase() ?? "";
+            if (key && seenNos.has(key)) continue;
+            if (key) seenNos.add(key);
+            merged.push({ ...r, rowNumber: merged.length + 2 });
           }
         }
 
-        if (!best || best.rows.length === 0) {
-          toast.error("No container rows found — check the sheet has a 'Container No' column");
+        if (merged.length === 0) {
+          toast.error("No container rows found — check the sheet has a 'Container No' / 'CNT No' column");
           return;
         }
-        setRows(best.rows);
-        setFileName(`${file.name} · ${best.sheet}`);
-        toast.success(`Parsed ${best.rows.length} containers from ${file.name}`);
+        setRows(merged);
+        setFileName(
+          `${file.name} · ${usedSheets.length} sheet${usedSheets.length === 1 ? "" : "s"}`
+        );
+        toast.success(`Parsed ${merged.length} containers from ${file.name}`);
       } catch (err) {
         console.error(err);
         toast.error("Couldn't parse that file — is it a valid .xlsx?");

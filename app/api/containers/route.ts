@@ -55,6 +55,14 @@ export async function POST(request: NextRequest) {
       PORTS.find((p) => p.name === input.port)?.code ??
       undefined;
 
+    // Free time auto-calculated from ETA + free days when not given explicitly.
+    let lastFreeDate = input.lastFreeDate;
+    if (!lastFreeDate && input.eta && input.freeDays) {
+      const d = new Date(input.eta);
+      d.setDate(d.getDate() + input.freeDays);
+      lastFreeDate = d;
+    }
+
     const container = await prisma.container.create({
       data: {
         orgId: session.orgId,
@@ -65,18 +73,41 @@ export async function POST(request: NextRequest) {
         customer: input.customer,
         port: input.port,
         portCode,
+        pol: input.pol,
+        origin: input.origin,
+        line: input.line,
+        vessel: input.vessel,
+        transhipment: input.transhipment,
         item: input.item,
         variety: input.variety,
+        packageType: input.packageType,
+        perPackageWeight: input.perPackageWeight,
         noOfBoxes: input.noOfBoxes,
+        transitTime: input.transitTime,
         status: input.status,
         etd: input.etd,
         eta: input.eta,
+        ata: input.ata,
         bookingDate: input.bookingDate,
+        doUpto: input.doUpto,
+        emptyReturnDate: input.emptyReturnDate,
         freeDays: input.freeDays,
-        lastFreeDate: input.lastFreeDate,
+        lastFreeDate,
         remarks: input.remarks,
       },
     });
+
+    // Capture shipper invoice / packing list numbers as a shipment item.
+    if (input.shipperInvoiceNo || input.packingListNo) {
+      await prisma.shipmentItem.create({
+        data: {
+          orgId: session.orgId,
+          containerId: container.id,
+          invoiceNo: input.shipperInvoiceNo,
+          packingListNo: input.packingListNo,
+        },
+      });
+    }
 
     await logActivity({
       orgId: session.orgId,

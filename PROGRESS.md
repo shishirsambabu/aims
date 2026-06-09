@@ -29,7 +29,7 @@
 | 15 | Landed-Cost Accuracy & Multi-Currency | ✅ Complete (2026-06-09) | IGST + Cess in landing cost; per-currency payment rollups (USD/AED/INR never summed together) |
 | 16 | Global Search, Bulk Ops & Audit Viewer | ✅ Complete (2026-06-09) | /search cross-entity; container bulk status/flag/archive; /settings/audit; soft-delete (deleted_at) |
 | 17 | Security Hardening | ✅ Complete (2026-06-09) | Signed-URL doc serving (private bucket); rate limiting; access logging; RLS SQL (prisma/rls.sql) + SECURITY.md |
-| 18 | Integrations & OCR | ⬜ Planned | Carrier/ICEGATE/Tally + email-to-doc + OCR (needs provider keys) |
+| 18 | Container Data Model v2 + Arrival Importer | ✅ Complete (2026-06-09) | POL/POD, origin, line, vessel, transhipment, package type, per-pkg weight, ATA, DO upto, empty return, transit; free-time auto-calc from ETA; shipper-invoice upload on create; multi-sheet arrival importer (418 rows verified) |
 | 19 | Mobile / PWA | ⬜ Planned | Installable, offline-friendly, photo capture for ops |
 
 ### Phase 10 — Workflow State Machine (done)

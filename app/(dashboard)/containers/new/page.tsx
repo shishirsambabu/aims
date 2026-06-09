@@ -37,7 +37,7 @@ export default async function NewContainerPage() {
         }
       />
       <div className="mx-auto max-w-3xl p-6">
-        <ContainerForm suppliers={suppliers} />
+        <ContainerForm suppliers={suppliers} orgId={orgId} />
       </div>
     </div>
   );

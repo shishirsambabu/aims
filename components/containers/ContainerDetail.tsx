@@ -37,12 +37,23 @@ interface DetailData {
   customer: string | null;
   port: string | null;
   portCode: string | null;
+  pol: string | null;
+  origin: string | null;
+  line: string | null;
+  vessel: string | null;
+  transhipment: string | null;
   item: string | null;
   variety: string | null;
+  packageType: string | null;
+  perPackageWeight: number | null;
   noOfBoxes: number | null;
+  transitTime: number | null;
   status: ContainerStatus;
   etd: string | null;
   eta: string | null;
+  ata: string | null;
+  doUpto: string | null;
+  emptyReturnDate: string | null;
   bookingDate: string | null;
   freeDays: number | null;
   lastFreeDate: string | null;
@@ -305,7 +316,7 @@ function OverviewTab({
           <DefItem label="Supplier" value={container.supplier?.name} />
           <DefItem label="Customer" value={container.customer} />
           <DefItem
-            label="Port"
+            label="POD (Arrival Port)"
             value={
               container.port
                 ? `${container.port}${
@@ -314,11 +325,27 @@ function OverviewTab({
                 : null
             }
           />
+          <DefItem label="POL (Loading)" value={container.pol} />
+          <DefItem label="Origin" value={container.origin} />
+          <DefItem label="Shipping Line" value={container.line} />
+          <DefItem label="Vessel & Voyage" value={container.vessel} />
+          <DefItem label="Transhipment" value={container.transhipment} />
           <DefItem label="Item" value={container.item} />
           <DefItem label="Variety" value={container.variety} />
+          <DefItem label="Package Type" value={container.packageType} />
+          <DefItem
+            label="Per-Package Weight"
+            value={container.perPackageWeight != null ? `${container.perPackageWeight} kg` : null}
+            mono
+          />
           <DefItem
             label="No. of Boxes"
             value={container.noOfBoxes?.toLocaleString("en-IN")}
+            mono
+          />
+          <DefItem
+            label="Transit Time"
+            value={container.transitTime != null ? `${container.transitTime} days` : null}
             mono
           />
         </dl>
@@ -335,6 +362,11 @@ function OverviewTab({
             <DefItem label="ETD" value={formatDate(container.etd)} mono />
             <DefItem label="ETA" value={formatDate(container.eta)} mono />
             <DefItem
+              label="ATA (Actual)"
+              value={formatDate(container.ata)}
+              mono
+            />
+            <DefItem
               label="Free Days"
               value={container.freeDays ?? null}
               mono
@@ -342,6 +374,12 @@ function OverviewTab({
             <DefItem
               label="Last Free Date"
               value={<DemurrageCountdown date={container.lastFreeDate} />}
+            />
+            <DefItem label="DO Valid Upto" value={formatDate(container.doUpto)} mono />
+            <DefItem
+              label="Empty Return"
+              value={formatDate(container.emptyReturnDate)}
+              mono
             />
           </dl>
         </SectionCard>

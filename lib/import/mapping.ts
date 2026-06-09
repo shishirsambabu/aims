@@ -9,13 +9,27 @@ export interface MappedRow {
   containerNo: string | null;
   customer: string | null;
   port: string | null;
+  pol: string | null;
+  origin: string | null;
+  line: string | null;
+  vessel: string | null;
+  transhipment: string | null;
   blNo: string | null;
   item: string | null;
+  packageType: string | null;
+  perPackageWeight: number | null;
   noOfBoxes: number | null;
+  transitTime: number | null;
+  etd: string | null;
+  eta: string | null;
+  doUpto: string | null;
+  emptyReturnDate: string | null;
+  freeDays: number | null;
   // shipment item
   beNo: string | null;
   beDate: string | null;
   invoiceNo: string | null;
+  packingListNo: string | null;
   netWeightKg: number | null;
   invoiceValueUsd: number | null;
   // costs
@@ -46,18 +60,38 @@ const HEADER_MAP: Record<string, keyof MappedRow> = {
   slno: "slNo",
   suppliername: "supplierName",
   containerno: "containerNo",
+  cntno: "containerNo",
   customer: "customer",
+  consignee: "customer",
   arrivalport: "port",
+  pol: "pol",
+  origin: "origin",
+  line: "line",
+  vesselandvoyage: "vessel",
+  vessel: "vessel",
+  transhipment: "transhipment",
   blno: "blNo",
   blnoifpresent: "blNo",
   beno: "beNo",
+  be: "beNo",
   bedate: "beDate",
   items: "item",
   item: "item",
+  freedays: "freeDays",
+  doupto: "doUpto",
+  do: "doUpto",
+  emptyreturn: "emptyReturnDate",
+  transittime: "transitTime",
+  etd: "etd",
+  eta: "eta",
+  changedeta: "eta",
   netweightkg: "netWeightKg",
   netweight: "netWeightKg",
   invno: "invoiceNo",
+  invoiceno: "invoiceNo",
   noofboxes: "noOfBoxes",
+  duty: "customsDuty",
+  detention: "detention",
   invvalueusd: "invoiceValueUsd",
   invoicevalueusd: "invoiceValueUsd",
   beinvoicevalueinr: "beInvoiceValueInr",
@@ -83,9 +117,12 @@ const NUMERIC_FIELDS = new Set<keyof MappedRow>([
   "customsDuty", "clearingCharges", "linerCharges", "detention", "chaCharges",
   "transport", "ohProportion", "claimDeduction", "soldQty", "avgPrice",
   "saleValue", "damageQty", "damageValue", "amountRequested",
+  "perPackageWeight", "transitTime", "freeDays",
 ]);
 
-const DATE_FIELDS = new Set<keyof MappedRow>(["beDate", "requestDate"]);
+const DATE_FIELDS = new Set<keyof MappedRow>([
+  "beDate", "requestDate", "etd", "eta", "doUpto", "emptyReturnDate",
+]);
 
 function normalize(h: string): string {
   return h.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -127,13 +164,39 @@ function blankRow(rowNumber: number): MappedRow {
   return {
     rowNumber,
     slNo: null, supplierName: null, containerNo: null, customer: null,
-    port: null, blNo: null, item: null, noOfBoxes: null, beNo: null,
-    beDate: null, invoiceNo: null, netWeightKg: null, invoiceValueUsd: null,
+    port: null, pol: null, origin: null, line: null, vessel: null,
+    transhipment: null, blNo: null, item: null, packageType: null,
+    perPackageWeight: null, noOfBoxes: null, transitTime: null, etd: null,
+    eta: null, doUpto: null, emptyReturnDate: null, freeDays: null,
+    beNo: null, beDate: null, invoiceNo: null, packingListNo: null,
+    netWeightKg: null, invoiceValueUsd: null,
     beInvoiceValueInr: null, customsDuty: null, clearingCharges: null,
     linerCharges: null, detention: null, chaCharges: null, transport: null,
     ohProportion: null, claimDeduction: null, soldQty: null, avgPrice: null,
     saleValue: null, damageQty: null, damageValue: null, amountRequested: null,
     requestDate: null, errors: [],
+  };
+}
+
+/**
+ * Parse the arrival sheet's "weight / boxes" cell — e.g. "13 KG / 1494 BOXES"
+ * or "10.712 KG / 2240 CARTONS" — into per-package weight, box count and type.
+ */
+function parseWeightBoxes(v: unknown): {
+  perPackageWeight: number | null;
+  noOfBoxes: number | null;
+  packageType: string | null;
+} {
+  const s = String(v ?? "").trim();
+  if (!s) return { perPackageWeight: null, noOfBoxes: null, packageType: null };
+  const nums = s.match(/[\d.]+/g) ?? [];
+  const w = nums[0] ? Number(nums[0]) : null;
+  const boxes = nums[1] ? Math.round(Number(nums[1])) : null;
+  const typeMatch = s.match(/(boxes|cartons?|cases?|bags?|wooden|crates?)/i);
+  return {
+    perPackageWeight: w != null && !Number.isNaN(w) ? w : null,
+    noOfBoxes: boxes != null && !Number.isNaN(boxes) ? boxes : null,
+    packageType: typeMatch ? typeMatch[1].toUpperCase() : null,
   };
 }
 
@@ -145,7 +208,16 @@ export function mapRow(
   const out = blankRow(rowNumber);
 
   for (const [header, value] of Object.entries(raw)) {
-    const key = HEADER_MAP[normalize(header)];
+    const norm = normalize(header);
+    // Arrival sheet packs weight + box count + type into one cell.
+    if (norm === "weightboxes" || (norm.startsWith("weight") && norm.includes("box"))) {
+      const wb = parseWeightBoxes(value);
+      if (wb.perPackageWeight != null) out.perPackageWeight = wb.perPackageWeight;
+      if (wb.noOfBoxes != null) out.noOfBoxes = wb.noOfBoxes;
+      if (wb.packageType) out.packageType = wb.packageType;
+      continue;
+    }
+    const key = HEADER_MAP[norm];
     if (!key || key === "rowNumber" || key === "errors") continue;
     // Don't let the reserved profit→saleValue alias overwrite a real Sale Value.
     if (key === "saleValue" && out.saleValue != null) continue;
@@ -186,11 +258,16 @@ function clean(v: unknown): string {
   return v == null ? "" : String(v).replace(/\s+/g, " ").trim();
 }
 
+function isContainerCol(c: unknown): boolean {
+  const n = normalize(clean(c));
+  return n === "containerno" || n === "cntno";
+}
+
 /** Index of the row that contains a "Container No" header (scans top 15). */
 export function detectHeaderRow(aoa: unknown[][]): number {
   for (let i = 0; i < Math.min(15, aoa.length); i++) {
     const row = aoa[i] ?? [];
-    if (row.some((c) => normalize(clean(c)) === "containerno")) return i;
+    if (row.some((c) => isContainerCol(c))) return i;
   }
   return 0;
 }
@@ -205,7 +282,7 @@ function buildHeaders(aoa: unknown[][], hdr: number): string[] {
   const sub = aoa[hdr + 1] ?? [];
 
   const containerCol = top.findIndex(
-    (c) => normalize(clean(c)) === "containerno"
+    (c) => isContainerCol(c)
   );
   // If the next row has a value in the Container-No column, it's data, not a
   // secondary header.
@@ -227,7 +304,7 @@ export function mapSheetRows(aoa: unknown[][]): MappedRow[] {
   const hdr = detectHeaderRow(aoa);
   const headers = buildHeaders(aoa, hdr);
   const containerCol = (aoa[hdr] ?? []).findIndex(
-    (c) => normalize(clean(c)) === "containerno"
+    (c) => isContainerCol(c)
   );
   const secondIsHeader =
     containerCol >= 0 && clean((aoa[hdr + 1] ?? [])[containerCol]) === "";

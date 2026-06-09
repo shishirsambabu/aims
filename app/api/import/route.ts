@@ -119,6 +119,14 @@ export async function POST(request: NextRequest) {
         nextSl += 1;
         const slNo = row.slNo ?? nextSl;
 
+        // Free time auto-calculated from ETA + free days.
+        let lastFreeDate: Date | null = null;
+        if (row.eta && row.freeDays) {
+          const d = new Date(row.eta);
+          d.setDate(d.getDate() + row.freeDays);
+          lastFreeDate = d;
+        }
+
         await prisma.$transaction(async (tx) => {
           const container = await tx.container.create({
             data: {
@@ -130,14 +138,34 @@ export async function POST(request: NextRequest) {
               customer: row.customer,
               port: row.port,
               portCode,
+              pol: row.pol,
+              origin: row.origin,
+              line: row.line,
+              vessel: row.vessel,
+              transhipment: row.transhipment,
               item: row.item,
+              packageType: row.packageType,
+              perPackageWeight: row.perPackageWeight,
               noOfBoxes: row.noOfBoxes,
+              transitTime: row.transitTime,
+              etd: row.etd ? new Date(row.etd) : null,
+              eta: row.eta ? new Date(row.eta) : null,
+              doUpto: row.doUpto ? new Date(row.doUpto) : null,
+              emptyReturnDate: row.emptyReturnDate
+                ? new Date(row.emptyReturnDate)
+                : null,
+              freeDays: row.freeDays,
+              lastFreeDate,
               status: row.saleValue != null ? "FullySold" : "Booked",
             },
           });
 
           const hasShipment =
-            row.beNo || row.invoiceNo || row.invoiceValueUsd || row.netWeightKg;
+            row.beNo ||
+            row.invoiceNo ||
+            row.packingListNo ||
+            row.invoiceValueUsd ||
+            row.netWeightKg;
           if (hasShipment) {
             await tx.shipmentItem.create({
               data: {
@@ -146,6 +174,7 @@ export async function POST(request: NextRequest) {
                 beNo: row.beNo,
                 beDate: row.beDate ? new Date(row.beDate) : null,
                 invoiceNo: row.invoiceNo,
+                packingListNo: row.packingListNo,
                 invoiceValue: row.invoiceValueUsd,
                 invoiceCurrency: "USD",
                 netWeightKg: row.netWeightKg,
