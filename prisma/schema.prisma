@@ -150,6 +150,9 @@ model Container {
   etd           DateTime?
   eta           DateTime?
   bookingDate   DateTime?       @map("booking_date")
+  // Demurrage / detention free-day deadline. Charges accrue after this date.
+  freeDays      Int?            @map("free_days")
+  lastFreeDate  DateTime?       @map("last_free_date")
   remarks       String?
   flagged       Boolean         @default(false)
   createdAt     DateTime        @default(now()) @map("created_at")

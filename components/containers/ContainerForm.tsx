@@ -41,6 +41,8 @@ interface FormValues {
   bookingDate: string;
   etd: string;
   eta: string;
+  freeDays: string;
+  lastFreeDate: string;
   remarks: string;
 }
 
@@ -193,6 +195,18 @@ export function ContainerForm({
               <Input type="date" {...register("eta")} />
             </Field>
           </div>
+
+          <Field label="Free Days">
+            <Input
+              type="number"
+              {...register("freeDays")}
+              placeholder="e.g. 7"
+              className="font-financial"
+            />
+          </Field>
+          <Field label="Last Free Date (demurrage deadline)">
+            <Input type="date" {...register("lastFreeDate")} />
+          </Field>
 
           <div className="sm:col-span-2">
             <Field label="Remarks">

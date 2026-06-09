@@ -102,6 +102,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         etd: input.etd,
         eta: input.eta,
         bookingDate: input.bookingDate,
+        freeDays: input.freeDays,
+        lastFreeDate: input.lastFreeDate,
         remarks: input.remarks,
       },
     });

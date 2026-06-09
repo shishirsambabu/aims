@@ -5,6 +5,7 @@ import {
   FileText,
   CreditCard,
   BarChart3,
+  Bell,
   Settings,
   type LucideIcon,
 } from "lucide-react";
@@ -24,6 +25,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Documents", href: "/documents", icon: FileText },
   { label: "Payments", href: "/payments", icon: CreditCard },
   { label: "Analytics", href: "/analytics", icon: BarChart3 },
+  { label: "Alerts", href: "/alerts", icon: Bell },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 

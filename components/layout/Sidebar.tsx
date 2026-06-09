@@ -13,6 +13,7 @@ function badgeFor(href: string, counts: NavCounts): number {
   if (href === "/containers") return counts.flaggedContainers;
   if (href === "/documents") return counts.expiringDocs;
   if (href === "/payments") return counts.pendingPayments;
+  if (href === "/alerts") return counts.totalAlerts;
   return 0;
 }
 
@@ -91,7 +92,7 @@ export function Sidebar({ counts }: { counts: NavCounts }) {
         <NavLinks counts={counts} />
         <div className="border-t border-white/10 px-5 py-4 text-[11px] text-sidebar-muted">
           Import Management System
-          <br />v1.2 · Phase 11
+          <br />v1.3 · Phase 12
         </div>
       </aside>
 

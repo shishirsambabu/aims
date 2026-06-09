@@ -15,7 +15,7 @@ import { CostPanel } from "@/components/containers/CostPanel";
 import { SalesPanel } from "@/components/containers/SalesPanel";
 import { DocumentUpload } from "@/components/documents/DocumentUpload";
 import { Button } from "@/components/ui/button";
-import { cn, formatUSD, formatDate } from "@/lib/utils";
+import { cn, formatUSD, formatDate, daysUntil, expiryLevel } from "@/lib/utils";
 import {
   CONTAINER_STATUSES,
   CONTAINER_STATUS_LABELS,
@@ -44,6 +44,8 @@ interface DetailData {
   etd: string | null;
   eta: string | null;
   bookingDate: string | null;
+  freeDays: number | null;
+  lastFreeDate: string | null;
   remarks: string | null;
   supplier: { name: string; country: string | null } | null;
   shipmentItem: Record<string, unknown> | null;
@@ -201,6 +203,28 @@ function DefItem({
   );
 }
 
+function DemurrageCountdown({ date }: { date: string | null }) {
+  if (!date) return <span className="text-muted-foreground">—</span>;
+  const days = daysUntil(date);
+  const level = expiryLevel(date);
+  const tone =
+    level === "expired" || level === "critical"
+      ? "text-danger"
+      : level === "warning"
+        ? "text-[#9A6212]"
+        : "text-foreground";
+  return (
+    <span className={cn("font-financial", tone)}>
+      {formatDate(date)}
+      {days !== null && (
+        <span className="ml-1 text-xs">
+          ({days < 0 ? `${Math.abs(days)}d overdue` : `${days}d left`})
+        </span>
+      )}
+    </span>
+  );
+}
+
 function SectionCard({
   title,
   children,
@@ -310,6 +334,15 @@ function OverviewTab({
             />
             <DefItem label="ETD" value={formatDate(container.etd)} mono />
             <DefItem label="ETA" value={formatDate(container.eta)} mono />
+            <DefItem
+              label="Free Days"
+              value={container.freeDays ?? null}
+              mono
+            />
+            <DefItem
+              label="Last Free Date"
+              value={<DemurrageCountdown date={container.lastFreeDate} />}
+            />
           </dl>
         </SectionCard>
 

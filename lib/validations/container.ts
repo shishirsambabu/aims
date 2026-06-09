@@ -42,6 +42,8 @@ export const createContainerSchema = z.object({
   etd: optionalDate,
   eta: optionalDate,
   bookingDate: optionalDate,
+  freeDays: optionalInt,
+  lastFreeDate: optionalDate,
   remarks: optionalString,
 });
 

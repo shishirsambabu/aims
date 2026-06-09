@@ -33,6 +33,9 @@ export default async function DashboardLayout({
     expiringDocs: 0,
     pendingPayments: 0,
     flaggedContainers: 0,
+    demurrageRisk: 0,
+    pendingApprovals: 0,
+    totalAlerts: 0,
   };
   const ctx = await getSessionContext();
   if (ctx) counts = await getNavCounts(ctx.orgId);
