@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { PrintBar } from "@/components/reports/PrintBar";
 import { requireSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
+import { logActivity } from "@/lib/activity";
 import { getContainerPnL } from "@/lib/data/reports";
 import {
   cn,
@@ -32,6 +33,15 @@ export default async function ContainerPnLPrint({ params }: PageProps) {
 
   const c = await getContainerPnL(session.orgId, params.id);
   if (!c) notFound();
+
+  await logActivity({
+    orgId: session.orgId,
+    userId: session.userId,
+    action: "viewed_pnl",
+    entityType: "container",
+    entityId: c.id,
+    summary: `Viewed P&L for ${c.containerNo}`,
+  });
 
   const cost = c.cost ?? {};
   const sale = c.sale ?? {};

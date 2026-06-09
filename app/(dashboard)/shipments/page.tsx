@@ -46,7 +46,7 @@ export default async function ShipmentsPage({ searchParams }: PageProps) {
         description="Drag containers across the pipeline — Booked to Fully Sold."
       />
 
-      <div className="flex flex-1 flex-col gap-4 overflow-hidden p-6">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-6">
         <div className="flex items-center justify-between">
           <ShipmentFilters suppliers={suppliers} />
           {!loadError && (
@@ -69,8 +69,12 @@ export default async function ShipmentsPage({ searchParams }: PageProps) {
             </div>
           </div>
         ) : (
-          <div className="flex-1 overflow-hidden">
-            <KanbanBoard rows={rows} canEdit={editable} />
+          <div className="min-h-0 flex-1 overflow-hidden">
+            <KanbanBoard
+              key={`${searchParams.port ?? ""}|${searchParams.supplierId ?? ""}`}
+              rows={rows}
+              canEdit={editable}
+            />
           </div>
         )}
       </div>

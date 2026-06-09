@@ -29,6 +29,7 @@ export default async function ContainersPage({ searchParams }: PageProps) {
   const session = await requireSession();
   const orgId = session.orgId;
   const showFinancials = can(session.role, "financials.view");
+  const canEditContainers = can(session.role, "container.write");
 
   let rows: ContainerListRow[] = [];
   let suppliers: { id: string; name: string }[] = [];
@@ -92,7 +93,11 @@ export default async function ContainersPage({ searchParams }: PageProps) {
             <p className="text-sm text-muted-foreground">
               {rows.length} container{rows.length === 1 ? "" : "s"}
             </p>
-            <ContainerTable data={rows} showFinancials={showFinancials} />
+            <ContainerTable
+              data={rows}
+              showFinancials={showFinancials}
+              canEdit={canEditContainers}
+            />
           </>
         )}
       </div>

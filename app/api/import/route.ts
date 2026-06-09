@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { requireSession } from "@/lib/auth";
+import { rateLimit } from "@/lib/ratelimit";
 import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/activity";
@@ -17,6 +18,10 @@ interface ImportResult {
 export async function POST(request: NextRequest) {
   try {
     const session = await requireSession();
+    const rl = rateLimit(`import:${session.userId}`, 5, 60_000);
+    if (!rl.ok) {
+      return NextResponse.json({ error: `Too many imports — retry in ${rl.retryAfter}s` }, { status: 429 });
+    }
     if (!can(session.role, "import")) {
       return NextResponse.json(
         { error: "You do not have permission to import data" },

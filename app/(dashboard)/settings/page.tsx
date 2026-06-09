@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileSpreadsheet, Users, Database, ArrowRight } from "lucide-react";
+import { FileSpreadsheet, Users, Database, History, ArrowRight } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
@@ -30,6 +30,13 @@ const SECTIONS = [
     description:
       "Invite members and manage roles (admin / manager / finance / clearing / viewer / auditor).",
     icon: Users,
+  },
+  {
+    href: "/settings/audit",
+    title: "Audit Log",
+    description:
+      "Immutable trail of every change — who did what, and when (admins, managers, auditors).",
+    icon: History,
   },
 ];
 

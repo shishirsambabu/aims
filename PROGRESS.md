@@ -27,8 +27,8 @@
 | 13 | Reports Module | ✅ Complete (2026-06-09) | /reports hub (profit by supplier/port, AP aging, date-range); printable per-container P&L at /print/container/[id] |
 | 14 | Master Data Management + Validation | ✅ Complete (2026-06-09) | Supplier CRUD (/settings/suppliers) + ports/customers reference; ISO 6346 Container No validation; masterdata.write capability |
 | 15 | Landed-Cost Accuracy & Multi-Currency | ✅ Complete (2026-06-09) | IGST + Cess in landing cost; per-currency payment rollups (USD/AED/INR never summed together) |
-| 16 | Global Search, Bulk Ops & Audit Viewer | ⬜ Planned | Cross-entity search, bulk status/edit, audit log page, soft-delete |
-| 17 | Security Hardening | ⬜ Planned | Supabase RLS, private bucket + signed URLs, rate limiting, access logging |
+| 16 | Global Search, Bulk Ops & Audit Viewer | ✅ Complete (2026-06-09) | /search cross-entity; container bulk status/flag/archive; /settings/audit; soft-delete (deleted_at) |
+| 17 | Security Hardening | ✅ Complete (2026-06-09) | Signed-URL doc serving (private bucket); rate limiting; access logging; RLS SQL (prisma/rls.sql) + SECURITY.md |
 | 18 | Integrations & OCR | ⬜ Planned | Carrier/ICEGATE/Tally + email-to-doc + OCR (needs provider keys) |
 | 19 | Mobile / PWA | ⬜ Planned | Installable, offline-friendly, photo capture for ops |
 

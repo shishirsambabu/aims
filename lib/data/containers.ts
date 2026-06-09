@@ -3,6 +3,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { PORTS } from "@/lib/constants";
 import type { ContainerStatus } from "@/types";
 
 export interface ContainerFilters {
@@ -41,7 +42,7 @@ function buildWhere(
   orgId: string,
   filters: ContainerFilters
 ): Prisma.ContainerWhereInput {
-  const where: Prisma.ContainerWhereInput = { orgId };
+  const where: Prisma.ContainerWhereInput = { orgId, deletedAt: null };
 
   if (filters.q) {
     // Search spans Container No AND BL No simultaneously.
@@ -50,7 +51,14 @@ function buildWhere(
       { blNo: { contains: filters.q, mode: "insensitive" } },
     ];
   }
-  if (filters.port) where.port = filters.port;
+  if (filters.port) {
+    // Containers may store the port name ("Bangalore") or its code ("INENR1"),
+    // so match either for the selected port.
+    const def = PORTS.find(
+      (p) => p.name === filters.port || p.code === filters.port
+    );
+    where.port = def ? { in: [def.name, def.code] } : filters.port;
+  }
   if (filters.supplierId) where.supplierId = filters.supplierId;
   if (filters.status) where.status = filters.status;
   if (filters.dateFrom || filters.dateTo) {
@@ -106,7 +114,7 @@ export async function listContainers(
 
 export async function getContainerById(orgId: string, id: string) {
   return prisma.container.findFirst({
-    where: { id, orgId },
+    where: { id, orgId, deletedAt: null },
     include: {
       supplier: true,
       shipmentItem: true,

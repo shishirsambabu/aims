@@ -45,7 +45,7 @@ export function TopNav({ user }: TopNavProps) {
     const q = query.trim();
     if (!q) return;
     // Search spans Container No AND BL No on the containers list.
-    router.push(`/containers?q=${encodeURIComponent(q)}`);
+    router.push(`/search?q=${encodeURIComponent(q)}`);
   }
 
   return (

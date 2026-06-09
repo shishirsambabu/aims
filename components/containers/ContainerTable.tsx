@@ -11,6 +11,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { ArrowUpDown, Flag, TrendingDown, TrendingUp } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   Table,
@@ -20,19 +21,69 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/containers/StatusBadge";
 import { cn, formatINR, marginColor } from "@/lib/utils";
+import { CONTAINER_STATUSES, CONTAINER_STATUS_LABELS } from "@/lib/constants";
 import type { ContainerListRow } from "@/lib/data/containers";
+import type { ContainerStatus } from "@/types";
 
 export function ContainerTable({
   data,
   showFinancials = true,
+  canEdit = false,
 }: {
   data: ContainerListRow[];
   showFinancials?: boolean;
+  canEdit?: boolean;
 }) {
   const router = useRouter();
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [busy, setBusy] = useState(false);
+
+  function toggle(id: string) {
+    setSelected((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  }
+  function toggleAll() {
+    setSelected((s) =>
+      s.size === data.length ? new Set() : new Set(data.map((r) => r.id))
+    );
+  }
+
+  async function runBulk(
+    action: "status" | "flag" | "unflag" | "archive",
+    status?: ContainerStatus
+  ) {
+    if (action === "archive" && !confirm(`Archive ${selected.size} container(s)?`))
+      return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/containers/bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [...selected], action, status }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(json.error ?? "Bulk action failed");
+        return;
+      }
+      const { updated, skipped } = json.data;
+      toast.success(
+        `${updated} updated${skipped ? `, ${skipped} skipped` : ""}`
+      );
+      setSelected(new Set());
+      router.refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
 
   const columns = useMemo<ColumnDef<ContainerListRow>[]>(
     () => [
@@ -161,11 +212,58 @@ export function ContainerTable({
   });
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
+    <div className="space-y-3">
+      {canEdit && selected.size > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-accent/40 px-3 py-2 text-sm">
+          <span className="font-medium">{selected.size} selected</span>
+          <select
+            disabled={busy}
+            defaultValue=""
+            onChange={(e) => {
+              if (e.target.value) {
+                runBulk("status", e.target.value as ContainerStatus);
+                e.target.value = "";
+              }
+            }}
+            className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+          >
+            <option value="">Set status…</option>
+            {CONTAINER_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {CONTAINER_STATUS_LABELS[s]}
+              </option>
+            ))}
+          </select>
+          <Button size="sm" variant="outline" disabled={busy} onClick={() => runBulk("flag")}>
+            Flag
+          </Button>
+          <Button size="sm" variant="outline" disabled={busy} onClick={() => runBulk("unflag")}>
+            Unflag
+          </Button>
+          <Button size="sm" variant="outline" disabled={busy} onClick={() => runBulk("archive")}>
+            Archive
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
+            Clear
+          </Button>
+        </div>
+      )}
+
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((hg) => (
             <TableRow key={hg.id} className="hover:bg-transparent">
+              {canEdit && (
+                <TableHead className="w-8">
+                  <input
+                    type="checkbox"
+                    checked={selected.size > 0 && selected.size === data.length}
+                    onChange={toggleAll}
+                    aria-label="Select all"
+                  />
+                </TableHead>
+              )}
               {hg.headers.map((header) => (
                 <TableHead key={header.id}>
                   <button
@@ -196,9 +294,20 @@ export function ContainerTable({
                 }
                 className={cn(
                   "cursor-pointer",
-                  i % 2 === 1 && "bg-surface-alt/30"
+                  i % 2 === 1 && "bg-surface-alt/30",
+                  selected.has(row.original.id) && "bg-accent/40"
                 )}
               >
+                {canEdit && (
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={selected.has(row.original.id)}
+                      onChange={() => toggle(row.original.id)}
+                      aria-label="Select row"
+                    />
+                  </TableCell>
+                )}
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
                     {flexRender(
@@ -212,7 +321,7 @@ export function ContainerTable({
           ) : (
             <TableRow className="hover:bg-transparent">
               <TableCell
-                colSpan={columns.length}
+                colSpan={columns.length + (canEdit ? 1 : 0)}
                 className="h-32 text-center text-muted-foreground"
               >
                 No containers match your filters.
@@ -221,6 +330,7 @@ export function ContainerTable({
           )}
         </TableBody>
       </Table>
+      </div>
     </div>
   );
 }

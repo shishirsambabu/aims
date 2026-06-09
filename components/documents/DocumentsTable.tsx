@@ -129,13 +129,13 @@ export function DocumentsTable({
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-1">
-                      {d.fileUrl && (
+                      {(d.fileUrl || d.fileName) && (
                         <a
-                          href={d.fileUrl}
+                          href={`/api/documents/${d.id}/file`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="rounded p-1.5 text-muted-foreground hover:bg-surface-alt hover:text-primary"
-                          title="Open file"
+                          title="Open file (secure link)"
                         >
                           <ExternalLink className="h-4 w-4" />
                         </a>

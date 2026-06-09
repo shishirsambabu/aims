@@ -106,7 +106,7 @@ export function KanbanBoard({
       onDragStart={onDragStart}
       onDragEnd={canEdit ? onDragEnd : undefined}
     >
-      <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin">
+      <div className="flex h-full gap-4 overflow-x-auto pb-4 scrollbar-thin">
         {CONTAINER_STATUSES.map((status) => (
           <Column
             key={status}
@@ -136,7 +136,7 @@ function Column({
   const { setNodeRef, isOver } = useDroppable({ id: status, disabled });
 
   return (
-    <div className="flex w-72 shrink-0 flex-col">
+    <div className="flex h-full w-72 shrink-0 flex-col">
       <div className="mb-2 flex items-center justify-between px-1">
         <h3 className="text-sm font-semibold">
           {CONTAINER_STATUS_LABELS[status]}
@@ -148,7 +148,7 @@ function Column({
       <div
         ref={setNodeRef}
         className={cn(
-          "flex min-h-[60vh] flex-1 flex-col gap-2 rounded-lg border border-dashed border-border bg-surface-alt/40 p-2 transition-colors",
+          "flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto rounded-lg border border-dashed border-border bg-surface-alt/40 p-2 transition-colors scrollbar-thin",
           isOver && "border-primary bg-accent/40"
         )}
       >
