@@ -28,9 +28,19 @@ const optionalDate = z
   .optional()
   .transform((v) => (v ? new Date(v) : undefined));
 
+// ISO 6346: 4 letters (owner + category) + 6 serial digits + 1 check digit.
+const CONTAINER_NO_RE = /^[A-Z]{4}\d{7}$/;
+
 export const createContainerSchema = z.object({
-  containerNo: z.string().trim().min(1, "Container No is required"),
-  blNo: z.string().trim().min(1, "BL No is required"),
+  containerNo: z
+    .string()
+    .trim()
+    .min(1, "Container No is required")
+    .transform((v) => v.toUpperCase())
+    .refine((v) => CONTAINER_NO_RE.test(v), {
+      message: "Container No must be ISO 6346 format — 4 letters + 7 digits (e.g. MNBU9052800)",
+    }),
+  blNo: z.string().trim().min(3, "BL No looks too short"),
   supplierId: optionalString,
   customer: optionalString,
   port: optionalString,

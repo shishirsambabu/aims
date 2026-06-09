@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileSpreadsheet, Users, ArrowRight } from "lucide-react";
+import { FileSpreadsheet, Users, Database, ArrowRight } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import {
@@ -11,6 +11,13 @@ import {
 
 const SECTIONS = [
   {
+    href: "/settings/suppliers",
+    title: "Master Data",
+    description:
+      "Manage suppliers (add/edit/delete) and reference data — ports and customers.",
+    icon: Database,
+  },
+  {
     href: "/settings/import",
     title: "Excel Import",
     description:
@@ -21,7 +28,7 @@ const SECTIONS = [
     href: "/settings/team",
     title: "Team Management",
     description:
-      "Invite members and manage roles (admin / manager / viewer).",
+      "Invite members and manage roles (admin / manager / finance / clearing / viewer / auditor).",
     icon: Users,
   },
 ];

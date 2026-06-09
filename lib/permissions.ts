@@ -16,6 +16,7 @@ export type Capability =
   | "payment.pay" // record a payment / mark paid
   | "import" // bulk Excel import
   | "team.manage" // manage members & roles
+  | "masterdata.write" // manage suppliers / reference data
   | "audit.view" // view the audit log
   | "financials.view"; // see cost / profit / payment figures
 
@@ -24,13 +25,13 @@ const MATRIX: Record<Role, Capability[]> = {
     "container.write", "cost.write", "cost.finalize", "cost.unlock",
     "sale.write", "doc.write", "doc.verify", "payment.write",
     "payment.approve", "payment.pay", "import", "team.manage",
-    "audit.view", "financials.view",
+    "masterdata.write", "audit.view", "financials.view",
   ],
   manager: [
     "container.write", "cost.write", "cost.finalize", "cost.unlock",
     "sale.write", "doc.write", "doc.verify", "payment.write",
-    "payment.approve", "payment.pay", "import", "audit.view",
-    "financials.view",
+    "payment.approve", "payment.pay", "import", "masterdata.write",
+    "audit.view", "financials.view",
   ],
   clearing_agent: ["container.write", "doc.write", "doc.verify"],
   finance: [
