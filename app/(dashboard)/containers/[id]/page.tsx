@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, AlertTriangle } from "lucide-react";
+import { ArrowLeft, AlertTriangle, FileText } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -77,6 +77,13 @@ export default async function ContainerDetailPage({ params }: PageProps) {
         actions={
           <div className="flex items-center gap-3">
             <StatusBadge status={container.status as ContainerStatus} />
+            {can(session.role, "financials.view") && (
+              <Button asChild variant="outline">
+                <Link href={`/print/container/${container.id}`}>
+                  <FileText className="h-4 w-4" /> P&amp;L
+                </Link>
+              </Button>
+            )}
             <Button asChild variant="outline">
               <Link href="/containers">
                 <ArrowLeft className="h-4 w-4" /> Back

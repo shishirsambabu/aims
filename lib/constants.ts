@@ -5,6 +5,7 @@ import {
   FileText,
   CreditCard,
   BarChart3,
+  FileBarChart,
   Bell,
   Settings,
   type LucideIcon,
@@ -25,6 +26,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Documents", href: "/documents", icon: FileText },
   { label: "Payments", href: "/payments", icon: CreditCard },
   { label: "Analytics", href: "/analytics", icon: BarChart3 },
+  { label: "Reports", href: "/reports", icon: FileBarChart },
   { label: "Alerts", href: "/alerts", icon: Bell },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
