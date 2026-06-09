@@ -208,6 +208,8 @@ model ContainerCost {
   linerCharges      Decimal? @map("liner_charges") @db.Decimal(14, 2)
   detention         Decimal? @db.Decimal(14, 2)
   chaCharges        Decimal? @map("cha_charges") @db.Decimal(14, 2)
+  igst              Decimal? @db.Decimal(14, 2)
+  cess              Decimal? @db.Decimal(14, 2)
   transport         Decimal? @db.Decimal(14, 2)
   ohProportion      Decimal? @map("oh_proportion") @db.Decimal(14, 2)
   claimDeduction    Decimal? @map("claim_deduction") @db.Decimal(14, 2)

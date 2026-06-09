@@ -26,7 +26,7 @@
 | 12 | Demurrage/Detention + Notifications Center | ✅ Complete (2026-06-09) | Free-day deadline per container w/ countdown; /alerts page (demurrage, doc expiry, overdue/pending payments, loss-making, flagged); Alerts nav badge |
 | 13 | Reports Module | ✅ Complete (2026-06-09) | /reports hub (profit by supplier/port, AP aging, date-range); printable per-container P&L at /print/container/[id] |
 | 14 | Master Data Management + Validation | ✅ Complete (2026-06-09) | Supplier CRUD (/settings/suppliers) + ports/customers reference; ISO 6346 Container No validation; masterdata.write capability |
-| 15 | Landed-Cost Accuracy & Multi-Currency | ⬜ Planned | Forex, GST/cess, per-currency rollups |
+| 15 | Landed-Cost Accuracy & Multi-Currency | ✅ Complete (2026-06-09) | IGST + Cess in landing cost; per-currency payment rollups (USD/AED/INR never summed together) |
 | 16 | Global Search, Bulk Ops & Audit Viewer | ⬜ Planned | Cross-entity search, bulk status/edit, audit log page, soft-delete |
 | 17 | Security Hardening | ⬜ Planned | Supabase RLS, private bucket + signed URLs, rate limiting, access logging |
 | 18 | Integrations & OCR | ⬜ Planned | Carrier/ICEGATE/Tally + email-to-doc + OCR (needs provider keys) |

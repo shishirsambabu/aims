@@ -112,6 +112,41 @@ export async function paymentSummary(
   };
 }
 
+/** Per-currency rollup — USD/AED/INR are never summed together. */
+export interface CurrencySummary {
+  currency: Currency;
+  totalRequested: number;
+  totalPaid: number;
+  totalOutstanding: number;
+  count: number;
+}
+
+export async function paymentSummaryByCurrency(
+  orgId: string,
+  filters: PaymentFilters = {}
+): Promise<CurrencySummary[]> {
+  const grouped = await prisma.payment.groupBy({
+    by: ["currency"],
+    where: buildWhere(orgId, filters),
+    _sum: { amountRequested: true, amountPaid: true },
+    _count: true,
+  });
+  const order: Currency[] = ["USD", "AED", "INR"];
+  return grouped
+    .map((g) => {
+      const requested = Number(g._sum.amountRequested ?? 0);
+      const paid = Number(g._sum.amountPaid ?? 0);
+      return {
+        currency: g.currency as Currency,
+        totalRequested: requested,
+        totalPaid: paid,
+        totalOutstanding: Math.max(requested - paid, 0),
+        count: g._count,
+      };
+    })
+    .sort((a, b) => order.indexOf(a.currency) - order.indexOf(b.currency));
+}
+
 /** Derive payment status from amounts. */
 export function deriveStatus(
   amountRequested: number,

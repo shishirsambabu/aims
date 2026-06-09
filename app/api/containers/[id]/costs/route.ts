@@ -61,6 +61,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
       linerCharges: input.linerCharges,
       detention: input.detention,
       chaCharges: input.chaCharges,
+      igst: input.igst,
+      cess: input.cess,
       transport: input.transport,
       ohProportion: input.ohProportion,
       claimDeduction: input.claimDeduction,

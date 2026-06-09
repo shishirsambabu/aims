@@ -9,12 +9,12 @@ import { requireSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import {
   listPayments,
-  paymentSummary,
+  paymentSummaryByCurrency,
   type PaymentRow,
-  type PaymentSummary,
+  type CurrencySummary,
 } from "@/lib/data/payments";
 import { containerOptions } from "@/lib/data/documents";
-import { formatUSD } from "@/lib/utils";
+import { formatMoney } from "@/lib/utils";
 import type { PaymentStatus } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -39,19 +39,14 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
   };
 
   let rows: PaymentRow[] = [];
-  let summary: PaymentSummary = {
-    totalRequested: 0,
-    totalPaid: 0,
-    totalOutstanding: 0,
-    count: 0,
-  };
+  let byCurrency: CurrencySummary[] = [];
   let containers: Awaited<ReturnType<typeof containerOptions>> = [];
   let loadError = false;
 
   try {
-    [rows, summary, containers] = await Promise.all([
+    [rows, byCurrency, containers] = await Promise.all([
       listPayments(session.orgId, filters),
-      paymentSummary(session.orgId, filters),
+      paymentSummaryByCurrency(session.orgId, filters),
       containerOptions(session.orgId),
     ]);
   } catch (err) {
@@ -69,24 +64,34 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
 
       <div className="space-y-4 p-6">
         {!loadError && (
-          <div className="grid gap-4 sm:grid-cols-3">
-            <SummaryCard
-              label="Total Outstanding"
-              value={formatUSD(summary.totalOutstanding)}
-              accent="border-t-danger"
-              tone="text-danger"
-            />
-            <SummaryCard
-              label="Total Paid"
-              value={formatUSD(summary.totalPaid)}
-              accent="border-t-success"
-              tone="text-success"
-            />
-            <SummaryCard
-              label="Total Requested"
-              value={formatUSD(summary.totalRequested)}
-              accent="border-t-primary"
-            />
+          <div className="space-y-2">
+            {byCurrency.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No payment requests yet.
+              </p>
+            ) : (
+              byCurrency.map((s) => (
+                <div key={s.currency} className="grid gap-4 sm:grid-cols-3">
+                  <SummaryCard
+                    label={`Outstanding (${s.currency})`}
+                    value={formatMoney(s.totalOutstanding, s.currency)}
+                    accent="border-t-danger"
+                    tone="text-danger"
+                  />
+                  <SummaryCard
+                    label={`Paid (${s.currency})`}
+                    value={formatMoney(s.totalPaid, s.currency)}
+                    accent="border-t-success"
+                    tone="text-success"
+                  />
+                  <SummaryCard
+                    label={`Requested (${s.currency})`}
+                    value={formatMoney(s.totalRequested, s.currency)}
+                    accent="border-t-primary"
+                  />
+                </div>
+              ))
+            )}
           </div>
         )}
 
@@ -107,7 +112,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
           <>
             <p className="text-sm text-muted-foreground">
               {rows.length} payment request{rows.length === 1 ? "" : "s"} ·
-              totals shown in USD
+              totals grouped by currency
             </p>
             <PaymentsTable
               data={rows}

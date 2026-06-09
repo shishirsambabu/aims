@@ -8,6 +8,8 @@ export interface CostInputs {
   linerCharges?: number | null;
   detention?: number | null;
   chaCharges?: number | null;
+  igst?: number | null;
+  cess?: number | null;
   transport?: number | null;
   otherCharges?: number | null;
   ohProportion?: number | null;
@@ -52,6 +54,8 @@ export function computeCost(
     n(cost.linerCharges) +
     n(cost.detention) +
     n(cost.chaCharges) +
+    n(cost.igst) +
+    n(cost.cess) +
     n(cost.transport) +
     n(cost.otherCharges);
 

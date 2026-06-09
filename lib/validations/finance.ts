@@ -19,6 +19,8 @@ export const costSchema = z.object({
   linerCharges: money,
   detention: money,
   chaCharges: money,
+  igst: money,
+  cess: money,
   transport: money,
   ohProportion: money,
   claimDeduction: money,
