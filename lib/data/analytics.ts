@@ -9,6 +9,9 @@ export interface AnalyticsKpis {
   avgMargin: number | null;
   pendingDocs: number;
   outstandingUsd: number;
+  detentionChargesInr: number;
+  avgEtaVarianceDays: number | null;
+  avgCustomsDays: number | null;
 }
 
 export interface NameValue {
@@ -61,10 +64,13 @@ export async function getAnalytics(orgId: string): Promise<Analytics> {
         port: true,
         status: true,
         eta: true,
+        ata: true,
+        originalEta: true,
         createdAt: true,
         supplier: { select: { name: true } },
         sale: { select: { profit: true, saleValue: true, marginPct: true } },
-        cost: { select: { beInvoiceValueInr: true } },
+        cost: { select: { beInvoiceValueInr: true, detention: true } },
+        shipmentItem: { select: { beDate: true } },
       },
     }),
     prisma.document.count({
@@ -79,7 +85,10 @@ export async function getAnalytics(orgId: string): Promise<Analytics> {
   // --- KPIs ---
   let totalInvoiceValueInr = 0;
   let totalProfit = 0;
+  let detentionChargesInr = 0;
   const margins: number[] = [];
+  const etaVarianceDays: number[] = [];
+  const customsDays: number[] = [];
 
   // --- aggregation accumulators ---
   const bySupplier = new Map<
@@ -95,7 +104,24 @@ export async function getAnalytics(orgId: string): Promise<Analytics> {
     const profit = num(c.sale?.profit);
     totalProfit += profit;
     totalInvoiceValueInr += num(c.cost?.beInvoiceValueInr);
+    detentionChargesInr += num(c.cost?.detention);
     if (c.sale?.marginPct != null) margins.push(num(c.sale.marginPct));
+
+    if (c.originalEta && c.ata) {
+      etaVarianceDays.push(
+        Math.round((c.ata.getTime() - c.originalEta.getTime()) / 86_400_000)
+      );
+    }
+    if (c.ata && c.shipmentItem?.beDate) {
+      customsDays.push(
+        Math.max(
+          0,
+          Math.round(
+            (c.shipmentItem.beDate.getTime() - c.ata.getTime()) / 86_400_000
+          )
+        )
+      );
+    }
 
     // supplier rollup
     const sup = c.supplier?.name ?? "Unassigned";
@@ -133,6 +159,22 @@ export async function getAnalytics(orgId: string): Promise<Analytics> {
         100
       : null;
 
+  const avgEtaVarianceDays =
+    etaVarianceDays.length > 0
+      ? Math.round(
+          (etaVarianceDays.reduce((a, b) => a + b, 0) /
+            etaVarianceDays.length) *
+            10
+        ) / 10
+      : null;
+
+  const avgCustomsDays =
+    customsDays.length > 0
+      ? Math.round(
+          (customsDays.reduce((a, b) => a + b, 0) / customsDays.length) * 10
+        ) / 10
+      : null;
+
   const outstandingUsd = Math.max(
     num(paymentAgg._sum.amountRequested) - num(paymentAgg._sum.amountPaid),
     0
@@ -167,6 +209,9 @@ export async function getAnalytics(orgId: string): Promise<Analytics> {
       avgMargin,
       pendingDocs,
       outstandingUsd: Math.round(outstandingUsd * 100) / 100,
+      detentionChargesInr: Math.round(detentionChargesInr * 100) / 100,
+      avgEtaVarianceDays,
+      avgCustomsDays,
     },
     profitByContainer: sortedByProfit
       .slice(0, 12)

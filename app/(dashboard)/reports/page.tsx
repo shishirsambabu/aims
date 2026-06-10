@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ExportCenter } from "@/components/reports/ExportCenter";
 import { ReportFilters } from "@/components/reports/ReportFilters";
 import { requireSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
@@ -68,6 +69,8 @@ export default async function ReportsPage({ searchParams }: PageProps) {
           </div>
         ) : (
           <>
+            <ExportCenter from={searchParams.from} to={searchParams.to} />
+
             {/* Summary */}
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <Kpi label="Containers" value={data.summary.containers.toString()} />

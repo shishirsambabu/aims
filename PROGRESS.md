@@ -34,6 +34,7 @@
 | 20 | Pipeline v2 + Team Handoff | ✅ Complete (2026-06-09) | New "Empty Returned" stage after In Warehouse; Kanban handoff divider (Docs team → Sales team) |
 | 21 | Personal Workbench + Alert Routing | ✅ Code complete (2026-06-10) | Roadmap file for Phases 21-24; per-user alert preferences/state; role-aware dashboard workbench; personal alert center with read/snooze/resolve actions |
 | 22 | Document Automation + File Packaging | ✅ Foundation complete (2026-06-10) | Container dossier ZIP download; JPG/PNG upload compression; document automation job schema/API/settings page; email/OCR providers pending keys |
+| 23 | Analytics v2 + Export Center | ✅ Foundation complete (2026-06-10) | Management Excel/CSV exports; export center UI; analytics v2 decision metrics for detention leakage, ETA variance and customs cycle |
 
 ### Phase 10 — Workflow State Machine (done)
 - [x] `lib/workflow.ts` — `canTransition`/`allowedTransitions`/`stageRequirement`
@@ -69,6 +70,19 @@
 - [ ] Connect OCR provider keys (Document AI / Azure / Textract / Mindee)
 - [ ] Build human OCR review/accept screen after provider choice
 - [ ] Manual dossier ZIP test on localhost:3001
+- [ ] Revisit GoDaddy/domain email ingestion provider path; Outlook is not currently used
+
+### Phase 23 — Analytics v2 + Export Center Checklist
+- [x] Server-side management report export endpoint added: `GET /api/reports/management`
+- [x] Excel workbook export added with Summary, Supplier Performance, Ports and AP Aging sheets
+- [x] CSV export added for quick sharing
+- [x] Reports page upgraded with Phase 23 Export Center card
+- [x] Dedicated Export Center page added: `/reports/exports`
+- [x] Analytics v2 decision metrics added: detention leakage, ETA variance and customs cycle
+- [x] Financial export access respects `financials.view`
+- [ ] Server-generated PDF report pack
+- [ ] Scheduled email report delivery; blocked until email provider path is chosen
+- [ ] Manual Excel/CSV download test on localhost:3001
 
 ## Phase 1 — Foundation Checklist
 - [x] `npx create-next-app@14` with TypeScript + Tailwind

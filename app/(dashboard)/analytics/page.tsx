@@ -6,6 +6,8 @@ import {
   FileWarning,
   CreditCard,
   AlertTriangle,
+  Clock,
+  Ship,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -113,6 +115,50 @@ export default async function AnalyticsPage() {
             valueClass="text-danger"
           />
         </div>
+
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="pt-6">
+            <div className="mb-4">
+              <p className="label-caps">Phase 23 Analytics v2</p>
+              <h3 className="font-heading text-lg font-semibold">
+                Decision metrics
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Operational leakage and timing indicators that management can act on.
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              <KPICard
+                label="Detention Leakage"
+                value={formatINR(k.detentionChargesInr)}
+                hint="Recorded detention charges"
+                icon={AlertTriangle}
+                accent="border-t-danger"
+                valueClass={k.detentionChargesInr > 0 ? "text-danger" : "text-success"}
+              />
+              <KPICard
+                label="ETA Variance"
+                value={
+                  k.avgEtaVarianceDays == null
+                    ? "—"
+                    : `${k.avgEtaVarianceDays.toFixed(1)}d`
+                }
+                hint="ATA vs original ETA"
+                icon={Ship}
+                accent="border-t-primary"
+              />
+              <KPICard
+                label="Customs Cycle"
+                value={
+                  k.avgCustomsDays == null ? "—" : `${k.avgCustomsDays.toFixed(1)}d`
+                }
+                hint="ATA to Bill of Entry date"
+                icon={Clock}
+                accent="border-t-warning"
+              />
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Charts */}
         <AnalyticsCharts data={data} />
