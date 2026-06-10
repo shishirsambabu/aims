@@ -92,12 +92,12 @@ export function ImportWizard({ existingNos }: { existingNos: string[] }) {
   }
 
   const validRows = rows.filter(
-    (r) => r.containerNo && !existing.has(r.containerNo)
+    (r) => r.containerNo && r.blNo && !existing.has(r.containerNo)
   );
   const dupCount = rows.filter(
-    (r) => r.containerNo && existing.has(r.containerNo)
+    (r) => r.containerNo && r.blNo && existing.has(r.containerNo)
   ).length;
-  const invalidCount = rows.filter((r) => !r.containerNo).length;
+  const invalidCount = rows.filter((r) => !r.containerNo || !r.blNo).length;
 
   async function runImport() {
     setImporting(true);
@@ -199,8 +199,8 @@ export function ImportWizard({ existingNos }: { existingNos: string[] }) {
                 </TableHeader>
                 <TableBody>
                   {rows.slice(0, 10).map((r) => {
-                    const dup = r.containerNo && existing.has(r.containerNo);
-                    const bad = !r.containerNo;
+                    const dup = r.containerNo && r.blNo && existing.has(r.containerNo);
+                    const bad = !r.containerNo || !r.blNo;
                     return (
                       <TableRow key={r.rowNumber}>
                         <TableCell className="font-financial text-muted-foreground">
@@ -219,7 +219,7 @@ export function ImportWizard({ existingNos }: { existingNos: string[] }) {
                         </TableCell>
                         <TableCell>
                           {bad ? (
-                            <span className="text-xs text-danger">Missing No</span>
+                            <span className="text-xs text-danger">Missing No / BL</span>
                           ) : dup ? (
                             <span className="text-xs text-warning">Duplicate</span>
                           ) : (

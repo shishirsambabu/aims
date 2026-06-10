@@ -22,7 +22,16 @@ export async function listAudit(
     take: limit,
     include: { user: { select: { fullName: true, email: true } } },
   });
-  return rows.map((r) => ({
+  return rows.map(
+    (r: {
+      id: string;
+      action: string;
+      entityType: string;
+      entityId: string | null;
+      summary: string | null;
+      createdAt: Date;
+      user: { fullName: string | null; email: string } | null;
+    }) => ({
     id: r.id,
     action: r.action,
     entityType: r.entityType,
@@ -30,5 +39,6 @@ export async function listAudit(
     summary: r.summary,
     createdAt: r.createdAt.toISOString(),
     user: r.user?.fullName || r.user?.email || null,
-  }));
+    })
+  );
 }

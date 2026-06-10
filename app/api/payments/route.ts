@@ -10,9 +10,12 @@ import type { PaymentStatus } from "@/types";
 
 export async function GET(request: NextRequest) {
   try {
-    const { orgId } = await requireSession();
+    const session = await requireSession();
+    if (!can(session.role, "financials.view")) {
+      return NextResponse.json({ error: "You do not have permission to view payments" }, { status: 403 });
+    }
     const sp = request.nextUrl.searchParams;
-    const rows = await listPayments(orgId, {
+    const rows = await listPayments(session.orgId, {
       q: sp.get("q") ?? undefined,
       status: (sp.get("status") as PaymentStatus) ?? undefined,
       containerId: sp.get("containerId") ?? undefined,
@@ -26,6 +29,12 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await requireSession();
+    if (!can(session.role, "financials.view")) {
+      return NextResponse.json(
+        { error: "You do not have permission to add payments" },
+        { status: 403 }
+      );
+    }
     if (!can(session.role, "payment.write")) {
       return NextResponse.json(
         { error: "You do not have permission to add payments" },

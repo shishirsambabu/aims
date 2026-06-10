@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { Prisma } from "@prisma/client";
 
 import { requireSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
@@ -12,17 +11,17 @@ import type { ContainerStatus } from "@/types";
 
 export async function GET(request: NextRequest) {
   try {
-    const { orgId } = await requireSession();
+    const session = await requireSession();
     const sp = request.nextUrl.searchParams;
 
-    const rows = await listContainers(orgId, {
+    const rows = await listContainers(session.orgId, {
       q: sp.get("q") ?? undefined,
       port: sp.get("port") ?? undefined,
       supplierId: sp.get("supplierId") ?? undefined,
       status: (sp.get("status") as ContainerStatus) ?? undefined,
       dateFrom: sp.get("dateFrom") ?? undefined,
       dateTo: sp.get("dateTo") ?? undefined,
-    });
+    }, { includeFinancials: can(session.role, "financials.view") });
 
     return NextResponse.json({ data: rows });
   } catch (err) {
@@ -50,6 +49,12 @@ export async function POST(request: NextRequest) {
     }
 
     const input = parsed.data;
+    if (input.status !== "Booked") {
+      return NextResponse.json(
+        { error: "New containers must start in Booked status" },
+        { status: 422 }
+      );
+    }
     const portCode =
       input.portCode ??
       PORTS.find((p) => p.name === input.port)?.code ??
@@ -128,10 +133,7 @@ function handleError(err: unknown) {
   if (err instanceof Error && err.message === "UNAUTHENTICATED") {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
-  if (
-    err instanceof Prisma.PrismaClientKnownRequestError &&
-    err.code === "P2002"
-  ) {
+  if (isUniqueError(err)) {
     return NextResponse.json(
       { error: "A container with this Container No already exists" },
       { status: 409 }
@@ -141,5 +143,14 @@ function handleError(err: unknown) {
   return NextResponse.json(
     { error: "Something went wrong" },
     { status: 500 }
+  );
+}
+
+function isUniqueError(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    (err as { code?: string }).code === "P2002"
   );
 }

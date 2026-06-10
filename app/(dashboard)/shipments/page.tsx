@@ -27,7 +27,7 @@ export default async function ShipmentsPage({ searchParams }: PageProps) {
       listContainers(session.orgId, {
         port: searchParams.port,
         supplierId: searchParams.supplierId,
-      }),
+      }, { includeFinancials: false }),
       prisma.supplier.findMany({
         where: { orgId: session.orgId },
         orderBy: { name: "asc" },

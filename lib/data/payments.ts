@@ -1,7 +1,5 @@
 import "server-only";
 
-import { Prisma } from "@prisma/client";
-
 import { prisma } from "@/lib/prisma";
 import type { ApprovalStatus, Currency, PaymentStatus } from "@/types";
 
@@ -38,11 +36,15 @@ export interface PaymentSummary {
   count: number;
 }
 
+type PaymentWhere = NonNullable<
+  Parameters<typeof prisma.payment.findMany>[0]
+>["where"];
+
 function buildWhere(
   orgId: string,
   filters: PaymentFilters
-): Prisma.PaymentWhereInput {
-  const where: Prisma.PaymentWhereInput = { orgId };
+): PaymentWhere {
+  const where = { orgId } as NonNullable<PaymentWhere>;
   if (filters.status) where.status = filters.status;
   if (filters.containerId) where.containerId = filters.containerId;
   if (filters.q) {
@@ -68,7 +70,23 @@ export async function listPayments(
     },
   });
 
-  return rows.map((r) => {
+  return rows.map((r: {
+    id: string;
+    containerId: string;
+    supplierName: string | null;
+    amountRequested: unknown;
+    amountPaid: unknown;
+    currency: Currency;
+    status: PaymentStatus;
+    approvalStatus: ApprovalStatus;
+    requestedById: string | null;
+    approvedById: string | null;
+    requestDate: Date | null;
+    dueDate: Date | null;
+    paidDate: Date | null;
+    reference: string | null;
+    container: { containerNo: string; blNo: string } | null;
+  }) => {
     const requested = Number(r.amountRequested);
     const paid = Number(r.amountPaid);
     return {
@@ -133,7 +151,15 @@ export async function paymentSummaryByCurrency(
   });
   const order: Currency[] = ["USD", "AED", "INR"];
   return grouped
-    .map((g) => {
+    .map(
+      (g: {
+        currency: Currency;
+        _sum: {
+          amountRequested: unknown;
+          amountPaid: unknown;
+        };
+        _count: number;
+      }) => {
       const requested = Number(g._sum.amountRequested ?? 0);
       const paid = Number(g._sum.amountPaid ?? 0);
       return {
@@ -143,8 +169,12 @@ export async function paymentSummaryByCurrency(
         totalOutstanding: Math.max(requested - paid, 0),
         count: g._count,
       };
-    })
-    .sort((a, b) => order.indexOf(a.currency) - order.indexOf(b.currency));
+      }
+    )
+    .sort(
+      (a: CurrencySummary, b: CurrencySummary) =>
+        order.indexOf(a.currency) - order.indexOf(b.currency)
+    );
 }
 
 /** Derive payment status from amounts. */

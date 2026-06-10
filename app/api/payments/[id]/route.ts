@@ -14,6 +14,12 @@ interface Params {
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
     const session = await requireSession();
+    if (!can(session.role, "financials.view")) {
+      return NextResponse.json(
+        { error: "You do not have permission to view or edit payments" },
+        { status: 403 }
+      );
+    }
     const body = (await request.json()) as Record<string, unknown> & {
       action?: "approve" | "reject";
     };
@@ -121,6 +127,12 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 export async function DELETE(_request: NextRequest, { params }: Params) {
   try {
     const session = await requireSession();
+    if (!can(session.role, "financials.view")) {
+      return NextResponse.json(
+        { error: "You do not have permission to delete payments" },
+        { status: 403 }
+      );
+    }
     if (!can(session.role, "payment.write")) {
       return NextResponse.json(
         { error: "You do not have permission to delete payments" },

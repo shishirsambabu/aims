@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DOCUMENT_TYPE_LABELS, REQUIRED_DOC_TYPES } from "@/lib/constants";
+import { ALL_DOCUMENT_TYPES, DOCUMENT_TYPE_LABELS } from "@/lib/constants";
 
 const ALL = "__all__";
 const DOC_STATUSES = ["Pending", "Uploaded", "Verified", "Expired"] as const;
@@ -64,7 +64,7 @@ export function DocumentFilters() {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={ALL}>All types</SelectItem>
-          {REQUIRED_DOC_TYPES.map((t) => (
+          {ALL_DOCUMENT_TYPES.map((t) => (
             <SelectItem key={t} value={t}>
               {DOCUMENT_TYPE_LABELS[t]}
             </SelectItem>

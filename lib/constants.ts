@@ -68,7 +68,7 @@ export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   Other: "Other",
 };
 
-// The 9 documents that make up a complete container dossier.
+// The mandatory documents that make up a complete container dossier.
 export const REQUIRED_DOC_TYPES: DocumentType[] = [
   "BillOfLading",
   "CommercialInvoice",
@@ -78,7 +78,15 @@ export const REQUIRED_DOC_TYPES: DocumentType[] = [
   "PhytosanitaryCertificate",
   "Insurance",
   "DeliveryOrder",
-  "Other",
+];
+
+// Optional / supporting documents can still be uploaded, but they do not count
+// toward completeness.
+export const OPTIONAL_DOC_TYPES: DocumentType[] = ["Other"];
+
+export const ALL_DOCUMENT_TYPES: DocumentType[] = [
+  ...REQUIRED_DOC_TYPES,
+  ...OPTIONAL_DOC_TYPES,
 ];
 
 export const PORTS = [

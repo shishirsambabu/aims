@@ -275,13 +275,15 @@ function OverviewTab({
 
   // Workflow context for stage-gating.
   const ctx: WorkflowContext = {
-    presentDocTypes: container.documents.map((d) => d.type),
+    verifiedDocTypes: container.documents
+      .filter((d) => d.status === "Verified")
+      .map((d) => d.type),
     hasSales: num(container.sale?.saleValue as unknown) != null,
   };
   const nextStage =
     CONTAINER_STATUSES[CONTAINER_STATUSES.indexOf(status) + 1];
   const nextReq = nextStage ? stageRequirement(nextStage) : null;
-  const presentSet = new Set(ctx.presentDocTypes);
+  const presentSet = new Set(ctx.verifiedDocTypes);
 
   async function markArrived() {
     const today = new Date().toISOString().slice(0, 10);
@@ -570,14 +572,16 @@ function DocumentsTab({
   orgId: string;
   canEdit: boolean;
 }) {
-  const presentTypes = new Set(documents.map((d) => d.type));
+  const presentTypes = new Set(
+    documents.filter((d) => d.status === "Verified").map((d) => d.type)
+  );
   const score = REQUIRED_DOC_TYPES.filter((t) => presentTypes.has(t)).length;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="font-heading text-base font-semibold">
-          Document Completeness — {score}/9
+          Document Completeness — {score}/8
         </h3>
         {canEdit && (
           <DocumentUpload

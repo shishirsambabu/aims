@@ -10,8 +10,8 @@ import {
 import type { ContainerStatus, DocumentType } from "@/types";
 
 export interface WorkflowContext {
-  /** Document types that have at least one uploaded/verified document. */
-  presentDocTypes: DocumentType[];
+  /** Document types that have at least one verified document. */
+  verifiedDocTypes: DocumentType[];
   /** Whether sales have been recorded (sale value present). */
   hasSales: boolean;
 }
@@ -67,7 +67,7 @@ export function canTransition(
   // Backward moves are permitted (corrections) — the API logs them.
   if (toIdx < fromIdx) return { ok: true };
 
-  const present = new Set(ctx.presentDocTypes);
+  const present = new Set(ctx.verifiedDocTypes);
   const missing: string[] = [];
 
   for (let i = fromIdx + 1; i <= toIdx; i++) {

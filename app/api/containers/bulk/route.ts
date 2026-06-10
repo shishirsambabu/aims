@@ -32,11 +32,12 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Scope to this org and not-deleted.
-    const owned = await prisma.container.findMany({
+    const owned: { id: string; status: ContainerStatus }[] =
+      await prisma.container.findMany({
       where: { id: { in: ids }, orgId: session.orgId, deletedAt: null },
       select: { id: true, status: true },
     });
-    const ownedIds = owned.map((c) => c.id);
+    const ownedIds = owned.map((c: { id: string }) => c.id);
 
     let updated = 0;
     let skipped = 0;
@@ -66,7 +67,7 @@ export async function PATCH(request: NextRequest) {
         }
         const [docs, sale] = await Promise.all([
           prisma.document.findMany({
-            where: { containerId: c.id },
+            where: { containerId: c.id, status: "Verified" },
             select: { type: true },
           }),
           prisma.sale.findUnique({
@@ -75,7 +76,9 @@ export async function PATCH(request: NextRequest) {
           }),
         ]);
         const check = canTransition(c.status as ContainerStatus, to, {
-          presentDocTypes: docs.map((d) => d.type as DocumentType),
+          verifiedDocTypes: docs.map(
+            (d: { type: DocumentType }) => d.type
+          ),
           hasSales: sale?.saleValue != null,
         });
         if (!check.ok) {

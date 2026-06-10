@@ -143,7 +143,10 @@ export async function getAnalytics(orgId: string): Promise<Analytics> {
   );
 
   const supplierSummary: SupplierSummaryRow[] = Array.from(bySupplier.entries())
-    .map(([supplier, v]) => ({
+    .map(([supplier, v]: [
+      string,
+      { containers: number; profit: number; margins: number[] }
+    ]) => ({
       supplier,
       containers: v.containers,
       profit: Math.round(v.profit * 100) / 100,
@@ -167,19 +170,28 @@ export async function getAnalytics(orgId: string): Promise<Analytics> {
     },
     profitByContainer: sortedByProfit
       .slice(0, 12)
-      .map((c) => ({ name: c.containerNo, value: c.profit })),
+      .map((c: ContainerProfitRow) => ({ name: c.containerNo, value: c.profit })),
     profitBySupplier: supplierSummary
       .filter((s) => s.profit > 0)
-      .map((s) => ({ name: s.supplier, value: s.profit })),
-    containersByPort: Array.from(byPort.entries()).map(([name, value]) => ({
+      .map((s: SupplierSummaryRow) => ({ name: s.supplier, value: s.profit })),
+    containersByPort: Array.from(byPort.entries()).map(([name, value]: [
+      string,
+      number
+    ]) => ({
       name,
       value,
     })),
-    monthlyVolume: Array.from(volumeByMonth.entries()).map(([month, count]) => ({
+    monthlyVolume: Array.from(volumeByMonth.entries()).map(([month, count]: [
+      string,
+      number
+    ]) => ({
       month,
       count,
     })),
-    profitTrend: Array.from(profitByMonth.entries()).map(([month, profit]) => ({
+    profitTrend: Array.from(profitByMonth.entries()).map(([month, profit]: [
+      string,
+      number
+    ]) => ({
       month,
       profit: Math.round(profit * 100) / 100,
     })),

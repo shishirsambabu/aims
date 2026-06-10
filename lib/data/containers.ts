@@ -1,7 +1,5 @@
 import "server-only";
 
-import { Prisma } from "@prisma/client";
-
 import { prisma } from "@/lib/prisma";
 import { PORTS } from "@/lib/constants";
 import type { ContainerStatus } from "@/types";
@@ -14,6 +12,14 @@ export interface ContainerFilters {
   dateFrom?: string;
   dateTo?: string;
 }
+
+export interface ContainerListOptions {
+  includeFinancials?: boolean;
+}
+
+type ContainerWhere = NonNullable<
+  Parameters<typeof prisma.container.findMany>[0]
+>["where"];
 
 export interface ContainerListRow {
   id: string;
@@ -30,10 +36,10 @@ export interface ContainerListRow {
   profit: number | null;
   marginPct: number | null;
   flagged: boolean;
-  docScore: number; // distinct document types present (out of 9)
+  docScore: number; // distinct verified mandatory document types present (out of 8)
 }
 
-function dec(value: Prisma.Decimal | null | undefined): number | null {
+function dec(value: unknown): number | null {
   return value == null ? null : Number(value);
 }
 
@@ -41,8 +47,8 @@ function dec(value: Prisma.Decimal | null | undefined): number | null {
 function buildWhere(
   orgId: string,
   filters: ContainerFilters
-): Prisma.ContainerWhereInput {
-  const where: Prisma.ContainerWhereInput = { orgId, deletedAt: null };
+): ContainerWhere {
+  const where = { orgId, deletedAt: null } as NonNullable<ContainerWhere>;
 
   if (filters.q) {
     // Search spans Container No AND BL No simultaneously.
@@ -71,8 +77,10 @@ function buildWhere(
 
 export async function listContainers(
   orgId: string,
-  filters: ContainerFilters = {}
+  filters: ContainerFilters = {},
+  options: ContainerListOptions = {}
 ): Promise<ContainerListRow[]> {
+  const includeFinancials = options.includeFinancials ?? false;
   const rows = await prisma.container.findMany({
     where: buildWhere(orgId, filters),
     orderBy: [{ slNo: "asc" }, { createdAt: "desc" }],
@@ -88,12 +96,34 @@ export async function listContainers(
       eta: true,
       flagged: true,
       supplier: { select: { name: true } },
-      sale: { select: { saleValue: true, profit: true, marginPct: true } },
-      documents: { select: { type: true } },
+      documents: { select: { type: true, status: true } },
+      ...(includeFinancials
+        ? {
+            sale: { select: { saleValue: true, profit: true, marginPct: true } },
+          }
+        : {}),
     },
   });
 
-  return rows.map((r) => ({
+  return rows.map((r: {
+    id: string;
+    slNo: number | null;
+    containerNo: string;
+    blNo: string;
+    port: string | null;
+    item: string | null;
+    noOfBoxes: number | null;
+    status: ContainerStatus;
+    eta: Date | null;
+    flagged: boolean;
+    supplier: { name: string } | null;
+    sale?: {
+      saleValue: unknown;
+      profit: unknown;
+      marginPct: unknown;
+    } | null;
+    documents: { type: string; status: string }[];
+  }) => ({
     id: r.id,
     slNo: r.slNo,
     containerNo: r.containerNo,
@@ -104,24 +134,32 @@ export async function listContainers(
     noOfBoxes: r.noOfBoxes,
     status: r.status as ContainerStatus,
     eta: r.eta ? r.eta.toISOString() : null,
-    saleValue: dec(r.sale?.saleValue),
-    profit: dec(r.sale?.profit),
-    marginPct: dec(r.sale?.marginPct),
+    saleValue: includeFinancials ? dec(r.sale?.saleValue) : null,
+    profit: includeFinancials ? dec(r.sale?.profit) : null,
+    marginPct: includeFinancials ? dec(r.sale?.marginPct) : null,
     flagged: r.flagged,
-    docScore: new Set(r.documents.map((d) => d.type)).size,
+    docScore: new Set(
+      r.documents.filter((d) => d.status === "Verified").map((d) => d.type)
+    ).size,
   }));
 }
 
-export async function getContainerById(orgId: string, id: string) {
+export async function getContainerById(
+  orgId: string,
+  id: string,
+  options: ContainerListOptions = {}
+) {
+  const includeFinancials = options.includeFinancials ?? false;
   return prisma.container.findFirst({
     where: { id, orgId, deletedAt: null },
     include: {
       supplier: true,
       shipmentItem: true,
-      cost: true,
-      sale: true,
+      ...(includeFinancials ? { cost: true, sale: true } : {}),
       documents: { orderBy: { createdAt: "desc" } },
-      payments: { orderBy: { createdAt: "desc" } },
+      ...(includeFinancials
+        ? { payments: { orderBy: { createdAt: "desc" } } }
+        : {}),
     },
   });
 }

@@ -44,7 +44,7 @@ export default async function ContainersPage({ searchParams }: PageProps) {
         status: searchParams.status as ContainerStatus | undefined,
         dateFrom: searchParams.dateFrom,
         dateTo: searchParams.dateTo,
-      }),
+      }, { includeFinancials: showFinancials }),
       prisma.supplier.findMany({
         where: { orgId },
         orderBy: { name: "asc" },

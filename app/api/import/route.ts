@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       where: { orgId: session.orgId },
       select: { containerNo: true },
     });
-    const seen = new Set(existing.map((c) => c.containerNo));
+    const seen = new Set(existing.map((c: { containerNo: string }) => c.containerNo));
 
     // Supplier name → id cache (find or create).
     const supplierCache = new Map<string, string>();
@@ -75,6 +75,18 @@ export async function POST(request: NextRequest) {
     for (const row of rows) {
       if (!row.containerNo) {
         result.skipped += 1;
+        result.errors.push({
+          row: row.rowNumber,
+          message: "Missing Container No — skipped",
+        });
+        continue;
+      }
+      if (!row.blNo) {
+        result.skipped += 1;
+        result.errors.push({
+          row: row.rowNumber,
+          message: `Missing BL No for Container ${row.containerNo} — skipped`,
+        });
         continue;
       }
       if (seen.has(row.containerNo)) {
@@ -129,12 +141,12 @@ export async function POST(request: NextRequest) {
 
         await prisma.$transaction(async (tx) => {
           const container = await tx.container.create({
-            data: {
-              orgId: session.orgId,
-              slNo,
-              containerNo: row.containerNo!,
-              blNo: row.blNo ?? row.containerNo!,
-              supplierId,
+              data: {
+                orgId: session.orgId,
+                slNo,
+                containerNo: row.containerNo!,
+                blNo: row.blNo!,
+                supplierId,
               customer: row.customer,
               port: row.port,
               portCode,
@@ -156,7 +168,7 @@ export async function POST(request: NextRequest) {
                 : null,
               freeDays: row.freeDays,
               lastFreeDate,
-              status: row.saleValue != null ? "FullySold" : "Booked",
+              status: "Booked",
             },
           });
 

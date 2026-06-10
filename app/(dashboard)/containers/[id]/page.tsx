@@ -28,7 +28,9 @@ export default async function ContainerDetailPage({ params }: PageProps) {
   let loadError = false;
 
   try {
-    container = await getContainerById(session.orgId, params.id);
+    container = await getContainerById(session.orgId, params.id, {
+      includeFinancials: can(session.role, "financials.view"),
+    });
     if (container) {
       activity = await getContainerActivity(session.orgId, params.id);
     }

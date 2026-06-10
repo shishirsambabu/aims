@@ -20,9 +20,9 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import {
   ACCEPTED_FILE_TYPES,
+  ALL_DOCUMENT_TYPES,
   DOCUMENT_TYPE_LABELS,
   MAX_FILE_SIZE,
-  REQUIRED_DOC_TYPES,
   STORAGE_BUCKET,
 } from "@/lib/constants";
 import { formatBytes } from "@/lib/utils";
@@ -176,7 +176,7 @@ export function DocumentUpload({
                 onChange={(e) => setType(e.target.value as DocumentType)}
                 className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               >
-                {REQUIRED_DOC_TYPES.map((t) => (
+                {ALL_DOCUMENT_TYPES.map((t) => (
                   <option key={t} value={t}>
                     {DOCUMENT_TYPE_LABELS[t]}
                   </option>

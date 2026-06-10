@@ -1,7 +1,5 @@
 import "server-only";
 
-import { Prisma } from "@prisma/client";
-
 import { prisma } from "@/lib/prisma";
 import type { DocumentStatus, DocumentType } from "@/types";
 
@@ -29,11 +27,15 @@ export interface DocumentRow {
   fileSize: number | null;
 }
 
+type DocumentWhere = NonNullable<
+  Parameters<typeof prisma.document.findMany>[0]
+>["where"];
+
 function buildWhere(
   orgId: string,
   filters: DocumentFilters
-): Prisma.DocumentWhereInput {
-  const where: Prisma.DocumentWhereInput = { orgId };
+): DocumentWhere {
+  const where = { orgId } as NonNullable<DocumentWhere>;
 
   if (filters.q) {
     where.OR = [
@@ -77,7 +79,21 @@ export async function listDocuments(
     },
   });
 
-  return rows.map((r) => ({
+  return rows.map((r: {
+    id: string;
+    type: DocumentType;
+    docNo: string | null;
+    containerId: string;
+    containerNo: string | null;
+    blNo: string | null;
+    supplierName: string | null;
+    issueDate: Date | null;
+    expiryDate: Date | null;
+    status: DocumentStatus;
+    fileUrl: string | null;
+    fileName: string | null;
+    fileSize: number | null;
+  }) => ({
     id: r.id,
     type: r.type as DocumentType,
     docNo: r.docNo,

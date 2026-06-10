@@ -26,7 +26,7 @@ export default async function ImportPage() {
 
   let existingNos: string[] = [];
   try {
-    const rows = await prisma.container.findMany({
+    const rows: { containerNo: string }[] = await prisma.container.findMany({
       where: { orgId: session.orgId },
       select: { containerNo: true },
     });

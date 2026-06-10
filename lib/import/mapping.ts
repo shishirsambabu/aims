@@ -232,9 +232,8 @@ export function mapRow(
     }
   }
 
-  // BL No is optional on import — this tracker keys on Container No; the API
-  // defaults BL No to the Container No when the sheet has no BL column.
   if (!out.containerNo) out.errors.push("Missing Container No");
+  if (!out.blNo) out.errors.push("Missing BL No");
 
   return out;
 }

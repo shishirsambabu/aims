@@ -85,21 +85,39 @@ export async function searchAll(
   ]);
 
   return {
-    containers: containers.map((c) => ({
+    containers: containers.map((c: {
+      id: string;
+      containerNo: string;
+      blNo: string;
+      status: ContainerStatus;
+      supplier: { name: string } | null;
+    }) => ({
       id: c.id,
       containerNo: c.containerNo,
       blNo: c.blNo,
       supplier: c.supplier?.name ?? null,
       status: c.status as ContainerStatus,
     })),
-    documents: documents.map((d) => ({
+    documents: documents.map((d: {
+      id: string;
+      containerId: string;
+      type: DocumentType;
+      docNo: string | null;
+      containerNo: string | null;
+    }) => ({
       id: d.id,
       containerId: d.containerId,
       type: d.type as DocumentType,
       docNo: d.docNo,
       containerNo: d.containerNo,
     })),
-    payments: payments.map((p) => ({
+    payments: payments.map((p: {
+      id: string;
+      reference: string | null;
+      amountRequested: unknown;
+      currency: string;
+      container: { containerNo: string } | null;
+    }) => ({
       id: p.id,
       containerNo: p.container?.containerNo ?? null,
       reference: p.reference,

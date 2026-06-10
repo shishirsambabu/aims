@@ -18,7 +18,15 @@ export async function listSuppliers(orgId: string): Promise<SupplierRecord[]> {
     orderBy: { name: "asc" },
     include: { _count: { select: { containers: true } } },
   });
-  return rows.map((s) => ({
+  return rows.map((s: {
+    id: string;
+    name: string;
+    country: string | null;
+    contactName: string | null;
+    email: string | null;
+    phone: string | null;
+    _count: { containers: number };
+  }) => ({
     id: s.id,
     name: s.name,
     country: s.country,

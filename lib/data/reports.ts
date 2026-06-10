@@ -1,10 +1,8 @@
 import "server-only";
 
-import { Prisma } from "@prisma/client";
-
 import { prisma } from "@/lib/prisma";
 
-function n(v: Prisma.Decimal | number | null | undefined): number {
+function n(v: unknown): number {
   if (v == null) return 0;
   return typeof v === "number" ? v : Number(v);
 }
@@ -55,8 +53,10 @@ export interface ReportData {
 function containerWhere(
   orgId: string,
   filters: ReportFilters
-): Prisma.ContainerWhereInput {
-  const where: Prisma.ContainerWhereInput = { orgId };
+): NonNullable<Parameters<typeof prisma.container.findMany>[0]>["where"] {
+  const where = { orgId } as NonNullable<
+    NonNullable<Parameters<typeof prisma.container.findMany>[0]>["where"]
+  >;
   if (filters.from || filters.to) {
     where.eta = {};
     if (filters.from) where.eta.gte = new Date(filters.from);
@@ -128,7 +128,7 @@ export async function getReportData(
   }
 
   const suppliers = Array.from(supMap.values())
-    .map((s) => ({
+    .map((s: SupplierRow) => ({
       ...s,
       marginPct: s.saleValue > 0 ? (s.profit / s.saleValue) * 100 : null,
     }))
