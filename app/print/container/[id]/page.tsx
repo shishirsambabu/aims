@@ -24,14 +24,15 @@ function num(v: unknown): number | null {
 }
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function ContainerPnLPrint({ params }: PageProps) {
+  const { id } = await params;
   const session = await requireSession();
   if (!can(session.role, "financials.view")) redirect("/containers");
 
-  const c = await getContainerPnL(session.orgId, params.id);
+  const c = await getContainerPnL(session.orgId, id);
   if (!c) notFound();
 
   await logActivity({

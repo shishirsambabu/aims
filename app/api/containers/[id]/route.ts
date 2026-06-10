@@ -11,13 +11,14 @@ import { PORTS } from "@/lib/constants";
 import type { ContainerStatus, DocumentType } from "@/types";
 
 interface Params {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export async function GET(_request: NextRequest, { params }: Params) {
   try {
+    const { id } = await params;
     const session = await requireSession();
-    const container = await getContainerById(session.orgId, params.id, {
+    const container = await getContainerById(session.orgId, id, {
       includeFinancials: can(session.role, "financials.view"),
     });
     if (!container) {
@@ -31,6 +32,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
+    const { id } = await params;
     const session = await requireSession();
     if (!can(session.role, "container.write")) {
       return NextResponse.json(
@@ -40,7 +42,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
 
     const existing = await prisma.container.findFirst({
-      where: { id: params.id, orgId: session.orgId, deletedAt: null },
+      where: { id, orgId: session.orgId, deletedAt: null },
       select: {
         id: true, status: true, containerNo: true,
         eta: true, ata: true, originalEta: true, freeDays: true,
@@ -119,7 +121,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const justArrived = !!input.ata && !existing.ata;
 
     const container = await prisma.container.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         containerNo: input.containerNo,
         blNo: input.blNo,

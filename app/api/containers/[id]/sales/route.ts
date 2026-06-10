@@ -8,12 +8,13 @@ import { saleSchema } from "@/lib/validations/finance";
 import { computeProfit } from "@/lib/finance";
 
 interface Params {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 /** Upsert sales figures and recompute profit / profit-per-box / margin. */
 export async function PUT(request: NextRequest, { params }: Params) {
   try {
+    const { id } = await params;
     const session = await requireSession();
     if (!can(session.role, "sale.write")) {
       return NextResponse.json(
@@ -23,7 +24,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     }
 
     const container = await prisma.container.findFirst({
-      where: { id: params.id, orgId: session.orgId, deletedAt: null },
+      where: { id, orgId: session.orgId, deletedAt: null },
       select: { id: true, containerNo: true, cost: { select: { totalCost: true } } },
     });
     if (!container) {

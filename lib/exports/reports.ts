@@ -1,68 +1,71 @@
-import * as XLSX from "xlsx";
 import PDFDocument from "pdfkit";
 
 import type { ReportData } from "@/lib/data/reports";
+import type { XlsxSheet } from "@/lib/exports/xlsx";
 
 function money(v: number): number {
   return Math.round(v * 100) / 100;
 }
 
-export function reportToWorkbook(data: ReportData): XLSX.WorkBook {
-  const wb = XLSX.utils.book_new();
-
+export function reportToWorkbook(data: ReportData): XlsxSheet[] {
   const summary = [
-    { Metric: "Containers", Value: data.summary.containers },
-    { Metric: "Invoice Value INR", Value: money(data.summary.invoiceValueInr) },
-    { Metric: "Total Cost INR", Value: money(data.summary.totalCost) },
-    { Metric: "Sale Value INR", Value: money(data.summary.saleValue) },
-    { Metric: "Profit INR", Value: money(data.summary.profit) },
-    {
-      Metric: "Margin %",
-      Value:
+    ["Metric", "Value"],
+    ["Containers", data.summary.containers],
+    ["Invoice Value INR", money(data.summary.invoiceValueInr)],
+    ["Total Cost INR", money(data.summary.totalCost)],
+    ["Sale Value INR", money(data.summary.saleValue)],
+    ["Profit INR", money(data.summary.profit)],
+    [
+      "Margin %",
         data.summary.marginPct == null
           ? ""
           : Math.round(data.summary.marginPct * 100) / 100,
-    },
-    { Metric: "Outstanding AP", Value: money(data.summary.outstanding) },
+    ],
+    ["Outstanding AP", money(data.summary.outstanding)],
   ];
 
-  const suppliers = data.suppliers.map((s) => ({
-    Supplier: s.supplier,
-    Containers: s.containers,
-    "Invoice Value INR": money(s.invoiceValueInr),
-    "Total Cost INR": money(s.totalCost),
-    "Sale Value INR": money(s.saleValue),
-    "Profit INR": money(s.profit),
-    "Margin %": s.marginPct == null ? "" : Math.round(s.marginPct * 100) / 100,
-  }));
+  const suppliers = [
+    [
+      "Supplier",
+      "Containers",
+      "Invoice Value INR",
+      "Total Cost INR",
+      "Sale Value INR",
+      "Profit INR",
+      "Margin %",
+    ],
+    ...data.suppliers.map((s) => [
+      s.supplier,
+      s.containers,
+      money(s.invoiceValueInr),
+      money(s.totalCost),
+      money(s.saleValue),
+      money(s.profit),
+      s.marginPct == null ? "" : Math.round(s.marginPct * 100) / 100,
+    ]),
+  ];
 
-  const ports = data.ports.map((p) => ({
-    Port: p.port,
-    Containers: p.containers,
-    "Sale Value INR": money(p.saleValue),
-    "Profit INR": money(p.profit),
-  }));
+  const ports = [
+    ["Port", "Containers", "Sale Value INR", "Profit INR"],
+    ...data.ports.map((p) => [
+      p.port,
+      p.containers,
+      money(p.saleValue),
+      money(p.profit),
+    ]),
+  ];
 
-  const aging = data.aging.map((a) => ({
-    Bucket: a.label,
-    Count: a.count,
-    "Outstanding INR": money(a.amount),
-  }));
+  const aging = [
+    ["Bucket", "Count", "Outstanding INR"],
+    ...data.aging.map((a) => [a.label, a.count, money(a.amount)]),
+  ];
 
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summary), "Summary");
-  XLSX.utils.book_append_sheet(
-    wb,
-    XLSX.utils.json_to_sheet(suppliers),
-    "Supplier Performance"
-  );
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ports), "Ports");
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(aging), "AP Aging");
-
-  return wb;
-}
-
-export function workbookToBuffer(wb: XLSX.WorkBook): Buffer {
-  return XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+  return [
+    { name: "Summary", rows: summary },
+    { name: "Supplier Performance", rows: suppliers },
+    { name: "Ports", rows: ports },
+    { name: "AP Aging", rows: aging },
+  ];
 }
 
 export function reportToCsv(data: ReportData): string {

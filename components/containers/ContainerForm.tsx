@@ -99,6 +99,7 @@ export function ContainerForm({
         try {
           const supabase = createClient();
           const safe = invoiceFile.name.replace(/[^\w.\-]+/g, "_");
+          // eslint-disable-next-line react-hooks/purity -- generated inside submit handler for a unique storage path
           const path = `${orgId}/${containerId}/CommercialInvoice/${Date.now()}_${safe}`;
           const { error: upErr } = await supabase.storage
             .from(STORAGE_BUCKET)

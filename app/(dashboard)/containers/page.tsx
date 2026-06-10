@@ -15,17 +15,18 @@ import type { ContainerStatus } from "@/types";
 export const dynamic = "force-dynamic";
 
 interface PageProps {
-  searchParams: {
+  searchParams: Promise<{
     q?: string;
     port?: string;
     supplierId?: string;
     status?: string;
     dateFrom?: string;
     dateTo?: string;
-  };
+  }>;
 }
 
 export default async function ContainersPage({ searchParams }: PageProps) {
+  const params = await searchParams;
   const session = await requireSession();
   const orgId = session.orgId;
   const showFinancials = can(session.role, "financials.view");
@@ -38,12 +39,12 @@ export default async function ContainersPage({ searchParams }: PageProps) {
   try {
     [rows, suppliers] = await Promise.all([
       listContainers(orgId, {
-        q: searchParams.q,
-        port: searchParams.port,
-        supplierId: searchParams.supplierId,
-        status: searchParams.status as ContainerStatus | undefined,
-        dateFrom: searchParams.dateFrom,
-        dateTo: searchParams.dateTo,
+        q: params.q,
+        port: params.port,
+        supplierId: params.supplierId,
+        status: params.status as ContainerStatus | undefined,
+        dateFrom: params.dateFrom,
+        dateTo: params.dateTo,
       }, { includeFinancials: showFinancials }),
       prisma.supplier.findMany({
         where: { orgId, deletedAt: null },

@@ -8,11 +8,12 @@ import { updatePaymentSchema } from "@/lib/validations/payment";
 import { deriveStatus } from "@/lib/data/payments";
 
 interface Params {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
+    const { id } = await params;
     const session = await requireSession();
     if (!can(session.role, "financials.view")) {
       return NextResponse.json(
@@ -25,7 +26,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     };
 
     const existing = await prisma.payment.findFirst({
-      where: { id: params.id, orgId: session.orgId, deletedAt: null },
+      where: { id, orgId: session.orgId, deletedAt: null },
     });
     if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -51,7 +52,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         );
       }
       const payment = await prisma.payment.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           approvalStatus: body.action === "approve" ? "Approved" : "Rejected",
           approvedById: session.userId,
@@ -97,7 +98,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const status = input.status ?? deriveStatus(requested, amountPaid);
 
     const payment = await prisma.payment.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         amountPaid,
         status,
@@ -126,6 +127,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
 export async function DELETE(_request: NextRequest, { params }: Params) {
   try {
+    const { id } = await params;
     const session = await requireSession();
     if (!can(session.role, "financials.view")) {
       return NextResponse.json(
@@ -140,14 +142,14 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
       );
     }
     const existing = await prisma.payment.findFirst({
-      where: { id: params.id, orgId: session.orgId, deletedAt: null },
+      where: { id, orgId: session.orgId, deletedAt: null },
       select: { id: true, containerId: true },
     });
     if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
     await prisma.payment.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         deletedAt: new Date(),
         deletedById: session.userId,

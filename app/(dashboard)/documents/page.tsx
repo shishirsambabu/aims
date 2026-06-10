@@ -16,16 +16,17 @@ import type { DocumentStatus, DocumentType } from "@/types";
 export const dynamic = "force-dynamic";
 
 interface PageProps {
-  searchParams: {
+  searchParams: Promise<{
     q?: string;
     type?: string;
     status?: string;
     containerId?: string;
     expiringSoon?: string;
-  };
+  }>;
 }
 
 export default async function DocumentsPage({ searchParams }: PageProps) {
+  const params = await searchParams;
   const session = await requireSession();
   const editable = can(session.role, "doc.write");
 
@@ -36,11 +37,11 @@ export default async function DocumentsPage({ searchParams }: PageProps) {
   try {
     [rows, containers] = await Promise.all([
       listDocuments(session.orgId, {
-        q: searchParams.q,
-        type: searchParams.type as DocumentType | undefined,
-        status: searchParams.status as DocumentStatus | undefined,
-        containerId: searchParams.containerId,
-        expiringSoon: searchParams.expiringSoon === "1",
+        q: params.q,
+        type: params.type as DocumentType | undefined,
+        status: params.status as DocumentStatus | undefined,
+        containerId: params.containerId,
+        expiringSoon: params.expiringSoon === "1",
       }),
       containerOptions(session.orgId),
     ]);

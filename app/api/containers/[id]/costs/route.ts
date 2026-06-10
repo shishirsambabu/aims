@@ -8,12 +8,13 @@ import { costSchema } from "@/lib/validations/finance";
 import { computeCost, computeProfit } from "@/lib/finance";
 
 interface Params {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 /** Upsert landing costs, recompute totals + rate/box, and re-derive profit. */
 export async function PUT(request: NextRequest, { params }: Params) {
   try {
+    const { id } = await params;
     const session = await requireSession();
     if (!can(session.role, "cost.write")) {
       return NextResponse.json(
@@ -23,7 +24,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     }
 
     const container = await prisma.container.findFirst({
-      where: { id: params.id, orgId: session.orgId, deletedAt: null },
+      where: { id, orgId: session.orgId, deletedAt: null },
       select: {
         id: true,
         noOfBoxes: true,
@@ -105,6 +106,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 /** Finalize (lock) or unlock a cost sheet — the maker-checker control. */
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
+    const { id } = await params;
     const session = await requireSession();
     const body = (await request.json()) as { finalized?: boolean };
     const finalize = body.finalized !== false;
@@ -122,7 +124,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
 
     const container = await prisma.container.findFirst({
-      where: { id: params.id, orgId: session.orgId, deletedAt: null },
+      where: { id, orgId: session.orgId, deletedAt: null },
       select: { id: true, containerNo: true, cost: { select: { id: true } } },
     });
     if (!container) {

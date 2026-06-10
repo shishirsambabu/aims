@@ -24,7 +24,7 @@ export interface SessionContext {
  * there is no authenticated Supabase user.
  */
 export async function getSessionContext(): Promise<SessionContext | null> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

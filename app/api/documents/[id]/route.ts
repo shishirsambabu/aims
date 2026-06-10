@@ -7,11 +7,12 @@ import { logActivity } from "@/lib/activity";
 import { updateDocumentSchema } from "@/lib/validations/document";
 
 interface Params {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
+    const { id } = await params;
     const session = await requireSession();
     if (!can(session.role, "doc.verify")) {
       return NextResponse.json(
@@ -21,7 +22,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
 
     const existing = await prisma.document.findFirst({
-      where: { id: params.id, orgId: session.orgId, deletedAt: null },
+      where: { id, orgId: session.orgId, deletedAt: null },
       select: { id: true, containerId: true, type: true },
     });
     if (!existing) {
@@ -37,7 +38,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
 
     const doc = await prisma.document.update({
-      where: { id: params.id },
+      where: { id },
       data: parsed.data,
     });
 
@@ -60,6 +61,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
 export async function DELETE(_request: NextRequest, { params }: Params) {
   try {
+    const { id } = await params;
     const session = await requireSession();
     if (!can(session.role, "doc.write")) {
       return NextResponse.json(
@@ -69,7 +71,7 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
     }
 
     const existing = await prisma.document.findFirst({
-      where: { id: params.id, orgId: session.orgId, deletedAt: null },
+      where: { id, orgId: session.orgId, deletedAt: null },
       select: { id: true, containerId: true },
     });
     if (!existing) {
@@ -77,7 +79,7 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
     }
 
     await prisma.document.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         deletedAt: new Date(),
         deletedById: session.userId,

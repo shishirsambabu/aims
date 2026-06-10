@@ -7,17 +7,18 @@ import { logActivity } from "@/lib/activity";
 import { updateSupplierSchema } from "@/lib/validations/supplier";
 
 interface Params {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
+    const { id } = await params;
     const session = await requireSession();
     if (!can(session.role, "masterdata.write")) {
       return NextResponse.json({ error: "Not permitted" }, { status: 403 });
     }
     const existing = await prisma.supplier.findFirst({
-      where: { id: params.id, orgId: session.orgId, deletedAt: null },
+      where: { id, orgId: session.orgId, deletedAt: null },
       select: { id: true },
     });
     if (!existing) {
@@ -31,7 +32,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       );
     }
     const supplier = await prisma.supplier.update({
-      where: { id: params.id },
+      where: { id },
       data: parsed.data,
     });
     await logActivity({
@@ -50,12 +51,13 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
 export async function DELETE(_request: NextRequest, { params }: Params) {
   try {
+    const { id } = await params;
     const session = await requireSession();
     if (!can(session.role, "masterdata.write")) {
       return NextResponse.json({ error: "Not permitted" }, { status: 403 });
     }
     const supplier = await prisma.supplier.findFirst({
-      where: { id: params.id, orgId: session.orgId, deletedAt: null },
+      where: { id, orgId: session.orgId, deletedAt: null },
       select: { id: true, name: true, _count: { select: { containers: true } } },
     });
     if (!supplier) {
@@ -70,7 +72,7 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
       );
     }
     await prisma.supplier.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         deletedAt: new Date(),
         deletedById: session.userId,

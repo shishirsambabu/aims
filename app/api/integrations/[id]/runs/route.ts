@@ -11,9 +11,10 @@ const runSchema = z.object({
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await requireSession();
     if (!can(session.role, "masterdata.write") && session.role !== "admin") {
       return NextResponse.json(
@@ -23,7 +24,7 @@ export async function POST(
     }
 
     const connection = await prisma.integrationConnection.findFirst({
-      where: { id: params.id, orgId: session.orgId },
+      where: { id, orgId: session.orgId },
     });
     if (!connection) {
       return NextResponse.json({ error: "Integration not found" }, { status: 404 });

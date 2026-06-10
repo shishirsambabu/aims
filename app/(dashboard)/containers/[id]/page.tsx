@@ -17,10 +17,11 @@ import type { ContainerStatus } from "@/types";
 export const dynamic = "force-dynamic";
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function ContainerDetailPage({ params }: PageProps) {
+  const { id } = await params;
   const session = await requireSession();
 
   let container: Awaited<ReturnType<typeof getContainerById>> = null;
@@ -28,11 +29,11 @@ export default async function ContainerDetailPage({ params }: PageProps) {
   let loadError = false;
 
   try {
-    container = await getContainerById(session.orgId, params.id, {
+    container = await getContainerById(session.orgId, id, {
       includeFinancials: can(session.role, "financials.view"),
     });
     if (container) {
-      activity = await getContainerActivity(session.orgId, params.id);
+      activity = await getContainerActivity(session.orgId, id);
     }
   } catch (err) {
     console.error("[containers/:id] load failed", err);

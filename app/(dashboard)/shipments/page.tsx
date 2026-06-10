@@ -11,10 +11,11 @@ import { listContainers, type ContainerListRow } from "@/lib/data/containers";
 export const dynamic = "force-dynamic";
 
 interface PageProps {
-  searchParams: { port?: string; supplierId?: string };
+  searchParams: Promise<{ port?: string; supplierId?: string }>;
 }
 
 export default async function ShipmentsPage({ searchParams }: PageProps) {
+  const params = await searchParams;
   const session = await requireSession();
   const editable = can(session.role, "container.write");
 
@@ -25,8 +26,8 @@ export default async function ShipmentsPage({ searchParams }: PageProps) {
   try {
     [rows, suppliers] = await Promise.all([
       listContainers(session.orgId, {
-        port: searchParams.port,
-        supplierId: searchParams.supplierId,
+        port: params.port,
+        supplierId: params.supplierId,
       }, { includeFinancials: false }),
       prisma.supplier.findMany({
         where: { orgId: session.orgId, deletedAt: null },
@@ -71,7 +72,7 @@ export default async function ShipmentsPage({ searchParams }: PageProps) {
         ) : (
           <div className="min-h-0 flex-1 overflow-hidden">
             <KanbanBoard
-              key={`${searchParams.port ?? ""}|${searchParams.supplierId ?? ""}`}
+              key={`${params.port ?? ""}|${params.supplierId ?? ""}`}
               rows={rows}
               canEdit={editable}
             />

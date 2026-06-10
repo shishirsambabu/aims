@@ -13,10 +13,11 @@ export const dynamic = "force-dynamic";
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: { q?: string };
+  searchParams: Promise<{ q?: string }>;
 }) {
+  const params = await searchParams;
   const session = await requireSession();
-  const q = (searchParams.q ?? "").trim();
+  const q = (params.q ?? "").trim();
 
   let results: SearchResults = { containers: [], documents: [], payments: [] };
   if (q) {

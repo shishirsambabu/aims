@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import * as XLSX from "xlsx";
+import readXlsxFile from "read-excel-file/browser";
 import {
   Upload,
   Loader2,
@@ -41,63 +41,51 @@ export function ImportWizard({ existingNos }: { existingNos: string[] }) {
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
 
-  function handleFile(file: File) {
+  async function handleFile(file: File) {
     setResult(null);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const wb = XLSX.read(e.target?.result, {
-          type: "binary",
-          cellDates: true,
-        });
+    try {
+      const sheets = await readXlsxFile(file);
 
-        // Merge rows from EVERY sheet that has container data (the arrival
-        // workbook has one tab per port). De-duplicate by Container No.
-        const merged: MappedRow[] = [];
-        const seenNos = new Set<string>();
-        const usedSheets: string[] = [];
-        for (const name of wb.SheetNames) {
-          const aoa = XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets[name], {
-            header: 1,
-            defval: null,
-            raw: false,
-            blankrows: false,
-          });
-          const mapped = mapSheetRows(aoa as unknown[][]);
-          if (mapped.length === 0) continue;
-          usedSheets.push(name);
-          for (const r of mapped) {
-            const key = r.containerNo?.toUpperCase() ?? "";
-            if (key && seenNos.has(key)) continue;
-            if (key) seenNos.add(key);
-            merged.push({ ...r, rowNumber: merged.length + 2 });
-          }
+      const merged: MappedRow[] = [];
+      const seenNos = new Set<string>();
+      const usedSheets: string[] = [];
+      for (const sheet of sheets) {
+        const mapped = mapSheetRows(sheet.data as unknown[][]);
+        if (mapped.length === 0) continue;
+        usedSheets.push(sheet.sheet);
+        for (const row of mapped) {
+          const key = row.containerNo?.toUpperCase() ?? "";
+          if (key && seenNos.has(key)) continue;
+          if (key) seenNos.add(key);
+          merged.push({ ...row, rowNumber: merged.length + 2 });
         }
-
-        if (merged.length === 0) {
-          toast.error("No container rows found — check the sheet has a 'Container No' / 'CNT No' column");
-          return;
-        }
-        setRows(merged);
-        setFileName(
-          `${file.name} · ${usedSheets.length} sheet${usedSheets.length === 1 ? "" : "s"}`
-        );
-        toast.success(`Parsed ${merged.length} containers from ${file.name}`);
-      } catch (err) {
-        console.error(err);
-        toast.error("Couldn't parse that file — is it a valid .xlsx?");
       }
-    };
-    reader.readAsBinaryString(file);
+
+      if (merged.length === 0) {
+        toast.error(
+          "No container rows found - check for a Container No or CNT No column"
+        );
+        return;
+      }
+
+      setRows(merged);
+      setFileName(
+        `${file.name} - ${usedSheets.length} sheet${usedSheets.length === 1 ? "" : "s"}`
+      );
+      toast.success(`Parsed ${merged.length} containers from ${file.name}`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Couldn't parse that file - please upload a valid .xlsx file");
+    }
   }
 
   const validRows = rows.filter(
-    (r) => r.containerNo && r.blNo && !existing.has(r.containerNo)
+    (row) => row.containerNo && row.blNo && !existing.has(row.containerNo)
   );
   const dupCount = rows.filter(
-    (r) => r.containerNo && r.blNo && existing.has(r.containerNo)
+    (row) => row.containerNo && row.blNo && existing.has(row.containerNo)
   ).length;
-  const invalidCount = rows.filter((r) => !r.containerNo || !r.blNo).length;
+  const invalidCount = rows.filter((row) => !row.containerNo || !row.blNo).length;
 
   async function runImport() {
     setImporting(true);
@@ -126,7 +114,9 @@ export function ImportWizard({ existingNos }: { existingNos: string[] }) {
     if (!result) return;
     const csv = [
       "Row,Message",
-      ...result.errors.map((e) => `${e.row},"${e.message.replace(/"/g, "'")}"`),
+      ...result.errors.map((error) =>
+        `${error.row},"${error.message.replace(/"/g, "'")}"`
+      ),
     ].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -139,16 +129,15 @@ export function ImportWizard({ existingNos }: { existingNos: string[] }) {
 
   return (
     <div className="space-y-6">
-      {/* Dropzone */}
       <Card>
         <CardContent className="pt-6">
           <label
             className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-surface-alt/40 px-6 py-10 text-center transition-colors hover:border-primary hover:bg-accent/30"
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              const f = e.dataTransfer.files?.[0];
-              if (f) handleFile(f);
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={(event) => {
+              event.preventDefault();
+              const file = event.dataTransfer.files?.[0];
+              if (file) void handleFile(file);
             }}
           >
             <Upload className="h-8 w-8 text-primary" />
@@ -156,22 +145,21 @@ export function ImportWizard({ existingNos }: { existingNos: string[] }) {
               Drop your tracker .xlsx here, or click to browse
             </p>
             <p className="text-xs text-muted-foreground">
-              First sheet is read; columns are auto-mapped to AIMS fields.
+              All sheets are scanned; columns are auto-mapped to AIMS fields.
             </p>
             <input
               type="file"
-              accept=".xlsx,.xls"
+              accept=".xlsx"
               className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) handleFile(f);
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void handleFile(file);
               }}
             />
           </label>
         </CardContent>
       </Card>
 
-      {/* Preview */}
       {rows.length > 0 && !result && (
         <Card>
           <CardContent className="space-y-4 pt-6">
@@ -181,7 +169,11 @@ export function ImportWizard({ existingNos }: { existingNos: string[] }) {
               </span>
               <Stat label="Ready" value={validRows.length} tone="text-success" />
               <Stat label="Duplicates" value={dupCount} tone="text-warning" />
-              <Stat label="Missing Container No" value={invalidCount} tone="text-danger" />
+              <Stat
+                label="Missing Container No"
+                value={invalidCount}
+                tone="text-danger"
+              />
             </div>
 
             <div className="overflow-hidden rounded-lg border border-border">
@@ -198,28 +190,31 @@ export function ImportWizard({ existingNos }: { existingNos: string[] }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {rows.slice(0, 10).map((r) => {
-                    const dup = r.containerNo && r.blNo && existing.has(r.containerNo);
-                    const bad = !r.containerNo || !r.blNo;
+                  {rows.slice(0, 10).map((row) => {
+                    const dup =
+                      row.containerNo && row.blNo && existing.has(row.containerNo);
+                    const bad = !row.containerNo || !row.blNo;
                     return (
-                      <TableRow key={r.rowNumber}>
+                      <TableRow key={row.rowNumber}>
                         <TableCell className="font-financial text-muted-foreground">
-                          {r.rowNumber}
+                          {row.rowNumber}
                         </TableCell>
                         <TableCell className="font-financial">
-                          {r.containerNo ?? "—"}
+                          {row.containerNo ?? "-"}
                         </TableCell>
                         <TableCell className="font-financial text-muted-foreground">
-                          {r.blNo ?? "—"}
+                          {row.blNo ?? "-"}
                         </TableCell>
-                        <TableCell>{r.supplierName ?? "—"}</TableCell>
-                        <TableCell>{r.port ?? "—"}</TableCell>
+                        <TableCell>{row.supplierName ?? "-"}</TableCell>
+                        <TableCell>{row.port ?? "-"}</TableCell>
                         <TableCell className="font-financial">
-                          {r.noOfBoxes ?? "—"}
+                          {row.noOfBoxes ?? "-"}
                         </TableCell>
                         <TableCell>
                           {bad ? (
-                            <span className="text-xs text-danger">Missing No / BL</span>
+                            <span className="text-xs text-danger">
+                              Missing No / BL
+                            </span>
                           ) : dup ? (
                             <span className="text-xs text-warning">Duplicate</span>
                           ) : (
@@ -241,10 +236,17 @@ export function ImportWizard({ existingNos }: { existingNos: string[] }) {
             )}
 
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setRows([])} disabled={importing}>
+              <Button
+                variant="outline"
+                onClick={() => setRows([])}
+                disabled={importing}
+              >
                 Clear
               </Button>
-              <Button onClick={runImport} disabled={importing || validRows.length === 0}>
+              <Button
+                onClick={runImport}
+                disabled={importing || validRows.length === 0}
+              >
                 {importing && <Loader2 className="animate-spin" />}
                 Import {validRows.length} containers
               </Button>
@@ -253,7 +255,6 @@ export function ImportWizard({ existingNos }: { existingNos: string[] }) {
         </Card>
       )}
 
-      {/* Result */}
       {result && (
         <Card>
           <CardContent className="space-y-4 pt-6">

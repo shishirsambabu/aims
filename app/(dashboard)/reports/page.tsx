@@ -21,10 +21,11 @@ import { cn, formatINR, marginColor } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 interface PageProps {
-  searchParams: { from?: string; to?: string };
+  searchParams: Promise<{ from?: string; to?: string }>;
 }
 
 export default async function ReportsPage({ searchParams }: PageProps) {
+  const params = await searchParams;
   const session = await requireSession();
 
   if (!can(session.role, "financials.view")) {
@@ -43,8 +44,8 @@ export default async function ReportsPage({ searchParams }: PageProps) {
   let loadError = false;
   try {
     data = await getReportData(session.orgId, {
-      from: searchParams.from,
-      to: searchParams.to,
+      from: params.from,
+      to: params.to,
     });
   } catch {
     loadError = true;
@@ -69,7 +70,7 @@ export default async function ReportsPage({ searchParams }: PageProps) {
           </div>
         ) : (
           <>
-            <ExportCenter from={searchParams.from} to={searchParams.to} />
+            <ExportCenter from={params.from} to={params.to} />
 
             {/* Summary */}
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

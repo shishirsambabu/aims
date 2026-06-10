@@ -20,10 +20,11 @@ import type { PaymentStatus } from "@/types";
 export const dynamic = "force-dynamic";
 
 interface PageProps {
-  searchParams: { q?: string; status?: string; containerId?: string };
+  searchParams: Promise<{ q?: string; status?: string; containerId?: string }>;
 }
 
 export default async function PaymentsPage({ searchParams }: PageProps) {
+  const params = await searchParams;
   const session = await requireSession();
   const perms = {
     canCreate: can(session.role, "payment.write"),
@@ -33,9 +34,9 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
   };
   const editable = perms.canCreate;
   const filters = {
-    q: searchParams.q,
-    status: searchParams.status as PaymentStatus | undefined,
-    containerId: searchParams.containerId,
+    q: params.q,
+    status: params.status as PaymentStatus | undefined,
+    containerId: params.containerId,
   };
 
   let rows: PaymentRow[] = [];

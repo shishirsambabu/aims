@@ -10,11 +10,15 @@ import { STORAGE_BUCKET } from "@/lib/constants";
  * Issues a short-lived signed URL for a document file and redirects to it.
  * Keeps the storage bucket private — files are never served via public URLs.
  */
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const session = await requireSession();
     const doc = await prisma.document.findFirst({
-      where: { id: params.id, orgId: session.orgId, deletedAt: null },
+      where: { id, orgId: session.orgId, deletedAt: null },
       select: { id: true, filePath: true, fileUrl: true, containerId: true, type: true },
     });
     if (!doc) {
@@ -32,7 +36,7 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
     });
 
     if (doc.filePath) {
-      const supabase = createClient();
+      const supabase = await createClient();
       const { data, error } = await supabase.storage
         .from(STORAGE_BUCKET)
         .createSignedUrl(doc.filePath, 120);

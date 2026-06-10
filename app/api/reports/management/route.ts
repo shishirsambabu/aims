@@ -7,8 +7,8 @@ import {
   reportToPdfBuffer,
   reportToCsv,
   reportToWorkbook,
-  workbookToBuffer,
 } from "@/lib/exports/reports";
+import { xlsxBuffer } from "@/lib/exports/xlsx";
 import { logActivity } from "@/lib/activity";
 
 export const runtime = "nodejs";
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const buffer = workbookToBuffer(reportToWorkbook(data));
+    const buffer = await xlsxBuffer(reportToWorkbook(data));
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
         "Content-Type":

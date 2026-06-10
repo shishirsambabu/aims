@@ -21,7 +21,7 @@ function extensionFromName(name: string | null): string {
 }
 
 async function fetchDocumentBytes(filePath: string): Promise<ArrayBuffer | null> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase.storage
     .from(STORAGE_BUCKET)
     .createSignedUrl(filePath, 120);
@@ -35,12 +35,13 @@ async function fetchDocumentBytes(filePath: string): Promise<ArrayBuffer | null>
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await requireSession();
     const container = await prisma.container.findFirst({
-      where: { id: params.id, orgId: session.orgId, deletedAt: null },
+      where: { id, orgId: session.orgId, deletedAt: null },
       select: {
         id: true,
         containerNo: true,

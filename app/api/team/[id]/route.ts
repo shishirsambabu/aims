@@ -11,11 +11,12 @@ const schema = z.object({
 });
 
 interface Params {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
+    const { id } = await params;
     const session = await requireSession();
     if (session.role !== "admin") {
       return NextResponse.json(
@@ -25,7 +26,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
 
     const target = await prisma.user.findFirst({
-      where: { id: params.id, orgId: session.orgId },
+      where: { id, orgId: session.orgId },
       select: { id: true, email: true },
     });
     if (!target) {
@@ -47,7 +48,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
 
     const user = await prisma.user.update({
-      where: { id: params.id },
+      where: { id },
       data: parsed.data,
     });
 
