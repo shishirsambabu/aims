@@ -40,6 +40,20 @@
 - [x] Server enforcement in PATCH `/api/containers/[id]` (409 + reason); Kanban inherits it
 - [x] Detail UI: status dropdown locks blocked stages (🔒) + live "to advance…" checklist
 
+### Phase 21 — Personal Workbench + Alert Routing Checklist
+- [x] Roadmap created for Phases 21-24 (`ROADMAP_PHASES_21_24.md`)
+- [x] Phase 21 schema added: `user_alert_preferences` and `user_alert_states`
+- [x] Phase 21 migration added and applied: `20260610113000_phase21_personal_alerts`
+- [x] Alert data layer upgraded (`lib/data/notifications.ts`) with role routing, personal preferences, read/snooze/resolve state, unread counts and detention counts
+- [x] Personal alert badge counts wired into dashboard layout/sidebar (`getPersonalNavCounts`)
+- [x] API added: `PATCH /api/alerts/state` for read, snooze, resolve and reopen
+- [x] API added: `PATCH /api/alerts/preferences` for per-user category toggles
+- [x] Dashboard upgraded with role-aware "My Work Today" workbench, critical/unread counts and detention watch panel
+- [x] Alerts page upgraded into "My Alert Center" with active queue, preference toggles and read/snooze/resolve actions
+- [x] Reusable alert UI controls added: `AlertActions` and `AlertPreferences`
+- [x] Production build passes after Phase 21 changes
+- [ ] Manual role-by-role smoke test on localhost:3001
+
 ## Phase 1 — Foundation Checklist
 - [x] `npx create-next-app@14` with TypeScript + Tailwind
 - [x] Install and init Shadcn/ui (components hand-authored under `components/ui/`)
