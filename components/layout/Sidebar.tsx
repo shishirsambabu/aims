@@ -42,14 +42,19 @@ function NavLinks({
             href={item.href}
             onClick={onNavigate}
             className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150",
               active
-                ? "bg-primary text-white"
-                : "text-sidebar-muted hover:bg-sidebar-hover hover:text-white"
+                ? "bg-gradient-to-r from-primary to-sky-500 text-white shadow-lg shadow-primary/25"
+                : "text-sidebar-muted hover:bg-white/5 hover:text-white"
             )}
           >
+            {active && (
+              <span className="absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-sky-300" />
+            )}
             <Icon className="h-[18px] w-[18px]" />
-            <span className="flex-1">{item.label}</span>
+            <span className="flex-1 uppercase tracking-wide text-[12px]">
+              {item.label}
+            </span>
             {badge > 0 && (
               <span
                 className={cn(
@@ -92,7 +97,7 @@ export function Sidebar({ counts }: { counts: NavCounts }) {
         <NavLinks counts={counts} />
         <div className="border-t border-white/10 px-5 py-4 text-[11px] text-sidebar-muted">
           Import Management System
-          <br />v2.0 · Phase 20
+          <br />v2.1 · Design Refresh
         </div>
       </aside>
 

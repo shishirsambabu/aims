@@ -7,6 +7,7 @@ import { Search, LogOut, ChevronRight, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/actions/auth";
 import { useUiStore } from "@/store/useUiStore";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -88,6 +89,8 @@ export function TopNav({ user }: TopNavProps) {
           />
         </div>
       </form>
+
+      <ThemeToggle />
 
       {/* User menu */}
       <DropdownMenu>

@@ -16,14 +16,12 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 border-b border-border bg-surface px-6 py-5 sm:flex-row sm:items-center sm:justify-between",
+        "glass sticky top-0 z-20 flex flex-col gap-3 border-b border-border px-6 py-5 sm:flex-row sm:items-center sm:justify-between",
         className
       )}
     >
       <div className="space-y-1">
-        <h1 className="font-heading text-xl font-bold tracking-tight">
-          {title}
-        </h1>
+        <h1 className="heading-caps text-xl text-foreground">{title}</h1>
         {description && (
           <p className="text-sm text-muted-foreground">{description}</p>
         )}

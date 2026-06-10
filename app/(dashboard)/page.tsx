@@ -167,17 +167,23 @@ function Kpi({
   tone?: string;
 }) {
   return (
-    <Card className={`border-t-4 ${accent}`}>
+    <Card
+      className={cn(
+        "group relative overflow-hidden border-t-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover",
+        accent
+      )}
+    >
+      <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-primary/5 blur-2xl transition-opacity group-hover:opacity-80" />
       <CardContent className="pt-6">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">{label}</p>
+            <p className="label-caps">{label}</p>
             <p className={cn("font-financial mt-2 text-3xl font-bold", tone)}>
               {value}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
           </div>
-          <div className="rounded-md bg-surface-alt p-2 text-primary">
+          <div className="rounded-xl bg-primary/10 p-2.5 text-primary ring-1 ring-primary/15">
             <Icon className="h-5 w-5" />
           </div>
         </div>

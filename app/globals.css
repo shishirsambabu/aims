@@ -4,37 +4,83 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3%;
+    /* ---- Light theme ---- */
+    --background: 215 35% 97%;
+    --foreground: 222 47% 11%;
+
+    --surface: 0 0% 100%;
+    --surface-alt: 214 32% 95%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3%;
+    --popover-foreground: 222 47% 11%;
 
     /* Salesforce blue #0070D2 */
     --primary: 208 100% 41%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 95%;
-    --secondary-foreground: 0 0% 9%;
+    --secondary: 214 32% 93%;
+    --secondary-foreground: 222 47% 18%;
 
-    --muted: 0 0% 95%;
-    --muted-foreground: 0 0% 43%;
+    --muted: 214 32% 93%;
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 208 100% 96%;
-    --accent-foreground: 208 100% 35%;
+    --accent: 208 100% 95%;
+    --accent-foreground: 208 100% 32%;
 
-    /* Loss red #C23934 */
     --destructive: 2 53% 49%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 30 4% 86%;
-    --input: 30 4% 86%;
-    --ring: 208 100% 41%;
+    --border: 214 25% 88%;
+    --input: 214 25% 86%;
+    --ring: 208 100% 45%;
 
-    --radius: 0.375rem;
+    --sidebar: 222 47% 16%;
+    --sidebar-foreground: 210 40% 96%;
+
+    --radius: 0.85rem;
+    --shadow-color: 220 40% 30%;
+  }
+
+  .dark {
+    /* ---- Dark theme ---- */
+    --background: 222 47% 7%;
+    --foreground: 210 40% 96%;
+
+    --surface: 222 40% 11%;
+    --surface-alt: 222 38% 14%;
+
+    --card: 222 40% 11%;
+    --card-foreground: 210 40% 96%;
+
+    --popover: 222 40% 11%;
+    --popover-foreground: 210 40% 96%;
+
+    --primary: 207 100% 56%;
+    --primary-foreground: 222 47% 9%;
+
+    --secondary: 217 33% 18%;
+    --secondary-foreground: 210 40% 92%;
+
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 62%;
+
+    --accent: 208 60% 20%;
+    --accent-foreground: 208 100% 80%;
+
+    --destructive: 2 65% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 217 33% 20%;
+    --input: 217 33% 24%;
+    --ring: 207 100% 56%;
+
+    --sidebar: 222 47% 9%;
+    --sidebar-foreground: 210 40% 92%;
+
+    --shadow-color: 222 80% 2%;
   }
 }
 
@@ -43,7 +89,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-surface-alt text-foreground font-sans antialiased;
+    @apply bg-background text-foreground font-sans antialiased;
   }
   h1,
   h2,
@@ -59,16 +105,42 @@
   .text-balance {
     text-wrap: balance;
   }
-  /* All financial figures render in JetBrains Mono */
   .font-financial {
     font-family: var(--font-jetbrains), ui-monospace, monospace;
     font-variant-numeric: tabular-nums;
+  }
+  .heading-caps {
+    @apply font-heading font-bold uppercase tracking-[0.06em];
+  }
+  .label-caps {
+    @apply text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground;
+  }
+  .shadow-card {
+    box-shadow:
+      0 1px 2px -1px hsl(var(--shadow-color) / 0.12),
+      0 4px 16px -4px hsl(var(--shadow-color) / 0.12);
+  }
+  .shadow-card-hover {
+    box-shadow:
+      0 2px 4px -1px hsl(var(--shadow-color) / 0.16),
+      0 12px 28px -6px hsl(var(--shadow-color) / 0.22);
+  }
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-sky-400 bg-clip-text text-transparent;
+  }
+  .glass {
+    background: hsl(var(--surface) / 0.7);
+    backdrop-filter: blur(12px);
   }
   .scrollbar-thin::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-black/15 rounded-full;
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 9999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
   }
 }

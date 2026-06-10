@@ -52,20 +52,25 @@ const config: Config = {
         // AIMS brand palette (Salesforce Lightning inspired)
         brand: { DEFAULT: "#0070D2", dark: "#005FB2" },
         sidebar: {
-          DEFAULT: "#16325C",
-          hover: "#1F4373",
-          active: "#0070D2",
-          muted: "#A8B7CF",
+          DEFAULT: "hsl(var(--sidebar))",
+          foreground: "hsl(var(--sidebar-foreground))",
+          hover: "hsl(var(--sidebar) / 0.6)",
+          active: "hsl(var(--primary))",
+          muted: "hsl(var(--sidebar-foreground) / 0.55)",
         },
-        surface: { DEFAULT: "#FFFFFF", alt: "#F3F3F3" },
+        surface: {
+          DEFAULT: "hsl(var(--surface))",
+          alt: "hsl(var(--surface-alt))",
+        },
         success: { DEFAULT: "#2E844A", light: "#EAF5EE" },
         warning: { DEFAULT: "#FFB75D", light: "#FFF6E9" },
         danger: { DEFAULT: "#C23934", light: "#FDEDEC" },
       },
       borderRadius: {
+        xl: "calc(var(--radius) + 4px)",
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        md: "calc(var(--radius) - 4px)",
+        sm: "calc(var(--radius) - 8px)",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
