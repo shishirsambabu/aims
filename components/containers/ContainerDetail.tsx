@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, FileText, CheckCircle2, Circle } from "lucide-react";
+import {
+  Loader2,
+  FileText,
+  CheckCircle2,
+  Circle,
+  Download,
+  ExternalLink,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -74,6 +81,8 @@ interface DocRow {
   issueDate: string | null;
   expiryDate: string | null;
   status: "Pending" | "Uploaded" | "Verified" | "Expired";
+  fileName?: string | null;
+  fileSize?: number | null;
 }
 
 interface PaymentRow {
@@ -583,18 +592,27 @@ function DocumentsTab({
         <h3 className="font-heading text-base font-semibold">
           Document Completeness — {score}/8
         </h3>
-        {canEdit && (
-          <DocumentUpload
-            orgId={orgId}
-            containers={[]}
-            presetContainerId={containerId}
-            trigger={
-              <Button size="sm">
-                <FileText className="h-4 w-4" /> Upload Document
-              </Button>
-            }
-          />
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {documents.length > 0 && (
+            <Button asChild size="sm" variant="outline">
+              <a href={`/api/containers/${containerId}/documents/zip`}>
+                <Download className="h-4 w-4" /> Download Dossier ZIP
+              </a>
+            </Button>
+          )}
+          {canEdit && (
+            <DocumentUpload
+              orgId={orgId}
+              containers={[]}
+              presetContainerId={containerId}
+              trigger={
+                <Button size="sm">
+                  <FileText className="h-4 w-4" /> Upload Document
+                </Button>
+              }
+            />
+          )}
+        </div>
       </div>
 
       <SectionCard title="Checklist">
@@ -646,7 +664,20 @@ function DocumentsTab({
                     </p>
                   </div>
                 </div>
-                <DocStatusBadge status={d.status} />
+                <div className="flex items-center gap-2">
+                  {d.fileName && (
+                    <a
+                      href={`/api/documents/${d.id}/file`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded p-1.5 text-muted-foreground hover:bg-surface-alt hover:text-primary"
+                      title="Open file"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  )}
+                  <DocStatusBadge status={d.status} />
+                </div>
               </li>
             ))}
           </ul>

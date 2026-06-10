@@ -35,6 +35,41 @@ export interface ContainerOption {
   supplier: { name: string } | null;
 }
 
+const IMAGE_TYPES = ["image/jpeg", "image/png"];
+const IMAGE_COMPRESS_THRESHOLD = 1.5 * 1024 * 1024;
+const MAX_IMAGE_DIMENSION = 2200;
+
+async function compressImage(file: File): Promise<File> {
+  if (!IMAGE_TYPES.includes(file.type) || file.size < IMAGE_COMPRESS_THRESHOLD) {
+    return file;
+  }
+
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(
+    1,
+    MAX_IMAGE_DIMENSION / Math.max(bitmap.width, bitmap.height)
+  );
+  const width = Math.round(bitmap.width * scale);
+  const height = Math.round(bitmap.height * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return file;
+  ctx.drawImage(bitmap, 0, 0, width, height);
+
+  const blob = await new Promise<Blob | null>((resolve) =>
+    canvas.toBlob(resolve, "image/jpeg", 0.82)
+  );
+  if (!blob || blob.size >= file.size) return file;
+
+  const baseName = file.name.replace(/\.[^.]+$/, "");
+  return new File([blob], `${baseName}.jpg`, {
+    type: "image/jpeg",
+    lastModified: Date.now(),
+  });
+}
+
 export function DocumentUpload({
   orgId,
   containers,
@@ -71,18 +106,33 @@ export function DocumentUpload({
     if (!file) return toast.error("Choose a file to upload");
     if (!ACCEPTED_FILE_TYPES.includes(file.type))
       return toast.error("Only PDF, JPG or PNG files are allowed");
-    if (file.size > MAX_FILE_SIZE)
+    let uploadFile = file;
+    let originalSize: number | null = null;
+    try {
+      const compressed = await compressImage(file);
+      if (compressed.size !== file.size) {
+        originalSize = file.size;
+        uploadFile = compressed;
+      }
+    } catch {
+      uploadFile = file;
+    }
+
+    if (uploadFile.size > MAX_FILE_SIZE)
       return toast.error("File exceeds the 25 MB limit");
 
     setBusy(true);
     try {
       const supabase = createClient();
-      const safeName = file.name.replace(/[^\w.\-]+/g, "_");
+      const safeName = uploadFile.name.replace(/[^\w.\-]+/g, "_");
       const path = `${orgId}/${containerId}/${type}/${Date.now()}_${safeName}`;
 
       const { error: upErr } = await supabase.storage
         .from(STORAGE_BUCKET)
-        .upload(path, file, { upsert: true, contentType: file.type });
+        .upload(path, uploadFile, {
+          upsert: true,
+          contentType: uploadFile.type,
+        });
       if (upErr) {
         toast.error(`Upload failed: ${upErr.message}`);
         return;
@@ -103,8 +153,8 @@ export function DocumentUpload({
           expiryDate,
           filePath: path,
           fileUrl: pub?.publicUrl,
-          fileName: file.name,
-          fileSize: file.size,
+          fileName: uploadFile.name,
+          fileSize: uploadFile.size,
           status: "Uploaded",
         }),
       });
@@ -114,7 +164,13 @@ export function DocumentUpload({
         return;
       }
 
-      toast.success("Document uploaded successfully");
+      if (originalSize) {
+        toast.success(
+          `Document uploaded. Image compressed from ${formatBytes(originalSize)} to ${formatBytes(uploadFile.size)}`
+        );
+      } else {
+        toast.success("Document uploaded successfully");
+      }
       setOpen(false);
       reset();
       router.refresh();
@@ -226,6 +282,13 @@ export function DocumentUpload({
                 {file.name} · {formatBytes(file.size)}
               </p>
             )}
+            {file &&
+              IMAGE_TYPES.includes(file.type) &&
+              file.size >= IMAGE_COMPRESS_THRESHOLD && (
+                <p className="text-xs text-primary">
+                  Phase 22: this image will be compressed before upload.
+                </p>
+              )}
           </div>
         </div>
 

@@ -33,6 +33,7 @@
 | 19 | Arrival/ATA Workflow + ETA Revision | ✅ Complete (2026-06-09) | Mark-Arrived (ATA) action; ETA-day arrival prompts (alerts + dashboard badge); ETA revision keeps originalEta; free time recomputed from ATA |
 | 20 | Pipeline v2 + Team Handoff | ✅ Complete (2026-06-09) | New "Empty Returned" stage after In Warehouse; Kanban handoff divider (Docs team → Sales team) |
 | 21 | Personal Workbench + Alert Routing | ✅ Code complete (2026-06-10) | Roadmap file for Phases 21-24; per-user alert preferences/state; role-aware dashboard workbench; personal alert center with read/snooze/resolve actions |
+| 22 | Document Automation + File Packaging | ✅ Foundation complete (2026-06-10) | Container dossier ZIP download; JPG/PNG upload compression; document automation job schema/API/settings page; email/OCR providers pending keys |
 
 ### Phase 10 — Workflow State Machine (done)
 - [x] `lib/workflow.ts` — `canTransition`/`allowedTransitions`/`stageRequirement`
@@ -53,6 +54,21 @@
 - [x] Reusable alert UI controls added: `AlertActions` and `AlertPreferences`
 - [x] Production build passes after Phase 21 changes
 - [ ] Manual role-by-role smoke test on localhost:3001
+
+### Phase 22 — Document Automation + File Packaging Checklist
+- [x] Container dossier ZIP endpoint added: `GET /api/containers/[id]/documents/zip`
+- [x] Dossier ZIP includes private Supabase documents via signed URLs and a `MANIFEST.txt`
+- [x] Container Documents tab now exposes `Download Dossier ZIP`
+- [x] Container Documents tab now exposes secure open-file links for uploaded docs
+- [x] Large JPG/PNG uploads are compressed client-side before storage
+- [x] Document automation queue schema added: `document_automation_jobs`
+- [x] Phase 22 migration added: `20260610124500_phase22_document_automation`
+- [x] API added: `GET/POST /api/document-automation/jobs`
+- [x] Settings page added: `/settings/document-automation`
+- [ ] Connect email provider keys (Microsoft Graph or Gmail)
+- [ ] Connect OCR provider keys (Document AI / Azure / Textract / Mindee)
+- [ ] Build human OCR review/accept screen after provider choice
+- [ ] Manual dossier ZIP test on localhost:3001
 
 ## Phase 1 — Foundation Checklist
 - [x] `npx create-next-app@14` with TypeScript + Tailwind

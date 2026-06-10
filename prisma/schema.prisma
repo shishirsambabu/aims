@@ -94,6 +94,7 @@ model Organization {
   activityLog ActivityLog[]
   alertPreferences UserAlertPreference[]
   alertStates      UserAlertState[]
+  documentAutomationJobs DocumentAutomationJob[]
 
   @@map("organizations")
 }
@@ -388,4 +389,32 @@ model UserAlertState {
   @@index([orgId])
   @@index([userId, category])
   @@map("user_alert_states")
+}
+
+model DocumentAutomationJob {
+  id             String   @id @default(uuid())
+  orgId          String   @map("org_id")
+  source         String
+  status         String   @default("Queued")
+  reviewStatus   String   @default("PendingReview") @map("review_status")
+  containerId    String?  @map("container_id")
+  documentId     String?  @map("document_id")
+  fileName       String?  @map("file_name")
+  filePath       String?  @map("file_path")
+  sender         String?
+  subject        String?
+  matchSummary   String?  @map("match_summary")
+  extractedData  Json?    @map("extracted_data")
+  confidence     Decimal? @db.Decimal(5, 2)
+  errorMessage   String?  @map("error_message")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([status])
+  @@index([reviewStatus])
+  @@index([containerId])
+  @@map("document_automation_jobs")
 }
