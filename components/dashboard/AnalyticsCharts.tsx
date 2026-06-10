@@ -51,9 +51,10 @@ function ChartCard({
   );
 }
 
+const GRID = "hsl(var(--border))";
 const axisProps = {
-  tick: { fontSize: 11, fill: "#706E6B" },
-  stroke: "#DDDBDA",
+  tick: { fontSize: 11, fill: "hsl(var(--muted-foreground))" },
+  stroke: "hsl(var(--border))",
 };
 
 export function AnalyticsCharts({ data }: { data: Analytics }) {
@@ -66,7 +67,7 @@ export function AnalyticsCharts({ data }: { data: Analytics }) {
             layout="vertical"
             margin={{ left: 8, right: 16 }}
           >
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#EEE" />
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={GRID} />
             <XAxis type="number" tickFormatter={inrCompact} {...axisProps} />
             <YAxis
               type="category"
@@ -111,7 +112,7 @@ export function AnalyticsCharts({ data }: { data: Analytics }) {
       <ChartCard title="Containers by Port">
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={data.containersByPort} margin={{ left: -16 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#EEE" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={GRID} />
             <XAxis dataKey="name" {...axisProps} />
             <YAxis allowDecimals={false} {...axisProps} />
             <Tooltip />
@@ -123,7 +124,7 @@ export function AnalyticsCharts({ data }: { data: Analytics }) {
       <ChartCard title="Monthly Volume">
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={data.monthlyVolume} margin={{ left: -16 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#EEE" />
+            <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
             <XAxis dataKey="month" {...axisProps} />
             <YAxis allowDecimals={false} {...axisProps} />
             <Tooltip />
@@ -141,7 +142,7 @@ export function AnalyticsCharts({ data }: { data: Analytics }) {
       <ChartCard title="Profit Trend">
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={data.profitTrend} margin={{ left: 8 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#EEE" />
+            <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
             <XAxis dataKey="month" {...axisProps} />
             <YAxis tickFormatter={inrCompact} width={70} {...axisProps} />
             <Tooltip formatter={(value) => inrCompact(Number(value))} />

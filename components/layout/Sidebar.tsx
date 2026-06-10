@@ -97,7 +97,7 @@ export function Sidebar({ counts }: { counts: NavCounts }) {
         <NavLinks counts={counts} />
         <div className="border-t border-white/10 px-5 py-4 text-[11px] text-sidebar-muted">
           Import Management System
-          <br />v2.1 · Design Refresh
+          <br />v2.2 · UI Polish
         </div>
       </aside>
 
