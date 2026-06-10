@@ -54,7 +54,8 @@ Scope:
 - Human review screen for extracted fields before applying to records.
 
 Provider candidates:
-- Email: Microsoft Graph or Gmail API.
+- Email: Microsoft Graph / Outlook is the preferred path; setup is blocked
+  until the Microsoft 365 admin account is available.
 - OCR: Google Document AI, Azure AI Document Intelligence, AWS Textract or
   Mindee.
 - Storage: continue using Supabase Storage.

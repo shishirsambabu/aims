@@ -35,6 +35,7 @@
 | 21 | Personal Workbench + Alert Routing | ✅ Code complete (2026-06-10) | Roadmap file for Phases 21-24; per-user alert preferences/state; role-aware dashboard workbench; personal alert center with read/snooze/resolve actions |
 | 22 | Document Automation + File Packaging | ✅ Foundation complete (2026-06-10) | Container dossier ZIP download; JPG/PNG upload compression; document automation job schema/API/settings page; email/OCR providers pending keys |
 | 23 | Analytics v2 + Export Center | ✅ Foundation complete (2026-06-10) | Management Excel/CSV exports; export center UI; analytics v2 decision metrics for detention leakage, ETA variance and customs cycle |
+| 24 | Integrations Layer | ✅ Foundation complete (2026-06-10) | Provider-agnostic connections, sync runs, sync errors and external references; Settings → Integrations; adapters pending provider credentials/admin access |
 
 ### Phase 10 — Workflow State Machine (done)
 - [x] `lib/workflow.ts` — `canTransition`/`allowedTransitions`/`stageRequirement`
@@ -80,9 +81,24 @@
 - [x] Dedicated Export Center page added: `/reports/exports`
 - [x] Analytics v2 decision metrics added: detention leakage, ETA variance and customs cycle
 - [x] Financial export access respects `financials.view`
-- [ ] Server-generated PDF report pack
-- [ ] Scheduled email report delivery; blocked until email provider path is chosen
+- [x] Server-generated PDF report pack
+- [ ] Scheduled email report delivery; blocked until Outlook admin account is available
 - [ ] Manual Excel/CSV download test on localhost:3001
+
+### Phase 24 — Integrations Layer Checklist
+- [x] Integration connection schema added: `integration_connections`
+- [x] Integration run schema added: `integration_runs`
+- [x] Integration error schema added: `integration_errors`
+- [x] External reference schema added: `external_references`
+- [x] Phase 24 migration added: `20260610133000_phase24_integrations_foundation`
+- [x] API added: `GET/POST /api/integrations`
+- [x] API added: `POST /api/integrations/[id]/runs` for test/dry-run placeholders
+- [x] Settings page added: `/settings/integrations`
+- [x] Settings hub linked to Integrations
+- [ ] Outlook adapter credentials; blocked until admin account is available
+- [ ] Tally adapter implementation
+- [ ] ICEGATE feasibility/provider confirmation
+- [ ] Carrier event ingestion adapter
 
 ## Phase 1 — Foundation Checklist
 - [x] `npx create-next-app@14` with TypeScript + Tailwind

@@ -53,8 +53,10 @@ export default async function ExportCenterPage() {
         <ExportCard
           icon={FileText}
           title="PDF Report Pack"
-          status="Next"
-          description="Server-generated monthly PDF packs. Planned after layout sign-off."
+          status="Live"
+          description="Server-generated management PDF for sharing with leadership."
+          href="/api/reports/management?format=pdf"
+          cta="Download PDF"
         />
         <ExportCard
           icon={Send}

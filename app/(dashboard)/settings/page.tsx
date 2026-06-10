@@ -6,6 +6,7 @@ import {
   History,
   ArrowRight,
   Bot,
+  Plug,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -37,6 +38,13 @@ const SECTIONS = [
     description:
       "Phase 22 queue for dossier ZIPs, image compression, email-to-doc and OCR review workflows.",
     icon: Bot,
+  },
+  {
+    href: "/settings/integrations",
+    title: "Integrations",
+    description:
+      "Phase 24 provider layer for Outlook, Tally, ICEGATE, carriers and OCR syncs.",
+    icon: Plug,
   },
   {
     href: "/settings/team",

@@ -4,6 +4,7 @@ import { requireSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { getReportData } from "@/lib/data/reports";
 import {
+  reportToPdfBuffer,
   reportToCsv,
   reportToWorkbook,
   workbookToBuffer,
@@ -28,7 +29,11 @@ export async function GET(request: NextRequest) {
     }
 
     const sp = request.nextUrl.searchParams;
-    const format = sp.get("format") === "csv" ? "csv" : "xlsx";
+    const requestedFormat = sp.get("format");
+    const format =
+      requestedFormat === "csv" || requestedFormat === "pdf"
+        ? requestedFormat
+        : "xlsx";
     const filters = {
       from: sp.get("from") ?? undefined,
       to: sp.get("to") ?? undefined,
@@ -52,6 +57,17 @@ export async function GET(request: NextRequest) {
         headers: {
           "Content-Type": "text/csv; charset=utf-8",
           "Content-Disposition": `attachment; filename="AIMS-management-report-${stamp()}.csv"`,
+          "Cache-Control": "no-store",
+        },
+      });
+    }
+
+    if (format === "pdf") {
+      const pdf = await reportToPdfBuffer(data);
+      return new NextResponse(new Uint8Array(pdf), {
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="AIMS-management-report-${stamp()}.pdf"`,
           "Cache-Control": "no-store",
         },
       });

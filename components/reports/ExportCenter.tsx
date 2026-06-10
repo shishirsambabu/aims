@@ -3,7 +3,10 @@ import { Download, FileSpreadsheet, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-function withFormat(params: { from?: string; to?: string }, format: "xlsx" | "csv") {
+function withFormat(
+  params: { from?: string; to?: string },
+  format: "xlsx" | "csv" | "pdf"
+) {
   const sp = new URLSearchParams();
   sp.set("format", format);
   if (params.from) sp.set("from", params.from);
@@ -40,6 +43,11 @@ export function ExportCenter({
           <Button asChild variant="outline">
             <a href={withFormat({ from, to }, "csv")}>
               <Download className="h-4 w-4" /> CSV
+            </a>
+          </Button>
+          <Button asChild variant="outline">
+            <a href={withFormat({ from, to }, "pdf")}>
+              <FileText className="h-4 w-4" /> PDF
             </a>
           </Button>
           <Button asChild variant="outline">

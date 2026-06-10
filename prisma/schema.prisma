@@ -95,6 +95,10 @@ model Organization {
   alertPreferences UserAlertPreference[]
   alertStates      UserAlertState[]
   documentAutomationJobs DocumentAutomationJob[]
+  integrationConnections IntegrationConnection[]
+  integrationRuns        IntegrationRun[]
+  integrationErrors      IntegrationError[]
+  externalReferences     ExternalReference[]
 
   @@map("organizations")
 }
@@ -417,4 +421,90 @@ model DocumentAutomationJob {
   @@index([reviewStatus])
   @@index([containerId])
   @@map("document_automation_jobs")
+}
+
+model IntegrationConnection {
+  id             String   @id @default(uuid())
+  orgId          String   @map("org_id")
+  provider       String
+  name           String
+  status         String   @default("NotConnected")
+  config         Json?
+  lastSyncAt     DateTime? @map("last_sync_at")
+  lastTestAt     DateTime? @map("last_test_at")
+  errorMessage   String?  @map("error_message")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  runs         IntegrationRun[]
+  errors       IntegrationError[]
+
+  @@unique([orgId, provider])
+  @@index([orgId])
+  @@index([provider])
+  @@map("integration_connections")
+}
+
+model IntegrationRun {
+  id             String   @id @default(uuid())
+  orgId          String   @map("org_id")
+  connectionId   String   @map("connection_id")
+  status         String   @default("Queued")
+  mode           String   @default("Manual")
+  startedAt      DateTime? @map("started_at")
+  finishedAt     DateTime? @map("finished_at")
+  recordsSeen    Int      @default(0) @map("records_seen")
+  recordsChanged Int      @default(0) @map("records_changed")
+  summary        String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  connection   IntegrationConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  errors       IntegrationError[]
+
+  @@index([orgId])
+  @@index([connectionId])
+  @@index([status])
+  @@map("integration_runs")
+}
+
+model IntegrationError {
+  id           String   @id @default(uuid())
+  orgId        String   @map("org_id")
+  connectionId String   @map("connection_id")
+  runId        String?  @map("run_id")
+  severity     String   @default("Error")
+  message      String
+  payload      Json?
+  resolvedAt   DateTime? @map("resolved_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  connection   IntegrationConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  run          IntegrationRun? @relation(fields: [runId], references: [id], onDelete: SetNull)
+
+  @@index([orgId])
+  @@index([connectionId])
+  @@index([runId])
+  @@map("integration_errors")
+}
+
+model ExternalReference {
+  id          String   @id @default(uuid())
+  orgId       String   @map("org_id")
+  provider    String
+  entityType  String   @map("entity_type")
+  entityId    String   @map("entity_id")
+  externalId  String   @map("external_id")
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, provider, entityType, entityId])
+  @@index([orgId])
+  @@index([provider, externalId])
+  @@map("external_references")
 }
