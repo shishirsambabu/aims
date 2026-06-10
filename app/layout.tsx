@@ -22,7 +22,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AIMS — Aeden Import Management System",
+  title: "AIMS — Aeden Imports Management System",
   description:
     "Internal SaaS for managing fruit container imports: tracking, costing, documentation and profit analysis.",
 };

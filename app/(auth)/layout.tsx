@@ -28,7 +28,7 @@ export default function AuthLayout({
           </div>
           <div className="leading-tight">
             <p className="heading-caps text-lg">AIMS</p>
-            <p className="text-xs text-white/50">Aeden Import Management</p>
+            <p className="text-xs text-white/50">Aeden Imports Management System</p>
           </div>
         </div>
 

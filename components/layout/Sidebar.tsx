@@ -91,17 +91,15 @@ export function Sidebar({ counts }: { counts: NavCounts }) {
 
   return (
     <>
-      {/* Desktop */}
       <aside className="hidden w-60 shrink-0 flex-col bg-sidebar text-white md:flex">
         <Brand />
         <NavLinks counts={counts} />
         <div className="border-t border-white/10 px-5 py-4 text-[11px] text-sidebar-muted">
-          Import Management System
-          <br />v2.2 · UI Polish
+          Aeden Imports Management System
+          <br />Operations Control
         </div>
       </aside>
 
-      {/* Mobile drawer */}
       {mobileSidebarOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div

@@ -31,7 +31,7 @@ export default async function ExportCenterPage() {
     <div>
       <PageHeader
         title="Export Center"
-        description="Phase 23 foundation for Excel, CSV, PDF and scheduled management packs."
+        description="Download Excel, CSV and PDF management packs for Aeden Imports Management System."
       />
       <div className="grid gap-4 p-6 lg:grid-cols-3">
         <ExportCard
@@ -61,8 +61,8 @@ export default async function ExportCenterPage() {
         <ExportCard
           icon={Send}
           title="Scheduled Email Reports"
-          status="Deferred"
-          description="Requires email provider decision; parked with GoDaddy/custom domain email TODO."
+          status="Awaiting admin setup"
+          description="Outlook delivery is planned once Microsoft 365 admin access is available."
         />
       </div>
     </div>
@@ -107,7 +107,7 @@ function ExportCard({
           </Button>
         ) : (
           <Button className="mt-5" variant="outline" disabled>
-            Coming soon
+            Setup pending
           </Button>
         )}
       </CardContent>

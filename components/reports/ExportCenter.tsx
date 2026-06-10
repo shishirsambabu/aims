@@ -25,7 +25,7 @@ export function ExportCenter({
     <Card className="border-primary/20 bg-primary/5">
       <CardContent className="flex flex-col gap-4 pt-6 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p className="label-caps">Phase 23 Export Center</p>
+          <p className="label-caps">Export Center</p>
           <h3 className="mt-1 font-heading text-lg font-semibold">
             Management report pack
           </h3>

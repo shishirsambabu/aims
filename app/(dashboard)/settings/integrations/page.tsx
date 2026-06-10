@@ -37,7 +37,7 @@ export default async function IntegrationsPage() {
     <div>
       <PageHeader
         title="Integrations"
-        description="Phase 24 provider layer for external systems without hardcoding provider logic into operations."
+        description="Manage external connections for Outlook, Tally, ICEGATE, carriers and OCR providers."
       />
       <div className="space-y-6 p-6">
         {!canManage ? (

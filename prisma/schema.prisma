@@ -1,4 +1,4 @@
-// AIMS — Aeden Import Management System
+// AIMS — Aeden Imports Management System
 // Prisma schema. All tables carry org_id for multi-tenancy (RLS in Supabase
 // is a backup; app-level org scoping is primary).
 

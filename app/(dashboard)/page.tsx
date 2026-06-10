@@ -178,7 +178,7 @@ function Workbench({
           <div className="border-b border-border px-6 py-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="label-caps">Phase 21 Workbench</p>
+                <p className="label-caps">Operations Workbench</p>
                 <h2 className="mt-1 font-heading text-2xl font-bold">
                   My work today
                 </h2>

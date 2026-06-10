@@ -28,7 +28,7 @@ export default async function DocumentAutomationPage() {
     <div>
       <PageHeader
         title="Document Automation"
-        description="Phase 22 foundation for compressed uploads, container dossier ZIPs, email-to-doc and OCR review."
+        description="Compressed uploads, container dossier ZIPs, email-to-document intake and OCR review."
       />
       <div className="space-y-6 p-6">
         {!canView ? (
@@ -75,8 +75,8 @@ export default async function DocumentAutomationPage() {
               <Capability
                 icon={Mail}
                 title="Email + OCR Providers"
-                status="Needs keys"
-                description="Queue schema and API are ready; provider credentials are not connected yet."
+                status="Setup pending"
+                description="The review queue is ready; Outlook and OCR credentials still need to be connected."
               />
             </div>
 

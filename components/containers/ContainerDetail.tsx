@@ -695,7 +695,7 @@ function PaymentsTab({ payments }: { payments: PaymentRow[] }) {
       title="Payments"
       empty={
         payments.length === 0
-          ? "No payment requests yet. Payments tracking arrives in Phase 6."
+          ? "No payment requests have been recorded for this container yet."
           : undefined
       }
     >

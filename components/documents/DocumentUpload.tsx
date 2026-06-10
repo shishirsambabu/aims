@@ -286,7 +286,7 @@ export function DocumentUpload({
               IMAGE_TYPES.includes(file.type) &&
               file.size >= IMAGE_COMPRESS_THRESHOLD && (
                 <p className="text-xs text-primary">
-                  Phase 22: this image will be compressed before upload.
+                  This image will be compressed before upload.
                 </p>
               )}
           </div>

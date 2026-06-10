@@ -119,7 +119,7 @@ export default async function AnalyticsPage() {
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="pt-6">
             <div className="mb-4">
-              <p className="label-caps">Phase 23 Analytics v2</p>
+              <p className="label-caps">Executive Analytics</p>
               <h3 className="font-heading text-lg font-semibold">
                 Decision metrics
               </h3>

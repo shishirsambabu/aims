@@ -56,6 +56,6 @@ whenever the schema changes.
 ## 8. Local development
 ```bash
 npm install
-cp .env.local.txt .env.local   # then set DATABASE_URL to the pooler URL
+cp .env.example.txt .env.local   # then fill Supabase values and set DATABASE_URL to the pooler URL
 npm run dev                     # http://localhost:3001
 ```

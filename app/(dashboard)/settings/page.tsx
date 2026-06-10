@@ -36,14 +36,14 @@ const SECTIONS = [
     href: "/settings/document-automation",
     title: "Document Automation",
     description:
-      "Phase 22 queue for dossier ZIPs, image compression, email-to-doc and OCR review workflows.",
+      "Dossier ZIPs, image compression, email-to-document intake and OCR review workflows.",
     icon: Bot,
   },
   {
     href: "/settings/integrations",
     title: "Integrations",
     description:
-      "Phase 24 provider layer for Outlook, Tally, ICEGATE, carriers and OCR syncs.",
+      "Provider setup for Outlook, Tally, ICEGATE, carriers and OCR syncs.",
     icon: Plug,
   },
   {
