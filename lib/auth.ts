@@ -90,7 +90,7 @@ export async function getSessionContext(): Promise<SessionContext | null> {
       orgId: DEFAULT_ORG_ID,
       email: user.email ?? "",
       fullName,
-      role: metaRole,
+      role: "viewer",
     };
   }
 }

@@ -54,7 +54,7 @@ function containerWhere(
   orgId: string,
   filters: ReportFilters
 ): NonNullable<Parameters<typeof prisma.container.findMany>[0]>["where"] {
-  const where = { orgId } as NonNullable<
+  const where = { orgId, deletedAt: null } as NonNullable<
     NonNullable<Parameters<typeof prisma.container.findMany>[0]>["where"]
   >;
   if (filters.from || filters.to) {
@@ -138,7 +138,7 @@ export async function getReportData(
 
   // AR/AP aging on outstanding payments.
   const payments = await prisma.payment.findMany({
-    where: { orgId, status: { not: "Paid" } },
+    where: { orgId, deletedAt: null, status: { not: "Paid" } },
     select: { amountRequested: true, amountPaid: true, dueDate: true },
   });
 
@@ -188,7 +188,7 @@ export async function getReportData(
 
 export async function getContainerPnL(orgId: string, containerId: string) {
   const c = await prisma.container.findFirst({
-    where: { id: containerId, orgId },
+    where: { id: containerId, orgId, deletedAt: null },
     include: {
       supplier: { select: { name: true } },
       cost: true,

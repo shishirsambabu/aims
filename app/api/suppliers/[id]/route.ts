@@ -17,7 +17,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "Not permitted" }, { status: 403 });
     }
     const existing = await prisma.supplier.findFirst({
-      where: { id: params.id, orgId: session.orgId },
+      where: { id: params.id, orgId: session.orgId, deletedAt: null },
       select: { id: true },
     });
     if (!existing) {
@@ -55,7 +55,7 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "Not permitted" }, { status: 403 });
     }
     const supplier = await prisma.supplier.findFirst({
-      where: { id: params.id, orgId: session.orgId },
+      where: { id: params.id, orgId: session.orgId, deletedAt: null },
       select: { id: true, name: true, _count: { select: { containers: true } } },
     });
     if (!supplier) {
@@ -69,14 +69,21 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
         { status: 409 }
       );
     }
-    await prisma.supplier.delete({ where: { id: params.id } });
+    await prisma.supplier.update({
+      where: { id: params.id },
+      data: {
+        deletedAt: new Date(),
+        deletedById: session.userId,
+        deleteReason: "Archived from supplier master data",
+      },
+    });
     await logActivity({
       orgId: session.orgId,
       userId: session.userId,
-      action: "deleted_supplier",
+      action: "archived_supplier",
       entityType: "supplier",
       entityId: supplier.id,
-      summary: `Deleted supplier ${supplier.name}`,
+      summary: `Archived supplier ${supplier.name}`,
     });
     return NextResponse.json({ ok: true });
   } catch (err) {

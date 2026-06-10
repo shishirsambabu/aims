@@ -14,7 +14,7 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
   try {
     const session = await requireSession();
     const doc = await prisma.document.findFirst({
-      where: { id: params.id, orgId: session.orgId },
+      where: { id: params.id, orgId: session.orgId, deletedAt: null },
       select: { id: true, filePath: true, fileUrl: true, containerId: true, type: true },
     });
     if (!doc) {
@@ -40,9 +40,6 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
         return NextResponse.redirect(data.signedUrl);
       }
     }
-    // Fallback for legacy public URLs.
-    if (doc.fileUrl) return NextResponse.redirect(doc.fileUrl);
-
     return NextResponse.json({ error: "No file" }, { status: 404 });
   } catch (err) {
     if (err instanceof Error && err.message === "UNAUTHENTICATED") {

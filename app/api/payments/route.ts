@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     const input = parsed.data;
 
     const container = await prisma.container.findFirst({
-      where: { id: input.containerId, orgId: session.orgId },
+      where: { id: input.containerId, orgId: session.orgId, deletedAt: null },
       select: {
         id: true,
         containerNo: true,

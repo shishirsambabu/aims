@@ -25,7 +25,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     };
 
     const existing = await prisma.payment.findFirst({
-      where: { id: params.id, orgId: session.orgId },
+      where: { id: params.id, orgId: session.orgId, deletedAt: null },
     });
     if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -140,20 +140,27 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
       );
     }
     const existing = await prisma.payment.findFirst({
-      where: { id: params.id, orgId: session.orgId },
+      where: { id: params.id, orgId: session.orgId, deletedAt: null },
       select: { id: true, containerId: true },
     });
     if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    await prisma.payment.delete({ where: { id: params.id } });
+    await prisma.payment.update({
+      where: { id: params.id },
+      data: {
+        deletedAt: new Date(),
+        deletedById: session.userId,
+        deleteReason: "Archived from payments module",
+      },
+    });
     await logActivity({
       orgId: session.orgId,
       userId: session.userId,
-      action: "deleted_payment",
+      action: "archived_payment",
       entityType: "container",
       entityId: existing.containerId,
-      summary: "Payment request deleted",
+      summary: "Payment request archived",
     });
     return NextResponse.json({ ok: true });
   } catch (err) {

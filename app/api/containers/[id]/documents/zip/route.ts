@@ -40,12 +40,13 @@ export async function GET(
   try {
     const session = await requireSession();
     const container = await prisma.container.findFirst({
-      where: { id: params.id, orgId: session.orgId },
+      where: { id: params.id, orgId: session.orgId, deletedAt: null },
       select: {
         id: true,
         containerNo: true,
         blNo: true,
         documents: {
+          where: { deletedAt: null },
           orderBy: [{ type: "asc" }, { createdAt: "desc" }],
           select: {
             id: true,

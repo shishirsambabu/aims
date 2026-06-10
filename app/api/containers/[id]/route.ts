@@ -40,7 +40,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
 
     const existing = await prisma.container.findFirst({
-      where: { id: params.id, orgId: session.orgId },
+      where: { id: params.id, orgId: session.orgId, deletedAt: null },
       select: {
         id: true, status: true, containerNo: true,
         eta: true, ata: true, originalEta: true, freeDays: true,
@@ -65,7 +65,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     if (input.status && input.status !== existing.status) {
       const [docs, sale] = await Promise.all([
         prisma.document.findMany({
-          where: { containerId: existing.id, status: "Verified" },
+          where: { containerId: existing.id, status: "Verified", deletedAt: null },
           select: { type: true },
         }),
         prisma.sale.findUnique({

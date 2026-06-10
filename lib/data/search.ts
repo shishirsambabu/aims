@@ -55,6 +55,7 @@ export async function searchAll(
     prisma.document.findMany({
       where: {
         orgId,
+        deletedAt: null,
         OR: [{ docNo: like }, { containerNo: like }, { blNo: like }],
       },
       take: 25,
@@ -70,6 +71,7 @@ export async function searchAll(
     prisma.payment.findMany({
       where: {
         orgId,
+        deletedAt: null,
         OR: [{ reference: like }, { container: { containerNo: like } }],
       },
       take: 25,

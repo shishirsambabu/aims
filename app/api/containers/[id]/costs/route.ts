@@ -23,7 +23,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     }
 
     const container = await prisma.container.findFirst({
-      where: { id: params.id, orgId: session.orgId },
+      where: { id: params.id, orgId: session.orgId, deletedAt: null },
       select: {
         id: true,
         noOfBoxes: true,
@@ -122,7 +122,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
 
     const container = await prisma.container.findFirst({
-      where: { id: params.id, orgId: session.orgId },
+      where: { id: params.id, orgId: session.orgId, deletedAt: null },
       select: { id: true, containerNo: true, cost: { select: { id: true } } },
     });
     if (!container) {

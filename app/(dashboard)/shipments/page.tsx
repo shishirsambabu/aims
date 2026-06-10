@@ -29,7 +29,7 @@ export default async function ShipmentsPage({ searchParams }: PageProps) {
         supplierId: searchParams.supplierId,
       }, { includeFinancials: false }),
       prisma.supplier.findMany({
-        where: { orgId: session.orgId },
+        where: { orgId: session.orgId, deletedAt: null },
         orderBy: { name: "asc" },
         select: { id: true, name: true },
       }),

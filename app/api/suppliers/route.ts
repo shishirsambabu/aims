@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     const input = parsed.data;
 
     const existing = await prisma.supplier.findFirst({
-      where: { orgId: session.orgId, name: input.name },
+      where: { orgId: session.orgId, name: input.name, deletedAt: null },
       select: { id: true },
     });
     if (existing) {

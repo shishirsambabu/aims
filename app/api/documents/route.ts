@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     // Denormalise container identity for fast filtering, with org check.
     const container = await prisma.container.findFirst({
-      where: { id: input.containerId, orgId: session.orgId },
+      where: { id: input.containerId, orgId: session.orgId, deletedAt: null },
       select: {
         id: true,
         containerNo: true,

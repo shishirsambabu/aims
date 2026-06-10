@@ -14,7 +14,7 @@ export interface SupplierRecord {
 
 export async function listSuppliers(orgId: string): Promise<SupplierRecord[]> {
   const rows = await prisma.supplier.findMany({
-    where: { orgId },
+    where: { orgId, deletedAt: null },
     orderBy: { name: "asc" },
     include: { _count: { select: { containers: true } } },
   });

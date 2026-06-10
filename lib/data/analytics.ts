@@ -58,7 +58,7 @@ function monthKey(d: Date): string {
 export async function getAnalytics(orgId: string): Promise<Analytics> {
   const [containers, pendingDocs, paymentAgg] = await Promise.all([
     prisma.container.findMany({
-      where: { orgId },
+      where: { orgId, deletedAt: null },
       select: {
         containerNo: true,
         port: true,
@@ -74,10 +74,10 @@ export async function getAnalytics(orgId: string): Promise<Analytics> {
       },
     }),
     prisma.document.count({
-      where: { orgId, status: { in: ["Pending", "Uploaded"] } },
+      where: { orgId, deletedAt: null, status: { in: ["Pending", "Uploaded"] } },
     }),
     prisma.payment.aggregate({
-      where: { orgId, status: { not: "Paid" } },
+      where: { orgId, deletedAt: null, status: { not: "Paid" } },
       _sum: { amountRequested: true, amountPaid: true },
     }),
   ]);

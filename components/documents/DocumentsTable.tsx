@@ -57,7 +57,7 @@ export function DocumentsTable({
   }
 
   async function remove(id: string) {
-    if (!confirm("Delete this document? This cannot be undone.")) return;
+    if (!confirm("Archive this document? It will be hidden but kept in the audit trail.")) return;
     setBusyId(id);
     try {
       const res = await fetch(`/api/documents/${id}`, { method: "DELETE" });
@@ -66,7 +66,7 @@ export function DocumentsTable({
         toast.error(j.error ?? "Failed to delete");
         return;
       }
-      toast.success("Document deleted");
+      toast.success("Document archived");
       router.refresh();
     } finally {
       setBusyId(null);
@@ -129,7 +129,7 @@ export function DocumentsTable({
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-1">
-                      {(d.fileUrl || d.fileName) && (
+                      {d.fileName && (
                         <a
                           href={`/api/documents/${d.id}/file`}
                           target="_blank"

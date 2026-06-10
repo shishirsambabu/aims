@@ -35,7 +35,7 @@ function buildWhere(
   orgId: string,
   filters: DocumentFilters
 ): DocumentWhere {
-  const where = { orgId } as NonNullable<DocumentWhere>;
+  const where = { orgId, deletedAt: null } as NonNullable<DocumentWhere>;
 
   if (filters.q) {
     where.OR = [
@@ -113,7 +113,7 @@ export async function listDocuments(
 /** Lightweight container options for the upload picker (Container No + BL No). */
 export async function containerOptions(orgId: string) {
   return prisma.container.findMany({
-    where: { orgId },
+    where: { orgId, deletedAt: null },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
@@ -129,6 +129,6 @@ export async function expiringCount(orgId: string): Promise<number> {
   const in30 = new Date();
   in30.setDate(in30.getDate() + 30);
   return prisma.document.count({
-    where: { orgId, expiryDate: { not: null, lte: in30 } },
+    where: { orgId, deletedAt: null, expiryDate: { not: null, lte: in30 } },
   });
 }

@@ -67,7 +67,7 @@ export async function PATCH(request: NextRequest) {
         }
         const [docs, sale] = await Promise.all([
           prisma.document.findMany({
-            where: { containerId: c.id, status: "Verified" },
+            where: { containerId: c.id, status: "Verified", deletedAt: null },
             select: { type: true },
           }),
           prisma.sale.findUnique({

@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       const key = name.trim();
       if (supplierCache.has(key)) return supplierCache.get(key)!;
       let supplier = await prisma.supplier.findFirst({
-        where: { orgId: session.orgId, name: key },
+        where: { orgId: session.orgId, name: key, deletedAt: null },
         select: { id: true },
       });
       if (!supplier) {
@@ -248,6 +248,8 @@ export async function POST(request: NextRequest) {
                 currency: "USD",
                 requestDate: row.requestDate ? new Date(row.requestDate) : null,
                 status: "Pending",
+                approvalStatus: "Draft",
+                notes: "Imported from tracker; finance review required before approval.",
               },
             });
           }

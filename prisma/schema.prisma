@@ -132,6 +132,9 @@ model Supplier {
   contactName String?  @map("contact_name")
   email       String?
   phone       String?
+  deletedAt   DateTime? @map("deleted_at")
+  deletedById String?  @map("deleted_by_id")
+  deleteReason String? @map("delete_reason")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -296,6 +299,9 @@ model Payment {
   approvedAt      DateTime?     @map("approved_at")
   reference       String?
   notes           String?
+  deletedAt       DateTime?     @map("deleted_at")
+  deletedById     String?       @map("deleted_by_id")
+  deleteReason    String?       @map("delete_reason")
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
 
@@ -325,6 +331,9 @@ model Document {
   filePath    String?        @map("file_path")
   fileName    String?        @map("file_name")
   fileSize    Int?           @map("file_size")
+  deletedAt   DateTime?      @map("deleted_at")
+  deletedById String?        @map("deleted_by_id")
+  deleteReason String?       @map("delete_reason")
   createdAt   DateTime       @default(now()) @map("created_at")
   updatedAt   DateTime       @updatedAt @map("updated_at")
 

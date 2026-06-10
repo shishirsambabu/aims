@@ -21,7 +21,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
 
     const existing = await prisma.document.findFirst({
-      where: { id: params.id, orgId: session.orgId },
+      where: { id: params.id, orgId: session.orgId, deletedAt: null },
       select: { id: true, containerId: true, type: true },
     });
     if (!existing) {
@@ -69,22 +69,29 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
     }
 
     const existing = await prisma.document.findFirst({
-      where: { id: params.id, orgId: session.orgId },
+      where: { id: params.id, orgId: session.orgId, deletedAt: null },
       select: { id: true, containerId: true },
     });
     if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    await prisma.document.delete({ where: { id: params.id } });
+    await prisma.document.update({
+      where: { id: params.id },
+      data: {
+        deletedAt: new Date(),
+        deletedById: session.userId,
+        deleteReason: "Archived from document manager",
+      },
+    });
 
     await logActivity({
       orgId: session.orgId,
       userId: session.userId,
-      action: "deleted_document",
+      action: "archived_document",
       entityType: "container",
       entityId: existing.containerId,
-      summary: "Document deleted",
+      summary: "Document archived",
     });
 
     return NextResponse.json({ ok: true });

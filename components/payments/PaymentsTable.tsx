@@ -95,7 +95,7 @@ export function PaymentsTable({
   }
 
   async function remove(id: string) {
-    if (!confirm("Delete this payment request?")) return;
+    if (!confirm("Archive this payment request? It will be hidden but kept in the audit trail.")) return;
     setBusyId(id);
     try {
       const res = await fetch(`/api/payments/${id}`, { method: "DELETE" });
@@ -104,7 +104,7 @@ export function PaymentsTable({
         toast.error(j.error ?? "Failed to delete");
         return;
       }
-      toast.success("Payment deleted");
+      toast.success("Payment archived");
       router.refresh();
     } finally {
       setBusyId(null);

@@ -95,14 +95,14 @@ export function SupplierManager({
   }
 
   async function remove(s: SupplierRecord) {
-    if (!confirm(`Delete supplier "${s.name}"?`)) return;
+    if (!confirm(`Archive supplier "${s.name}"? It will be hidden but kept in the audit trail.`)) return;
     const res = await fetch(`/api/suppliers/${s.id}`, { method: "DELETE" });
     if (!res.ok) {
       const j = await res.json();
       toast.error(j.error ?? "Failed to delete");
       return;
     }
-    toast.success("Supplier deleted");
+    toast.success("Supplier archived");
     router.refresh();
   }
 

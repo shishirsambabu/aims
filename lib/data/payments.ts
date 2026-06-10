@@ -44,7 +44,7 @@ function buildWhere(
   orgId: string,
   filters: PaymentFilters
 ): PaymentWhere {
-  const where = { orgId } as NonNullable<PaymentWhere>;
+  const where = { orgId, deletedAt: null } as NonNullable<PaymentWhere>;
   if (filters.status) where.status = filters.status;
   if (filters.containerId) where.containerId = filters.containerId;
   if (filters.q) {

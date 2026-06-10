@@ -96,7 +96,10 @@ export async function listContainers(
       eta: true,
       flagged: true,
       supplier: { select: { name: true } },
-      documents: { select: { type: true, status: true } },
+      documents: {
+        where: { deletedAt: null },
+        select: { type: true, status: true },
+      },
       ...(includeFinancials
         ? {
             sale: { select: { saleValue: true, profit: true, marginPct: true } },
@@ -156,9 +159,17 @@ export async function getContainerById(
       supplier: true,
       shipmentItem: true,
       ...(includeFinancials ? { cost: true, sale: true } : {}),
-      documents: { orderBy: { createdAt: "desc" } },
+      documents: {
+        where: { deletedAt: null },
+        orderBy: { createdAt: "desc" },
+      },
       ...(includeFinancials
-        ? { payments: { orderBy: { createdAt: "desc" } } }
+        ? {
+            payments: {
+              where: { deletedAt: null },
+              orderBy: { createdAt: "desc" },
+            },
+          }
         : {}),
     },
   });

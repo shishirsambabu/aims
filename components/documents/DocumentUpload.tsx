@@ -138,10 +138,6 @@ export function DocumentUpload({
         return;
       }
 
-      const { data: pub } = supabase.storage
-        .from(STORAGE_BUCKET)
-        .getPublicUrl(path);
-
       const res = await fetch("/api/documents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -152,7 +148,6 @@ export function DocumentUpload({
           issueDate,
           expiryDate,
           filePath: path,
-          fileUrl: pub?.publicUrl,
           fileName: uploadFile.name,
           fileSize: uploadFile.size,
           status: "Uploaded",

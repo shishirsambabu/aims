@@ -15,7 +15,7 @@ export default async function NewContainerPage() {
   let suppliers: { id: string; name: string }[] = [];
   try {
     suppliers = await prisma.supplier.findMany({
-      where: { orgId },
+      where: { orgId, deletedAt: null },
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     });

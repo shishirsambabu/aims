@@ -139,9 +139,11 @@ export async function getNavCounts(orgId: string): Promise<NavCounts> {
       arrivalPrompts,
     ] = await Promise.all([
       prisma.document.count({
-        where: { orgId, expiryDate: { not: null, lte: in30 } },
+        where: { orgId, deletedAt: null, expiryDate: { not: null, lte: in30 } },
       }),
-      prisma.payment.count({ where: { orgId, status: { not: "Paid" } } }),
+      prisma.payment.count({
+        where: { orgId, deletedAt: null, status: { not: "Paid" } },
+      }),
       prisma.container.count({ where: { orgId, flagged: true } }),
       prisma.container.count({
         where: {
@@ -227,6 +229,7 @@ export async function getAlerts(orgId: string): Promise<AlertItem[]> {
         prisma.container.findMany({
           where: {
             orgId,
+            deletedAt: null,
             lastFreeDate: { not: null, lte: in7 },
             status: { in: ACTIVE_STATUSES },
           },
@@ -238,7 +241,7 @@ export async function getAlerts(orgId: string): Promise<AlertItem[]> {
           },
         }),
         prisma.document.findMany({
-          where: { orgId, expiryDate: { not: null, lte: in30 } },
+          where: { orgId, deletedAt: null, expiryDate: { not: null, lte: in30 } },
           select: {
             id: true,
             type: true,
@@ -248,7 +251,7 @@ export async function getAlerts(orgId: string): Promise<AlertItem[]> {
           },
         }),
         prisma.payment.findMany({
-          where: { orgId, approvalStatus: "PendingApproval" },
+          where: { orgId, deletedAt: null, approvalStatus: "PendingApproval" },
           select: {
             id: true,
             containerId: true,
@@ -258,7 +261,12 @@ export async function getAlerts(orgId: string): Promise<AlertItem[]> {
           },
         }),
         prisma.payment.findMany({
-          where: { orgId, status: { not: "Paid" }, dueDate: { lt: now } },
+          where: {
+            orgId,
+            deletedAt: null,
+            status: { not: "Paid" },
+            dueDate: { lt: now },
+          },
           select: {
             id: true,
             containerId: true,
@@ -269,7 +277,7 @@ export async function getAlerts(orgId: string): Promise<AlertItem[]> {
           },
         }),
         prisma.sale.findMany({
-          where: { orgId, marginPct: { lt: 0 } },
+          where: { orgId, marginPct: { lt: 0 }, container: { deletedAt: null } },
           select: {
             id: true,
             containerId: true,
@@ -278,7 +286,7 @@ export async function getAlerts(orgId: string): Promise<AlertItem[]> {
           },
         }),
         prisma.container.findMany({
-          where: { orgId, flagged: true },
+          where: { orgId, deletedAt: null, flagged: true },
           select: { id: true, containerNo: true },
         }),
       ]);
