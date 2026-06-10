@@ -108,12 +108,17 @@ export function KanbanBoard({
     >
       <div className="flex h-full gap-4 overflow-x-auto pb-4 scrollbar-thin">
         {CONTAINER_STATUSES.map((status) => (
-          <Column
-            key={status}
-            status={status}
-            rows={columns[status]}
-            disabled={!canEdit}
-          />
+          <div key={status} className="flex h-full">
+            {status === "PartiallySold" && (
+              <div className="mr-4 flex h-full flex-col items-center justify-start">
+                <div className="rounded-full bg-primary/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary [writing-mode:vertical-rl]">
+                  Handoff → Sales Team
+                </div>
+                <div className="mt-2 w-px flex-1 bg-border" />
+              </div>
+            )}
+            <Column status={status} rows={columns[status]} disabled={!canEdit} />
+          </div>
         ))}
       </div>
 

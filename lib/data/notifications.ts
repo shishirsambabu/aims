@@ -11,6 +11,7 @@ export interface NavCounts {
   flaggedContainers: number;
   demurrageRisk: number;
   pendingApprovals: number;
+  arrivalPrompts: number;
   totalAlerts: number;
 }
 
@@ -20,10 +21,12 @@ const ZERO: NavCounts = {
   flaggedContainers: 0,
   demurrageRisk: 0,
   pendingApprovals: 0,
+  arrivalPrompts: 0,
   totalAlerts: 0,
 };
 
 export type AlertCategory =
+  | "arrival"
   | "demurrage"
   | "docExpiry"
   | "approval"
@@ -66,6 +69,7 @@ export async function getNavCounts(orgId: string): Promise<NavCounts> {
       flaggedContainers,
       demurrageRisk,
       pendingApprovals,
+      arrivalPrompts,
     ] = await Promise.all([
       prisma.document.count({
         where: { orgId, expiryDate: { not: null, lte: in30 } },
@@ -82,17 +86,26 @@ export async function getNavCounts(orgId: string): Promise<NavCounts> {
       prisma.payment.count({
         where: { orgId, approvalStatus: "PendingApproval" },
       }),
+      prisma.container.count({
+        where: {
+          orgId,
+          deletedAt: null,
+          ata: null,
+          eta: { not: null, lte: now },
+          status: { in: ACTIVE_STATUSES },
+        },
+      }),
     ]);
 
-    void now;
     const totalAlerts =
-      expiringDocs + flaggedContainers + demurrageRisk + pendingApprovals;
+      expiringDocs + flaggedContainers + demurrageRisk + pendingApprovals + arrivalPrompts;
     return {
       expiringDocs,
       pendingPayments,
       flaggedContainers,
       demurrageRisk,
       pendingApprovals,
+      arrivalPrompts,
       totalAlerts,
     };
   } catch {
@@ -109,8 +122,19 @@ export async function getAlerts(orgId: string): Promise<AlertItem[]> {
     in7.setDate(in7.getDate() + 7);
     const now = new Date();
 
-    const [demurrage, docs, approvals, overdue, lossMaking, flagged] =
+    const [arrivals, demurrage, docs, approvals, overdue, lossMaking, flagged] =
       await Promise.all([
+        prisma.container.findMany({
+          where: {
+            orgId,
+            deletedAt: null,
+            ata: null,
+            eta: { not: null, lte: now },
+            status: { in: ACTIVE_STATUSES },
+          },
+          select: { id: true, containerNo: true, eta: true, status: true },
+          take: 50,
+        }),
         prisma.container.findMany({
           where: {
             orgId,
@@ -171,6 +195,21 @@ export async function getAlerts(orgId: string): Promise<AlertItem[]> {
       ]);
 
     const alerts: AlertItem[] = [];
+
+    for (const c of arrivals) {
+      const d = daysUntil(c.eta);
+      alerts.push({
+        id: `arr-${c.id}`,
+        category: "arrival",
+        severity: d !== null && d < 0 ? "critical" : "warning",
+        title: `${c.containerNo} — confirm arrival?`,
+        subtitle:
+          d !== null && d < 0
+            ? `ETA was ${Math.abs(d)}d ago · set ATA`
+            : "ETA today · mark arrived to set ATA",
+        href: `/containers/${c.id}`,
+      });
+    }
 
     for (const c of demurrage) {
       const d = daysUntil(c.lastFreeDate);

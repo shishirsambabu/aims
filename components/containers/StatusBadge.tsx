@@ -10,6 +10,7 @@ const CONTAINER_STATUS_STYLES: Record<ContainerStatus, string> = {
   CustomsClearance: "bg-amber-100 text-amber-800",
   Cleared: "bg-cyan-100 text-cyan-800",
   InWarehouse: "bg-violet-100 text-violet-800",
+  EmptyReturned: "bg-teal-100 text-teal-800",
   PartiallySold: "bg-warning/20 text-[#9A6212]",
   FullySold: "bg-success/15 text-success",
 };

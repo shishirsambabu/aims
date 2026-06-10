@@ -7,6 +7,7 @@ const CONTAINER_STATUS = [
   "CustomsClearance",
   "Cleared",
   "InWarehouse",
+  "EmptyReturned",
   "PartiallySold",
   "FullySold",
 ] as const;

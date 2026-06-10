@@ -19,6 +19,7 @@ import { getAlerts, type AlertCategory, type AlertItem } from "@/lib/data/notifi
 export const dynamic = "force-dynamic";
 
 const GROUPS: { key: AlertCategory; label: string; icon: LucideIcon }[] = [
+  { key: "arrival", label: "Arrival Confirmation (set ATA)", icon: Clock },
   { key: "demurrage", label: "Demurrage / Detention Risk", icon: Clock },
   { key: "paymentOverdue", label: "Overdue Payments", icon: CreditCard },
   { key: "lossMaking", label: "Loss-Making Containers", icon: TrendingDown },

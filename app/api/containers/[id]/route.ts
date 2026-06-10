@@ -40,7 +40,10 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
     const existing = await prisma.container.findFirst({
       where: { id: params.id, orgId: session.orgId },
-      select: { id: true, status: true, containerNo: true },
+      select: {
+        id: true, status: true, containerNo: true,
+        eta: true, ata: true, originalEta: true, freeDays: true,
+      },
     });
     if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -86,13 +89,31 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       input.portCode ??
       (input.port ? PORTS.find((p) => p.name === input.port)?.code : undefined);
 
-    // Recompute free time from ETA + free days when not explicitly provided.
-    let lastFreeDate = input.lastFreeDate;
-    if (lastFreeDate === undefined && input.eta && input.freeDays) {
-      const d = new Date(input.eta);
-      d.setDate(d.getDate() + input.freeDays);
-      lastFreeDate = d;
+    // ETA revision: remember the original ETA the first time ETA changes.
+    let originalEta: Date | undefined = undefined;
+    if (
+      input.eta &&
+      existing.eta &&
+      input.eta.getTime() !== existing.eta.getTime() &&
+      !existing.originalEta
+    ) {
+      originalEta = existing.eta;
     }
+
+    // Free time: prefer ATA (actual) over ETA as the base; recompute when not
+    // explicitly provided.
+    let lastFreeDate = input.lastFreeDate;
+    if (lastFreeDate === undefined) {
+      const base = input.ata ?? existing.ata ?? input.eta ?? existing.eta ?? null;
+      const days = input.freeDays ?? existing.freeDays ?? null;
+      if (base && days) {
+        const d = new Date(base);
+        d.setDate(d.getDate() + days);
+        lastFreeDate = d;
+      }
+    }
+
+    const justArrived = !!input.ata && !existing.ata;
 
     const container = await prisma.container.update({
       where: { id: params.id },
@@ -118,6 +139,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         etd: input.etd,
         eta: input.eta,
         ata: input.ata,
+        originalEta,
         bookingDate: input.bookingDate,
         doUpto: input.doUpto,
         emptyReturnDate: input.emptyReturnDate,
@@ -131,12 +153,18 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     await logActivity({
       orgId: session.orgId,
       userId: session.userId,
-      action: statusChanged ? "status_changed" : "updated",
+      action: justArrived
+        ? "marked_arrived"
+        : statusChanged
+          ? "status_changed"
+          : "updated",
       entityType: "container",
       entityId: container.id,
-      summary: statusChanged
-        ? `Status of ${container.containerNo} → ${input.status}`
-        : `Updated container ${container.containerNo}`,
+      summary: justArrived
+        ? `${container.containerNo} marked arrived (ATA set)`
+        : statusChanged
+          ? `Status of ${container.containerNo} → ${input.status}`
+          : `Updated container ${container.containerNo}`,
     });
 
     return NextResponse.json({ data: container });

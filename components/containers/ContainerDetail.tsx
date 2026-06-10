@@ -52,6 +52,7 @@ interface DetailData {
   etd: string | null;
   eta: string | null;
   ata: string | null;
+  originalEta: string | null;
   doUpto: string | null;
   emptyReturnDate: string | null;
   bookingDate: string | null;
@@ -282,6 +283,34 @@ function OverviewTab({
   const nextReq = nextStage ? stageRequirement(nextStage) : null;
   const presentSet = new Set(ctx.presentDocTypes);
 
+  async function markArrived() {
+    const today = new Date().toISOString().slice(0, 10);
+    const input = window.prompt(
+      "Actual arrival date (ATA):",
+      container.ata ? container.ata.slice(0, 10) : today
+    );
+    if (!input) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/containers/${container.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ata: input }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(json.error ?? "Failed to mark arrived");
+        return;
+      }
+      toast.success("Marked arrived — ATA recorded, free time recalculated");
+      router.refresh();
+    } catch {
+      toast.error("Network error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function changeStatus(next: ContainerStatus) {
     setSaving(true);
     setStatus(next);
@@ -436,6 +465,30 @@ function OverviewTab({
                   </ul>
                 </div>
               )}
+            {/* Arrival workflow */}
+            {!container.ata ? (
+              <div className="rounded-md border border-primary/30 bg-accent/40 p-2.5 text-xs">
+                <p className="font-medium">
+                  {container.eta && daysUntil(container.eta) !== null && daysUntil(container.eta)! <= 0
+                    ? "Has this container arrived?"
+                    : "Arrival not yet confirmed"}
+                </p>
+                {canEdit && (
+                  <Button size="sm" className="mt-2" onClick={markArrived} disabled={saving}>
+                    Mark Arrived (set ATA)
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-success">
+                Arrived · ATA {formatDate(container.ata)}
+              </p>
+            )}
+            {container.originalEta && (
+              <p className="text-xs text-[#9A6212]">
+                ETA revised — original was {formatDate(container.originalEta)}
+              </p>
+            )}
             {!canEdit && (
               <p className="text-xs text-muted-foreground">
                 Viewers can&apos;t change status.

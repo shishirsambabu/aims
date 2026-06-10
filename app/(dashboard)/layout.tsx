@@ -35,6 +35,7 @@ export default async function DashboardLayout({
     flaggedContainers: 0,
     demurrageRisk: 0,
     pendingApprovals: 0,
+    arrivalPrompts: 0,
     totalAlerts: 0,
   };
   const ctx = await getSessionContext();

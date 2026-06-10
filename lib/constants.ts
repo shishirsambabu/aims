@@ -39,6 +39,7 @@ export const CONTAINER_STATUSES: ContainerStatus[] = [
   "CustomsClearance",
   "Cleared",
   "InWarehouse",
+  "EmptyReturned",
   "PartiallySold",
   "FullySold",
 ];
@@ -50,6 +51,7 @@ export const CONTAINER_STATUS_LABELS: Record<ContainerStatus, string> = {
   CustomsClearance: "Customs Clearance",
   Cleared: "Cleared",
   InWarehouse: "In Warehouse",
+  EmptyReturned: "Empty Returned",
   PartiallySold: "Partially Sold",
   FullySold: "Fully Sold",
 };

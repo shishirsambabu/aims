@@ -21,6 +21,7 @@ export type ContainerStatus =
   | "CustomsClearance"
   | "Cleared"
   | "InWarehouse"
+  | "EmptyReturned"
   | "PartiallySold"
   | "FullySold";
 
