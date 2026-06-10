@@ -32,6 +32,7 @@
 | 18 | Container Data Model v2 + Arrival Importer | ✅ Complete (2026-06-09) | POL/POD, origin, line, vessel, transhipment, package type, per-pkg weight, ATA, DO upto, empty return, transit; free-time auto-calc from ETA; shipper-invoice upload on create; multi-sheet arrival importer (418 rows verified) |
 | 19 | Arrival/ATA Workflow + ETA Revision | ✅ Complete (2026-06-09) | Mark-Arrived (ATA) action; ETA-day arrival prompts (alerts + dashboard badge); ETA revision keeps originalEta; free time recomputed from ATA |
 | 20 | Pipeline v2 + Team Handoff | ✅ Complete (2026-06-09) | New "Empty Returned" stage after In Warehouse; Kanban handoff divider (Docs team → Sales team) |
+| 21 | Personal Workbench + Alert Routing | ✅ Code complete (2026-06-10) | Roadmap file for Phases 21-24; per-user alert preferences/state; role-aware dashboard workbench; personal alert center with read/snooze/resolve actions |
 
 ### Phase 10 — Workflow State Machine (done)
 - [x] `lib/workflow.ts` — `canTransition`/`allowedTransitions`/`stageRequirement`

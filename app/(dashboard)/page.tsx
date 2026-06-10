@@ -7,14 +7,18 @@ import {
   TrendingDown,
   ArrowRight,
   Percent,
+  BellRing,
+  ShieldAlert,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
+import { AlertActions } from "@/components/alerts/AlertActions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { getAnalytics, type Analytics } from "@/lib/data/analytics";
+import { getPersonalAlerts, type PersonalAlertSummary } from "@/lib/data/notifications";
 import { cn, formatINR, formatUSD, marginColor } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -24,9 +28,13 @@ export default async function DashboardHome() {
   const showFinancials = can(session.role, "financials.view");
 
   let data: Analytics | null = null;
+  let workbench: PersonalAlertSummary | null = null;
   let loadError = false;
   try {
-    data = await getAnalytics(session.orgId);
+    [data, workbench] = await Promise.all([
+      getAnalytics(session.orgId),
+      getPersonalAlerts(session),
+    ]);
   } catch {
     loadError = true;
   }
@@ -55,6 +63,8 @@ export default async function DashboardHome() {
           </div>
         ) : (
           <>
+            <Workbench data={workbench} role={session.role} />
+
             {/* KPI cards */}
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <Kpi
@@ -147,6 +157,143 @@ export default async function DashboardHome() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function Workbench({
+  data,
+  role,
+}: {
+  data: PersonalAlertSummary | null;
+  role: string;
+}) {
+  const active = data?.active ?? [];
+  const topAlerts = active.slice(0, 5);
+
+  return (
+    <div className="grid gap-6 xl:grid-cols-[1.5fr_0.8fr]">
+      <Card className="overflow-hidden border-primary/15 bg-gradient-to-br from-surface via-surface to-primary/5">
+        <CardContent className="p-0">
+          <div className="border-b border-border px-6 py-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="label-caps">Phase 21 Workbench</p>
+                <h2 className="mt-1 font-heading text-2xl font-bold">
+                  My work today
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Role-aware next actions for your {role.replace("_", " ")} queue.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <BadgeStat label="Unread" value={data?.unreadCount ?? 0} />
+                <BadgeStat label="Critical" value={data?.criticalCount ?? 0} tone="danger" />
+              </div>
+            </div>
+          </div>
+
+          {topAlerts.length === 0 ? (
+            <div className="flex items-center gap-3 px-6 py-8">
+              <div className="rounded-full bg-success/10 p-3 text-success">
+                <BellRing className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-medium">No active tasks in your queue.</p>
+                <p className="text-sm text-muted-foreground">
+                  The noisy stuff stays out until the SOP actually needs you.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <ul className="divide-y divide-border">
+              {topAlerts.map((a) => (
+                <li key={a.id} className="px-6 py-4">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <Link href={a.href} className="group flex min-w-0 gap-3">
+                      <span
+                        className={cn(
+                          "mt-1 h-2.5 w-2.5 shrink-0 rounded-full",
+                          a.severity === "critical" ? "bg-danger" : "bg-warning"
+                        )}
+                      />
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-medium group-hover:text-primary">
+                            {a.title}
+                          </p>
+                          {a.isUnread && (
+                            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                              New
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {a.subtitle}
+                        </p>
+                        <p className="mt-1 text-xs font-medium text-primary">
+                          Next: {a.primaryAction}
+                        </p>
+                      </div>
+                    </Link>
+                    <AlertActions alertKey={a.id} category={a.category} compact />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-warning/30 bg-warning/10">
+        <CardContent className="space-y-4 pt-6">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="h-5 w-5 text-[#9A6212]" />
+            <h3 className="font-heading text-base font-semibold">
+              Detention watch
+            </h3>
+          </div>
+          <p className="font-financial text-4xl font-bold">
+            {data?.detentionCount ?? 0}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Active containers are inside the free-day danger window or already
+            accruing charges.
+          </p>
+          <Button asChild variant="outline" className="w-full">
+            <Link href="/alerts">Open alert center</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function BadgeStat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone?: "danger";
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-xl border bg-surface px-3 py-2 text-right shadow-sm",
+        tone === "danger" && "border-danger/25 bg-danger/5"
+      )}
+    >
+      <p className="label-caps">{label}</p>
+      <p
+        className={cn(
+          "font-financial text-xl font-bold",
+          tone === "danger" && "text-danger"
+        )}
+      >
+        {value}
+      </p>
     </div>
   );
 }

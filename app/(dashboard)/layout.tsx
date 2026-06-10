@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopNav } from "@/components/layout/TopNav";
 import { getSessionContext } from "@/lib/auth";
-import { getNavCounts, type NavCounts } from "@/lib/data/notifications";
+import { getPersonalNavCounts, type NavCounts } from "@/lib/data/notifications";
 
 export default async function DashboardLayout({
   children,
@@ -39,7 +39,7 @@ export default async function DashboardLayout({
     totalAlerts: 0,
   };
   const ctx = await getSessionContext();
-  if (ctx) counts = await getNavCounts(ctx.orgId);
+  if (ctx) counts = await getPersonalNavCounts(ctx);
 
   return (
     <div className="flex h-screen overflow-hidden bg-surface-alt">
