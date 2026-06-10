@@ -102,9 +102,10 @@ export default async function ContainerDetailPage({ params }: PageProps) {
           container: can(session.role, "container.write"),
           cost: can(session.role, "cost.write"),
           finalize: can(session.role, "cost.finalize"),
-          unlock: can(session.role, "cost.unlock"),
-          sale: can(session.role, "sale.write"),
-          docs: can(session.role, "doc.write"),
+    unlock: can(session.role, "cost.unlock"),
+    sale: can(session.role, "sale.write"),
+    saleApprove: can(session.role, "sale.approve"),
+    docs: can(session.role, "doc.write"),
           financials: can(session.role, "financials.view"),
         }}
         orgId={session.orgId}

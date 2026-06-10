@@ -75,7 +75,9 @@ export async function getReportData(
       port: true,
       supplier: { select: { name: true } },
       cost: { select: { totalCost: true, beInvoiceValueInr: true } },
-      sale: { select: { saleValue: true, profit: true } },
+      sale: {
+        select: { saleValue: true, profit: true, approvalStatus: true },
+      },
     },
   });
 
@@ -90,8 +92,9 @@ export async function getReportData(
   for (const c of containers) {
     const inv = n(c.cost?.beInvoiceValueInr);
     const cost = n(c.cost?.totalCost);
-    const sale = n(c.sale?.saleValue);
-    const prof = n(c.sale?.profit);
+    const approvedSale = c.sale?.approvalStatus === "Approved" ? c.sale : null;
+    const sale = n(approvedSale?.saleValue);
+    const prof = n(approvedSale?.profit);
     invoiceValueInr += inv;
     totalCost += cost;
     saleValue += sale;

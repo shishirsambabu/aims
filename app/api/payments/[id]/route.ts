@@ -11,6 +11,22 @@ interface Params {
   params: Promise<{ id: string }>;
 }
 
+function paymentSnapshot(payment: {
+  amountRequested: unknown;
+  amountPaid: unknown;
+  status: string;
+  approvalStatus: string;
+  paidDate?: Date | null;
+}) {
+  return {
+    amountRequested: Number(payment.amountRequested),
+    amountPaid: Number(payment.amountPaid),
+    status: payment.status,
+    approvalStatus: payment.approvalStatus,
+    paidDate: payment.paidDate?.toISOString() ?? null,
+  };
+}
+
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
     const { id } = await params;
@@ -23,7 +39,12 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
     const body = (await request.json()) as Record<string, unknown> & {
       action?: "approve" | "reject";
+      reason?: string;
     };
+    const reason =
+      typeof body.reason === "string" && body.reason.trim()
+        ? body.reason.trim()
+        : null;
 
     const existing = await prisma.payment.findFirst({
       where: { id, orgId: session.orgId, deletedAt: null },
@@ -32,7 +53,6 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // --- Maker-checker approval path ---
     if (body.action === "approve" || body.action === "reject") {
       if (!can(session.role, "payment.approve")) {
         return NextResponse.json(
@@ -40,14 +60,19 @@ export async function PATCH(request: NextRequest, { params }: Params) {
           { status: 403 }
         );
       }
-      // A maker cannot approve their own request.
+      if (body.action === "reject" && !reason) {
+        return NextResponse.json(
+          { error: "A rejection reason is required" },
+          { status: 422 }
+        );
+      }
       if (
         body.action === "approve" &&
         existing.requestedById &&
         existing.requestedById === session.userId
       ) {
         return NextResponse.json(
-          { error: "You can't approve a payment you raised — needs a second approver" },
+          { error: "You can't approve a payment you raised - needs a second approver" },
           { status: 409 }
         );
       }
@@ -57,6 +82,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
           approvalStatus: body.action === "approve" ? "Approved" : "Rejected",
           approvedById: session.userId,
           approvedAt: new Date(),
+          notes: reason
+            ? `${existing.notes ? `${existing.notes}\n` : ""}Review note: ${reason}`
+            : existing.notes,
         },
       });
       await logActivity({
@@ -66,11 +94,15 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         entityType: "container",
         entityId: existing.containerId,
         summary: `Payment ${body.action === "approve" ? "approved" : "rejected"} (${existing.currency} ${Number(existing.amountRequested).toLocaleString()})`,
+        metadata: {
+          reason,
+          before: paymentSnapshot(existing),
+          after: paymentSnapshot(payment),
+        },
       });
       return NextResponse.json({ data: payment });
     }
 
-    // --- Record-payment path (requires an approved request) ---
     if (!can(session.role, "payment.pay")) {
       return NextResponse.json(
         { error: "You do not have permission to record payments" },
@@ -81,6 +113,12 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       return NextResponse.json(
         { error: "Payment must be approved before it can be paid" },
         { status: 409 }
+      );
+    }
+    if (!reason) {
+      return NextResponse.json(
+        { error: "A reason is required to record a payment update" },
+        { status: 422 }
       );
     }
 
@@ -106,7 +144,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
           input.paidDate ??
           (status === "Paid" && !existing.paidDate ? new Date() : undefined),
         reference: input.reference,
-        notes: input.notes,
+        notes: input.notes ?? existing.notes,
       },
     });
 
@@ -116,7 +154,12 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       action: "updated_payment",
       entityType: "container",
       entityId: existing.containerId,
-      summary: `Payment ${status} — paid ${existing.currency} ${amountPaid.toLocaleString()}`,
+      summary: `Payment ${status} - paid ${existing.currency} ${amountPaid.toLocaleString()}`,
+      metadata: {
+        reason,
+        before: paymentSnapshot(existing),
+        after: paymentSnapshot(payment),
+      },
     });
 
     return NextResponse.json({ data: payment });
@@ -125,25 +168,31 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: Params) {
+export async function DELETE(request: NextRequest, { params }: Params) {
   try {
     const { id } = await params;
     const session = await requireSession();
-    if (!can(session.role, "financials.view")) {
+    if (!can(session.role, "financials.view") || !can(session.role, "payment.write")) {
       return NextResponse.json(
         { error: "You do not have permission to delete payments" },
         { status: 403 }
       );
     }
-    if (!can(session.role, "payment.write")) {
+
+    const body = await request.json().catch(() => ({}));
+    const reason =
+      typeof body.reason === "string" && body.reason.trim()
+        ? body.reason.trim()
+        : null;
+    if (!reason) {
       return NextResponse.json(
-        { error: "You do not have permission to delete payments" },
-        { status: 403 }
+        { error: "A reason is required to archive a payment request" },
+        { status: 422 }
       );
     }
+
     const existing = await prisma.payment.findFirst({
       where: { id, orgId: session.orgId, deletedAt: null },
-      select: { id: true, containerId: true },
     });
     if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -153,7 +202,7 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
       data: {
         deletedAt: new Date(),
         deletedById: session.userId,
-        deleteReason: "Archived from payments module",
+        deleteReason: reason,
       },
     });
     await logActivity({
@@ -163,6 +212,7 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
       entityType: "container",
       entityId: existing.containerId,
       summary: "Payment request archived",
+      metadata: { reason, before: paymentSnapshot(existing) },
     });
     return NextResponse.json({ ok: true });
   } catch (err) {

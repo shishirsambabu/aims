@@ -11,6 +11,37 @@ interface Params {
   params: Promise<{ id: string }>;
 }
 
+function costSnapshot(cost: Record<string, unknown> | null | undefined) {
+  if (!cost) return null;
+  const keys = [
+    "beInvoiceValueInr",
+    "exchangeRate",
+    "customsDuty",
+    "clearingCharges",
+    "linerCharges",
+    "detention",
+    "chaCharges",
+    "igst",
+    "cess",
+    "transport",
+    "ohProportion",
+    "claimDeduction",
+    "otherCharges",
+    "totalCost",
+    "ratePerBoxLanding",
+    "ratePerBox",
+    "finalized",
+  ];
+  return Object.fromEntries(
+    keys.map((key) => [
+      key,
+      typeof cost[key] === "object" && cost[key] !== null
+        ? Number(cost[key])
+        : (cost[key] ?? null),
+    ])
+  );
+}
+
 /** Upsert landing costs, recompute totals + rate/box, and re-derive profit. */
 export async function PUT(request: NextRequest, { params }: Params) {
   try {
@@ -29,7 +60,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
         id: true,
         noOfBoxes: true,
         containerNo: true,
-        cost: { select: { finalized: true } },
+        cost: true,
       },
     });
     if (!container) {
@@ -37,7 +68,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     }
     if (container.cost?.finalized) {
       return NextResponse.json(
-        { error: "Cost sheet is finalized — unlock it before editing" },
+        { error: "Cost sheet is finalized - unlock it before editing" },
         { status: 409 }
       );
     }
@@ -79,7 +110,6 @@ export async function PUT(request: NextRequest, { params }: Params) {
       update: data,
     });
 
-    // Keep cached profit in sync with the new total cost.
     await resyncProfit(session.orgId, container.id, computed.totalCost);
 
     await logActivity({
@@ -88,9 +118,13 @@ export async function PUT(request: NextRequest, { params }: Params) {
       action: "updated_costs",
       entityType: "container",
       entityId: container.id,
-      summary: `Updated costs for ${container.containerNo} — total ₹${computed.totalCost.toLocaleString(
+      summary: `Updated costs for ${container.containerNo} - total INR ${computed.totalCost.toLocaleString(
         "en-IN"
       )}`,
+      metadata: {
+        before: costSnapshot(container.cost),
+        after: costSnapshot(cost),
+      },
     });
 
     return NextResponse.json({ data: cost });
@@ -103,13 +137,17 @@ export async function PUT(request: NextRequest, { params }: Params) {
   }
 }
 
-/** Finalize (lock) or unlock a cost sheet — the maker-checker control. */
+/** Finalize (lock) or unlock a cost sheet - the maker-checker control. */
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
     const { id } = await params;
     const session = await requireSession();
-    const body = (await request.json()) as { finalized?: boolean };
+    const body = (await request.json()) as {
+      finalized?: boolean;
+      reason?: string;
+    };
     const finalize = body.finalized !== false;
+    const reason = body.reason?.trim() || null;
 
     const cap = finalize ? "cost.finalize" : "cost.unlock";
     if (!can(session.role, cap)) {
@@ -122,10 +160,16 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         { status: 403 }
       );
     }
+    if (!finalize && !reason) {
+      return NextResponse.json(
+        { error: "A reason is required to unlock a finalized cost sheet" },
+        { status: 422 }
+      );
+    }
 
     const container = await prisma.container.findFirst({
       where: { id, orgId: session.orgId, deletedAt: null },
-      select: { id: true, containerNo: true, cost: { select: { id: true } } },
+      select: { id: true, containerNo: true, cost: true },
     });
     if (!container) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -153,6 +197,11 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       entityType: "container",
       entityId: container.id,
       summary: `${finalize ? "Finalized" : "Unlocked"} cost sheet for ${container.containerNo}`,
+      metadata: {
+        reason,
+        before: costSnapshot(container.cost),
+        after: costSnapshot(cost),
+      },
     });
 
     return NextResponse.json({ data: cost });
@@ -187,6 +236,12 @@ async function resyncProfit(
       profit: profit.profit,
       profitPerBox: profit.profitPerBox,
       marginPct: profit.marginPct,
+      approvalStatus:
+        sale.approvalStatus === "Approved" ? "PendingApproval" : sale.approvalStatus,
+      reviewNotes:
+        sale.approvalStatus === "Approved"
+          ? "Cost changed; sales require re-review before operational use."
+          : sale.reviewNotes,
     },
   });
 }

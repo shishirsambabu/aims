@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, TrendingDown, TrendingUp } from "lucide-react";
+import { Check, Loader2, TrendingDown, TrendingUp, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -36,11 +36,13 @@ export function SalesPanel({
   totalCost,
   sale,
   canEdit,
+  canApprove,
 }: {
   containerId: string;
   totalCost: number | null;
   sale: Record<string, unknown> | null;
   canEdit: boolean;
+  canApprove: boolean;
 }) {
   const router = useRouter();
   const [form, setForm] = useState<FormState>(() => toForm(sale));
@@ -65,19 +67,20 @@ export function SalesPanel({
   }
 
   async function save() {
+    const reason = window.prompt("Sales update reason / review note (optional):") ?? "";
     setSaving(true);
     try {
       const res = await fetch(`/api/containers/${containerId}/sales`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form }),
+        body: JSON.stringify({ ...form, reason }),
       });
       const json = await res.json();
       if (!res.ok) {
         toast.error(json.error ?? "Failed to save sales");
         return;
       }
-      toast.success("Sales saved");
+      toast.success("Sales submitted for review");
       router.refresh();
     } catch {
       toast.error("Network error");
@@ -87,6 +90,34 @@ export function SalesPanel({
   }
 
   const profitUp = result.profit >= 0;
+  const approvalStatus = String(sale?.approvalStatus ?? "Draft");
+
+  async function review(action: "approve" | "reject") {
+    const reason =
+      action === "reject"
+        ? window.prompt("Why are you rejecting these sales figures?")
+        : window.prompt("Approval note (optional):") ?? "";
+    if (action === "reject" && !reason?.trim()) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/containers/${containerId}/sales`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, reason }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(json.error ?? "Failed to review sales");
+        return;
+      }
+      toast.success(action === "approve" ? "Sales approved" : "Sales rejected");
+      router.refresh();
+    } catch {
+      toast.error("Network error");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -147,6 +178,35 @@ export function SalesPanel({
           <h3 className="mb-4 font-heading text-base font-semibold">
             Sales Figures
           </h3>
+          {sale && (
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-surface-alt/50 p-3 text-sm">
+              <span>
+                Review status:{" "}
+                <strong className="font-semibold">{approvalStatus}</strong>
+              </span>
+              {canApprove && approvalStatus === "PendingApproval" && (
+                <span className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => review("reject")}
+                    disabled={saving}
+                  >
+                    <X className="h-4 w-4" /> Reject
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => review("approve")}
+                    disabled={saving}
+                  >
+                    <Check className="h-4 w-4" /> Approve
+                  </Button>
+                </span>
+              )}
+            </div>
+          )}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {FIELDS.map((field) => (
               <div key={field.key} className="space-y-1.5">

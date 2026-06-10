@@ -63,12 +63,16 @@ export function CostPanel({
   const editable = canEdit && !finalized;
 
   async function setFinalized(next: boolean) {
+    const reason = next
+      ? window.prompt("Finalize note (optional):") ?? ""
+      : window.prompt("Why are you unlocking this finalized cost sheet?");
+    if (!next && !reason?.trim()) return;
     setSaving(true);
     try {
       const res = await fetch(`/api/containers/${containerId}/costs`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ finalized: next }),
+        body: JSON.stringify({ finalized: next, reason }),
       });
       const json = await res.json();
       if (!res.ok) {

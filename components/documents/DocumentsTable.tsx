@@ -57,10 +57,17 @@ export function DocumentsTable({
   }
 
   async function remove(id: string) {
-    if (!confirm("Archive this document? It will be hidden but kept in the audit trail.")) return;
+    const reason = window.prompt(
+      "Why are you archiving this document? This will be kept in the audit trail."
+    );
+    if (!reason?.trim()) return;
     setBusyId(id);
     try {
-      const res = await fetch(`/api/documents/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/documents/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      });
       if (!res.ok) {
         const j = await res.json();
         toast.error(j.error ?? "Failed to delete");

@@ -45,12 +45,17 @@ export function PaymentsTable({
   const [busyId, setBusyId] = useState<string | null>(null);
 
   async function decide(id: string, action: "approve" | "reject") {
+    const reason =
+      action === "reject"
+        ? window.prompt("Why are you rejecting this payment request?")
+        : window.prompt("Approval note (optional):") ?? "";
+    if (action === "reject" && !reason?.trim()) return;
     setBusyId(id);
     try {
       const res = await fetch(`/api/payments/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action, reason }),
       });
       if (!res.ok) {
         const j = await res.json();
@@ -75,12 +80,14 @@ export function PaymentsTable({
       toast.error("Enter a valid amount");
       return;
     }
+    const reason = window.prompt("Payment update reason / reference for audit trail:");
+    if (!reason?.trim()) return;
     setBusyId(p.id);
     try {
       const res = await fetch(`/api/payments/${p.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amountPaid }),
+        body: JSON.stringify({ amountPaid, reason }),
       });
       if (!res.ok) {
         const j = await res.json();
@@ -95,10 +102,17 @@ export function PaymentsTable({
   }
 
   async function remove(id: string) {
-    if (!confirm("Archive this payment request? It will be hidden but kept in the audit trail.")) return;
+    const reason = window.prompt(
+      "Why are you archiving this payment request? This will be kept in the audit trail."
+    );
+    if (!reason?.trim()) return;
     setBusyId(id);
     try {
-      const res = await fetch(`/api/payments/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/payments/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      });
       if (!res.ok) {
         const j = await res.json();
         toast.error(j.error ?? "Failed to delete");

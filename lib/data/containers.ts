@@ -102,7 +102,14 @@ export async function listContainers(
       },
       ...(includeFinancials
         ? {
-            sale: { select: { saleValue: true, profit: true, marginPct: true } },
+            sale: {
+              select: {
+                saleValue: true,
+                profit: true,
+                marginPct: true,
+                approvalStatus: true,
+              },
+            },
           }
         : {}),
     },
@@ -120,10 +127,11 @@ export async function listContainers(
     eta: Date | null;
     flagged: boolean;
     supplier: { name: string } | null;
-    sale?: {
+      sale?: {
       saleValue: unknown;
       profit: unknown;
       marginPct: unknown;
+      approvalStatus: string;
     } | null;
     documents: { type: string; status: string }[];
   }) => ({
@@ -137,9 +145,18 @@ export async function listContainers(
     noOfBoxes: r.noOfBoxes,
     status: r.status as ContainerStatus,
     eta: r.eta ? r.eta.toISOString() : null,
-    saleValue: includeFinancials ? dec(r.sale?.saleValue) : null,
-    profit: includeFinancials ? dec(r.sale?.profit) : null,
-    marginPct: includeFinancials ? dec(r.sale?.marginPct) : null,
+    saleValue:
+      includeFinancials && r.sale?.approvalStatus === "Approved"
+        ? dec(r.sale.saleValue)
+        : null,
+    profit:
+      includeFinancials && r.sale?.approvalStatus === "Approved"
+        ? dec(r.sale.profit)
+        : null,
+    marginPct:
+      includeFinancials && r.sale?.approvalStatus === "Approved"
+        ? dec(r.sale.marginPct)
+        : null,
     flagged: r.flagged,
     docScore: new Set(
       r.documents.filter((d) => d.status === "Verified").map((d) => d.type)

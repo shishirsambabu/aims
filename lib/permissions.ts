@@ -9,6 +9,7 @@ export type Capability =
   | "cost.finalize" // lock a cost sheet
   | "cost.unlock" // re-open a finalized cost sheet
   | "sale.write" // edit sales
+  | "sale.approve" // review imported / edited sales
   | "doc.write" // upload documents
   | "doc.verify" // mark a document verified
   | "payment.write" // raise a payment request (maker)
@@ -23,19 +24,19 @@ export type Capability =
 const MATRIX: Record<Role, Capability[]> = {
   admin: [
     "container.write", "cost.write", "cost.finalize", "cost.unlock",
-    "sale.write", "doc.write", "doc.verify", "payment.write",
+    "sale.write", "sale.approve", "doc.write", "doc.verify", "payment.write",
     "payment.approve", "payment.pay", "import", "team.manage",
     "masterdata.write", "audit.view", "financials.view",
   ],
   manager: [
     "container.write", "cost.write", "cost.finalize", "cost.unlock",
-    "sale.write", "doc.write", "doc.verify", "payment.write",
+    "sale.write", "sale.approve", "doc.write", "doc.verify", "payment.write",
     "payment.approve", "payment.pay", "import", "masterdata.write",
     "audit.view", "financials.view",
   ],
   clearing_agent: ["container.write", "doc.write", "doc.verify"],
   finance: [
-    "cost.write", "cost.finalize", "sale.write", "payment.write",
+    "cost.write", "cost.finalize", "sale.write", "sale.approve", "payment.write",
     "payment.approve", "payment.pay", "import", "financials.view",
   ],
   viewer: [],

@@ -59,7 +59,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: Params) {
+export async function DELETE(request: NextRequest, { params }: Params) {
   try {
     const { id } = await params;
     const session = await requireSession();
@@ -70,9 +70,21 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
       );
     }
 
+    const body = await request.json().catch(() => ({}));
+    const reason =
+      typeof body.reason === "string" && body.reason.trim()
+        ? body.reason.trim()
+        : null;
+    if (!reason) {
+      return NextResponse.json(
+        { error: "A reason is required to archive a document" },
+        { status: 422 }
+      );
+    }
+
     const existing = await prisma.document.findFirst({
       where: { id, orgId: session.orgId, deletedAt: null },
-      select: { id: true, containerId: true },
+      select: { id: true, containerId: true, type: true, status: true, docNo: true },
     });
     if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -83,7 +95,7 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
       data: {
         deletedAt: new Date(),
         deletedById: session.userId,
-        deleteReason: "Archived from document manager",
+        deleteReason: reason,
       },
     });
 
@@ -94,6 +106,7 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
       entityType: "container",
       entityId: existing.containerId,
       summary: "Document archived",
+      metadata: { reason, before: existing },
     });
 
     return NextResponse.json({ ok: true });

@@ -116,6 +116,7 @@ export interface DetailPerms {
   finalize: boolean; // finalize cost sheet
   unlock: boolean; // unlock cost sheet
   sale: boolean; // edit sales
+  saleApprove: boolean; // approve/reject sales
   docs: boolean; // upload documents
   financials: boolean; // see cost / profit / payment figures
 }
@@ -175,6 +176,7 @@ export function ContainerDetail({
                   totalCost={num(container.cost?.totalCost)}
                   sale={container.sale}
                   canEdit={perms.sale}
+                  canApprove={perms.saleApprove}
                 />
               </TabsContent>
             </>
@@ -287,7 +289,9 @@ function OverviewTab({
     verifiedDocTypes: container.documents
       .filter((d) => d.status === "Verified")
       .map((d) => d.type),
-    hasSales: num(container.sale?.saleValue as unknown) != null,
+    hasSales:
+      container.sale?.approvalStatus === "Approved" &&
+      num(container.sale?.saleValue as unknown) != null,
   };
   const nextStage =
     CONTAINER_STATUSES[CONTAINER_STATUSES.indexOf(status) + 1];
@@ -323,13 +327,20 @@ function OverviewTab({
   }
 
   async function changeStatus(next: ContainerStatus) {
+    const currentIndex = CONTAINER_STATUSES.indexOf(status);
+    const nextIndex = CONTAINER_STATUSES.indexOf(next);
+    const reason =
+      nextIndex < currentIndex
+        ? window.prompt("Why are you moving this container backward in the workflow?")
+        : "";
+    if (nextIndex < currentIndex && !reason?.trim()) return;
     setSaving(true);
     setStatus(next);
     try {
       const res = await fetch(`/api/containers/${container.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: next }),
+        body: JSON.stringify({ status: next, reason }),
       });
       const json = await res.json();
       if (!res.ok) {

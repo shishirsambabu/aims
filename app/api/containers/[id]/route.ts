@@ -7,7 +7,7 @@ import { logActivity } from "@/lib/activity";
 import { getContainerById } from "@/lib/data/containers";
 import { updateContainerSchema } from "@/lib/validations/container";
 import { canTransition } from "@/lib/workflow";
-import { PORTS } from "@/lib/constants";
+import { PORTS, CONTAINER_STATUSES } from "@/lib/constants";
 import type { ContainerStatus, DocumentType } from "@/types";
 
 interface Params {
@@ -44,8 +44,13 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const existing = await prisma.container.findFirst({
       where: { id, orgId: session.orgId, deletedAt: null },
       select: {
-        id: true, status: true, containerNo: true,
-        eta: true, ata: true, originalEta: true, freeDays: true,
+        id: true,
+        status: true,
+        containerNo: true,
+        eta: true,
+        ata: true,
+        originalEta: true,
+        freeDays: true,
       },
     });
     if (!existing) {
@@ -53,6 +58,10 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
 
     const body = await request.json();
+    const reason =
+      typeof body.reason === "string" && body.reason.trim()
+        ? body.reason.trim()
+        : null;
     const parsed = updateContainerSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -62,9 +71,19 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
 
     const input = parsed.data;
+    const statusChanged = input.status && input.status !== existing.status;
+    const isReversal =
+      statusChanged &&
+      CONTAINER_STATUSES.indexOf(input.status as ContainerStatus) <
+        CONTAINER_STATUSES.indexOf(existing.status as ContainerStatus);
+    if (isReversal && !reason) {
+      return NextResponse.json(
+        { error: "A reason is required to move a container backward in the workflow" },
+        { status: 422 }
+      );
+    }
 
-    // Enforce the workflow state machine on status changes.
-    if (input.status && input.status !== existing.status) {
+    if (statusChanged) {
       const [docs, sale] = await Promise.all([
         prisma.document.findMany({
           where: { containerId: existing.id, status: "Verified", deletedAt: null },
@@ -72,17 +91,15 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         }),
         prisma.sale.findUnique({
           where: { containerId: existing.id },
-          select: { saleValue: true },
+          select: { saleValue: true, approvalStatus: true },
         }),
       ]);
       const check = canTransition(
         existing.status as ContainerStatus,
         input.status as ContainerStatus,
         {
-          verifiedDocTypes: docs.map(
-            (d: { type: DocumentType }) => d.type
-          ),
-          hasSales: sale?.saleValue != null,
+          verifiedDocTypes: docs.map((d: { type: DocumentType }) => d.type),
+          hasSales: sale?.approvalStatus === "Approved" && sale.saleValue != null,
         }
       );
       if (!check.ok) {
@@ -94,7 +111,6 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       input.portCode ??
       (input.port ? PORTS.find((p) => p.name === input.port)?.code : undefined);
 
-    // ETA revision: remember the original ETA the first time ETA changes.
     let originalEta: Date | undefined = undefined;
     if (
       input.eta &&
@@ -105,8 +121,6 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       originalEta = existing.eta;
     }
 
-    // Free time: prefer ATA (actual) over ETA as the base; recompute when not
-    // explicitly provided.
     let lastFreeDate = input.lastFreeDate;
     if (lastFreeDate === undefined) {
       const base = input.ata ?? existing.ata ?? input.eta ?? existing.eta ?? null;
@@ -154,7 +168,6 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       },
     });
 
-    const statusChanged = input.status && input.status !== existing.status;
     await logActivity({
       orgId: session.orgId,
       userId: session.userId,
@@ -168,8 +181,25 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       summary: justArrived
         ? `${container.containerNo} marked arrived (ATA set)`
         : statusChanged
-          ? `Status of ${container.containerNo} → ${input.status}`
+          ? `Status of ${container.containerNo} -> ${input.status}`
           : `Updated container ${container.containerNo}`,
+      metadata: {
+        reason,
+        before: {
+          status: existing.status,
+          eta: existing.eta?.toISOString() ?? null,
+          ata: existing.ata?.toISOString() ?? null,
+          originalEta: existing.originalEta?.toISOString() ?? null,
+          freeDays: existing.freeDays,
+        },
+        after: {
+          status: container.status,
+          eta: container.eta?.toISOString() ?? null,
+          ata: container.ata?.toISOString() ?? null,
+          originalEta: container.originalEta?.toISOString() ?? null,
+          freeDays: container.freeDays,
+        },
+      },
     });
 
     return NextResponse.json({ data: container });

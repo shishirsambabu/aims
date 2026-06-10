@@ -234,6 +234,9 @@ export async function POST(request: NextRequest) {
                 profit: profit.profit,
                 profitPerBox: profit.profitPerBox,
                 marginPct: profit.marginPct,
+                approvalStatus: "Draft",
+                reviewNotes:
+                  "Imported from tracker; finance review required before sales become operational.",
               },
             });
           }

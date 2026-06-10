@@ -68,7 +68,14 @@ export async function getAnalytics(orgId: string): Promise<Analytics> {
         originalEta: true,
         createdAt: true,
         supplier: { select: { name: true } },
-        sale: { select: { profit: true, saleValue: true, marginPct: true } },
+        sale: {
+          select: {
+            profit: true,
+            saleValue: true,
+            marginPct: true,
+            approvalStatus: true,
+          },
+        },
         cost: { select: { beInvoiceValueInr: true, detention: true } },
         shipmentItem: { select: { beDate: true } },
       },
@@ -101,11 +108,12 @@ export async function getAnalytics(orgId: string): Promise<Analytics> {
   const containerProfits: ContainerProfitRow[] = [];
 
   for (const c of containers) {
-    const profit = num(c.sale?.profit);
+    const approvedSale = c.sale?.approvalStatus === "Approved" ? c.sale : null;
+    const profit = num(approvedSale?.profit);
     totalProfit += profit;
     totalInvoiceValueInr += num(c.cost?.beInvoiceValueInr);
     detentionChargesInr += num(c.cost?.detention);
-    if (c.sale?.marginPct != null) margins.push(num(c.sale.marginPct));
+    if (approvedSale?.marginPct != null) margins.push(num(approvedSale.marginPct));
 
     if (c.originalEta && c.ata) {
       etaVarianceDays.push(
@@ -128,7 +136,7 @@ export async function getAnalytics(orgId: string): Promise<Analytics> {
     const s = bySupplier.get(sup) ?? { containers: 0, profit: 0, margins: [] };
     s.containers += 1;
     s.profit += profit;
-    if (c.sale?.marginPct != null) s.margins.push(num(c.sale.marginPct));
+    if (approvedSale?.marginPct != null) s.margins.push(num(approvedSale.marginPct));
     bySupplier.set(sup, s);
 
     // port rollup
@@ -143,12 +151,12 @@ export async function getAnalytics(orgId: string): Promise<Analytics> {
       profitByMonth.set(k, (profitByMonth.get(k) ?? 0) + profit);
     }
 
-    if (c.sale?.profit != null) {
+    if (approvedSale?.profit != null) {
       containerProfits.push({
         containerNo: c.containerNo,
         supplier: c.supplier?.name ?? null,
         profit,
-        marginPct: c.sale.marginPct != null ? num(c.sale.marginPct) : null,
+        marginPct: approvedSale.marginPct != null ? num(approvedSale.marginPct) : null,
       });
     }
   }

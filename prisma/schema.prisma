@@ -271,6 +271,11 @@ model Sale {
   profit          Decimal? @db.Decimal(14, 2)
   profitPerBox    Decimal? @map("profit_per_box") @db.Decimal(14, 2)
   marginPct       Decimal? @map("margin_pct") @db.Decimal(6, 2)
+  // Review gate: imported or edited sales are not operational until approved.
+  approvalStatus  ApprovalStatus @default(PendingApproval) @map("approval_status")
+  reviewedById    String?  @map("reviewed_by_id")
+  reviewedAt      DateTime? @map("reviewed_at")
+  reviewNotes     String?  @map("review_notes")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 

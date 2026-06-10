@@ -277,7 +277,12 @@ export async function getAlerts(orgId: string): Promise<AlertItem[]> {
           },
         }),
         prisma.sale.findMany({
-          where: { orgId, marginPct: { lt: 0 }, container: { deletedAt: null } },
+          where: {
+            orgId,
+            approvalStatus: "Approved",
+            marginPct: { lt: 0 },
+            container: { deletedAt: null },
+          },
           select: {
             id: true,
             containerId: true,

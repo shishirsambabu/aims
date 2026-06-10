@@ -49,12 +49,23 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: Params) {
+export async function DELETE(request: NextRequest, { params }: Params) {
   try {
     const { id } = await params;
     const session = await requireSession();
     if (!can(session.role, "masterdata.write")) {
       return NextResponse.json({ error: "Not permitted" }, { status: 403 });
+    }
+    const body = await request.json().catch(() => ({}));
+    const reason =
+      typeof body.reason === "string" && body.reason.trim()
+        ? body.reason.trim()
+        : null;
+    if (!reason) {
+      return NextResponse.json(
+        { error: "A reason is required to archive a supplier" },
+        { status: 422 }
+      );
     }
     const supplier = await prisma.supplier.findFirst({
       where: { id, orgId: session.orgId, deletedAt: null },
@@ -76,7 +87,7 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
       data: {
         deletedAt: new Date(),
         deletedById: session.userId,
-        deleteReason: "Archived from supplier master data",
+        deleteReason: reason,
       },
     });
     await logActivity({
@@ -86,6 +97,7 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
       entityType: "supplier",
       entityId: supplier.id,
       summary: `Archived supplier ${supplier.name}`,
+      metadata: { reason, before: { id: supplier.id, name: supplier.name } },
     });
     return NextResponse.json({ ok: true });
   } catch (err) {
