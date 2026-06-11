@@ -42,7 +42,7 @@ export default async function DashboardLayout({
   if (ctx) counts = await getPersonalNavCounts(ctx);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-surface-alt">
+    <div className="flex h-screen overflow-hidden bg-transparent">
       <Sidebar counts={counts} />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopNav user={profile} />

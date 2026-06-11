@@ -249,9 +249,9 @@ export function ContainerTable({
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-border bg-card">
+      <div className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-card">
       <Table>
-        <TableHeader>
+        <TableHeader className="sticky top-0 z-10 bg-card/95 backdrop-blur">
           {table.getHeaderGroups().map((hg) => (
             <TableRow key={hg.id} className="hover:bg-transparent">
               {canEdit && (
@@ -293,7 +293,7 @@ export function ContainerTable({
                   router.push(`/containers/${row.original.id}`)
                 }
                 className={cn(
-                  "cursor-pointer",
+                  "cursor-pointer transition-colors",
                   i % 2 === 1 && "bg-surface-alt/30",
                   selected.has(row.original.id) && "bg-accent/40"
                 )}
@@ -322,9 +322,17 @@ export function ContainerTable({
             <TableRow className="hover:bg-transparent">
               <TableCell
                 colSpan={columns.length + (canEdit ? 1 : 0)}
-                className="h-32 text-center text-muted-foreground"
+                className="h-40 text-center text-muted-foreground"
               >
-                No containers match your filters.
+                <div className="mx-auto max-w-sm">
+                  <p className="font-heading text-base font-semibold text-foreground">
+                    No containers match this view
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Try clearing a filter, changing the date range, or searching
+                    by Container No / BL No.
+                  </p>
+                </div>
               </TableCell>
             </TableRow>
           )}

@@ -9,6 +9,9 @@ import {
   Percent,
   BellRing,
   ShieldAlert,
+  Clock3,
+  ClipboardCheck,
+  Warehouse,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -44,8 +47,8 @@ export default async function DashboardHome() {
   return (
     <div>
       <PageHeader
-        title="Dashboard"
-        description="Overview of imports, costs, documentation and profit."
+        title="Operations Command"
+        description="A live cockpit for containers, documents, payments and SOP exceptions."
         actions={
           <Button asChild>
             <Link href="/containers">
@@ -63,6 +66,12 @@ export default async function DashboardHome() {
           </div>
         ) : (
           <>
+            <DashboardHero
+              activeContainers={k?.totalContainers ?? 0}
+              pendingDocs={k?.pendingDocs ?? 0}
+              detentionCount={workbench?.detentionCount ?? 0}
+              outstandingUsd={showFinancials ? (k?.outstandingUsd ?? 0) : null}
+            />
             <Workbench data={workbench} role={session.role} />
 
             {/* KPI cards */}
@@ -138,7 +147,7 @@ export default async function DashboardHome() {
               </div>
             )}
 
-            <div className="flex flex-wrap gap-2">
+            <div className="sticky bottom-4 z-10 flex flex-wrap gap-2 rounded-2xl border border-border/80 bg-background/85 p-2 shadow-card backdrop-blur md:static md:border-0 md:bg-transparent md:p-0 md:shadow-none md:backdrop-blur-0">
               <Button asChild variant="outline" size="sm">
                 <Link href="/containers">Containers</Link>
               </Button>
@@ -173,9 +182,9 @@ function Workbench({
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1.5fr_0.8fr]">
-      <Card className="overflow-hidden border-primary/15 bg-gradient-to-br from-surface via-surface to-primary/5">
+      <Card className="command-surface overflow-hidden rounded-[1.5rem]">
         <CardContent className="p-0">
-          <div className="border-b border-border px-6 py-5">
+          <div className="border-b border-border/70 px-6 py-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="label-caps">Operations Workbench</p>
@@ -245,7 +254,7 @@ function Workbench({
         </CardContent>
       </Card>
 
-      <Card className="border-warning/30 bg-warning/10">
+      <Card className="lift-card overflow-hidden rounded-[1.5rem] border-warning/30 bg-gradient-to-br from-warning/15 via-card to-card">
         <CardContent className="space-y-4 pt-6">
           <div className="flex items-center gap-2">
             <ShieldAlert className="h-5 w-5 text-[#9A6212]" />
@@ -266,6 +275,104 @@ function Workbench({
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function DashboardHero({
+  activeContainers,
+  pendingDocs,
+  detentionCount,
+  outstandingUsd,
+}: {
+  activeContainers: number;
+  pendingDocs: number;
+  detentionCount: number;
+  outstandingUsd: number | null;
+}) {
+  const pulseItems = [
+    {
+      label: "Containers live",
+      value: activeContainers.toLocaleString("en-IN"),
+      icon: Warehouse,
+    },
+    {
+      label: "Docs need eyes",
+      value: pendingDocs.toLocaleString("en-IN"),
+      icon: ClipboardCheck,
+    },
+    {
+      label: "Detention watch",
+      value: detentionCount.toLocaleString("en-IN"),
+      icon: Clock3,
+    },
+  ];
+
+  return (
+    <section className="mesh-panel fade-in-up overflow-hidden rounded-[2rem] p-6 text-white shadow-card md:p-8">
+      <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+        <div>
+          <div className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-sky-100">
+            AIMS live desk
+          </div>
+          <h2 className="mt-5 max-w-3xl font-heading text-4xl font-bold tracking-tight md:text-5xl">
+            Move every import from port risk to warehouse clarity.
+          </h2>
+          <p className="mt-4 max-w-2xl text-sm leading-6 text-sky-100/80 md:text-base">
+            A task-first view for Aeden Imports Management System: what is late,
+            what needs approval, and where money or documents are blocking flow.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button asChild className="bg-white text-slate-950 hover:bg-sky-50">
+              <Link href="/containers">Open operations board</Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="border-white/25 bg-white/10 text-white hover:bg-white/15 hover:text-white"
+            >
+              <Link href="/alerts">Review exceptions</Link>
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+          {pulseItems.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <div
+                key={item.label}
+                className="rounded-2xl border border-white/[0.12] bg-white/10 p-4 shadow-2xl shadow-black/10 backdrop-blur"
+                style={{ animationDelay: `${index * 80}ms` }}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sky-100/70">
+                      {item.label}
+                    </p>
+                    <p className="font-financial mt-1 text-3xl font-bold">
+                      {item.value}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-white/[0.12] p-3 text-sky-100">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          {outstandingUsd != null && (
+            <div className="rounded-2xl border border-amber-200/20 bg-amber-300/10 p-4 text-amber-50">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-100/70">
+                Outstanding AP
+              </p>
+              <p className="font-financial mt-1 text-2xl font-bold">
+                {formatUSD(outstandingUsd)}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -316,11 +423,12 @@ function Kpi({
   return (
     <Card
       className={cn(
-        "group relative overflow-hidden border-t-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover",
+        "group lift-card relative overflow-hidden rounded-[1.35rem] border-t-4",
         accent
       )}
     >
-      <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-primary/5 blur-2xl transition-opacity group-hover:opacity-80" />
+      <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-primary/10 blur-2xl transition-opacity group-hover:opacity-90" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-surface-alt/55 to-transparent opacity-70" />
       <CardContent className="pt-6">
         <div className="flex items-start justify-between">
           <div>
@@ -330,7 +438,7 @@ function Kpi({
             </p>
             <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
           </div>
-          <div className="rounded-xl bg-primary/10 p-2.5 text-primary ring-1 ring-primary/15">
+          <div className="rounded-2xl bg-primary/10 p-3 text-primary ring-1 ring-primary/15">
             <Icon className="h-5 w-5" />
           </div>
         </div>
@@ -347,7 +455,7 @@ function RankCard({
   rows: { containerNo: string; supplier: string | null; profit: number; marginPct: number | null }[];
 }) {
   return (
-    <Card>
+    <Card className="lift-card overflow-hidden rounded-[1.5rem]">
       <CardContent className="pt-6">
         <h3 className="mb-3 font-heading text-base font-semibold">{title}</h3>
         {rows.length === 0 ? (

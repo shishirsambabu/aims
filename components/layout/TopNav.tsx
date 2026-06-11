@@ -50,7 +50,7 @@ export function TopNav({ user }: TopNavProps) {
   }
 
   return (
-    <header className="flex h-16 shrink-0 items-center gap-4 border-b border-border bg-surface px-4 md:px-6">
+    <header className="glass sticky top-0 z-30 flex h-16 shrink-0 items-center gap-4 border-b border-border/80 px-4 md:px-6">
       {/* Mobile menu toggle */}
       <button
         onClick={toggleMobileSidebar}
@@ -78,14 +78,14 @@ export function TopNav({ user }: TopNavProps) {
       </nav>
 
       {/* Global search */}
-      <form onSubmit={handleSearch} className="ml-auto w-full max-w-sm">
+      <form onSubmit={handleSearch} className="ml-auto w-full max-w-xl">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search Container No or BL No…"
-            className="h-9 w-full rounded-md border border-input bg-surface-alt pl-9 pr-3 text-sm focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+            className="h-10 w-full rounded-2xl border border-input/80 bg-background/70 pl-10 pr-3 text-sm shadow-sm outline-none transition focus:border-primary/40 focus:bg-background focus:ring-4 focus:ring-primary/10"
           />
         </div>
       </form>

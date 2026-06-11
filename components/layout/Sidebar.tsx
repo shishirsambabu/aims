@@ -74,12 +74,12 @@ function NavLinks({
 
 function Brand() {
   return (
-    <div className="flex h-16 items-center gap-3 border-b border-white/10 px-5">
-      <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary">
+    <div className="flex h-20 items-center gap-3 border-b border-white/10 px-5">
+      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-sky-200 shadow-lg shadow-black/20 ring-1 ring-white/15">
         <Ship className="h-5 w-5" />
       </div>
       <div className="leading-tight">
-        <p className="font-heading text-base font-bold">AIMS</p>
+        <p className="font-heading text-lg font-bold tracking-tight">AIMS</p>
         <p className="text-[11px] text-sidebar-muted">Aeden Imports</p>
       </div>
     </div>
@@ -91,12 +91,14 @@ export function Sidebar({ counts }: { counts: NavCounts }) {
 
   return (
     <>
-      <aside className="hidden w-60 shrink-0 flex-col bg-sidebar text-white md:flex">
+      <aside className="mesh-panel hidden w-64 shrink-0 flex-col text-white md:flex">
         <Brand />
         <NavLinks counts={counts} />
-        <div className="border-t border-white/10 px-5 py-4 text-[11px] text-sidebar-muted">
-          Aeden Imports Management System
-          <br />Operations Control
+        <div className="m-4 rounded-2xl border border-white/10 bg-white/[0.08] p-4 text-[11px] text-sky-100/75 shadow-2xl shadow-black/20 backdrop-blur">
+          <p className="font-heading text-sm font-semibold text-white">
+            Aeden Imports Management System
+          </p>
+          <p className="mt-1">Operations command center</p>
         </div>
       </aside>
 
@@ -106,7 +108,7 @@ export function Sidebar({ counts }: { counts: NavCounts }) {
             className="absolute inset-0 bg-black/50"
             onClick={closeMobileSidebar}
           />
-          <aside className="absolute left-0 top-0 flex h-full w-64 flex-col bg-sidebar text-white shadow-xl">
+          <aside className="mesh-panel absolute left-0 top-0 flex h-full w-72 flex-col text-white shadow-xl">
             <div className="flex items-center justify-between border-b border-white/10 pr-3">
               <Brand />
               <button
