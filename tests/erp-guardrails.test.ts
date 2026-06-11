@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { computeCost, computeProfit } from "@/lib/finance";
+import {
+  dossierArchiveName,
+  dossierDocumentFileName,
+  extensionFromName,
+} from "@/lib/document-dossier";
+import { paymentCanBePaid, paymentReviewBlocker } from "@/lib/payment-workflow";
 import { can } from "@/lib/permissions";
 import { rateLimit } from "@/lib/ratelimit";
 import { validateDocumentUploadMetadata } from "@/lib/upload-security";
@@ -29,6 +35,45 @@ describe("role permissions", () => {
     expect(can("finance", "payment.approve")).toBe(true);
     expect(can("clearing_agent", "payment.write")).toBe(false);
     expect(can("viewer", "payment.approve")).toBe(false);
+  });
+});
+
+describe("payment maker-checker workflow", () => {
+  it("blocks a maker from approving their own payment request", () => {
+    expect(
+      paymentReviewBlocker({
+        action: "approve",
+        requestedById: "maker-1",
+        reviewerId: "maker-1",
+        approvalStatus: "PendingApproval",
+      })
+    ).toContain("second approver");
+  });
+
+  it("requires rejection reasons and blocks paying unapproved payments", () => {
+    expect(
+      paymentReviewBlocker({
+        action: "reject",
+        requestedById: "maker-1",
+        reviewerId: "checker-1",
+        approvalStatus: "PendingApproval",
+      })
+    ).toContain("rejection reason");
+
+    expect(paymentCanBePaid("PendingApproval")).toBe(false);
+    expect(paymentCanBePaid("Rejected")).toBe(false);
+    expect(paymentCanBePaid("Approved")).toBe(true);
+  });
+
+  it("allows a different checker to approve a pending payment", () => {
+    expect(
+      paymentReviewBlocker({
+        action: "approve",
+        requestedById: "maker-1",
+        reviewerId: "checker-1",
+        approvalStatus: "PendingApproval",
+      })
+    ).toBeNull();
   });
 });
 
@@ -195,6 +240,27 @@ describe("document upload validation", () => {
         filePath: baseUpload.filePath,
       })
     ).toContain("file path, file name and file size");
+  });
+});
+
+describe("document dossier downloads", () => {
+  it("sanitises dossier document names while preserving useful business labels", () => {
+    expect(
+      dossierDocumentFileName({
+        index: 1,
+        type: "BillOfLading",
+        docNo: "BL/001:ABC",
+        status: "Verified",
+        fileName: "original.PDF",
+      })
+    ).toBe("01_Bill_of_Lading_BL_001_ABC_Verified.PDF");
+  });
+
+  it("sanitises archive names and falls back to .bin when a source file has no extension", () => {
+    expect(dossierArchiveName("MNBU9052800", "BL/001:ABC")).toBe(
+      "MNBU9052800_BL_001_ABC_dossier.zip"
+    );
+    expect(extensionFromName("document-without-extension")).toBe(".bin");
   });
 });
 

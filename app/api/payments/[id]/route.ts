@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/activity";
 import { updatePaymentSchema } from "@/lib/validations/payment";
 import { deriveStatus } from "@/lib/data/payments";
+import { paymentCanBePaid, paymentReviewBlocker } from "@/lib/payment-workflow";
 
 interface Params {
   params: Promise<{ id: string }>;
@@ -60,20 +61,17 @@ export async function PATCH(request: NextRequest, { params }: Params) {
           { status: 403 }
         );
       }
-      if (body.action === "reject" && !reason) {
+      const blocker = paymentReviewBlocker({
+        action: body.action,
+        requestedById: existing.requestedById,
+        reviewerId: session.userId,
+        approvalStatus: existing.approvalStatus,
+        reason,
+      });
+      if (blocker) {
         return NextResponse.json(
-          { error: "A rejection reason is required" },
-          { status: 422 }
-        );
-      }
-      if (
-        body.action === "approve" &&
-        existing.requestedById &&
-        existing.requestedById === session.userId
-      ) {
-        return NextResponse.json(
-          { error: "You can't approve a payment you raised - needs a second approver" },
-          { status: 409 }
+          { error: blocker },
+          { status: blocker.includes("reason") ? 422 : 409 }
         );
       }
       const payment = await prisma.payment.update({
@@ -109,7 +107,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         { status: 403 }
       );
     }
-    if (existing.approvalStatus !== "Approved") {
+    if (!paymentCanBePaid(existing.approvalStatus)) {
       return NextResponse.json(
         { error: "Payment must be approved before it can be paid" },
         { status: 409 }

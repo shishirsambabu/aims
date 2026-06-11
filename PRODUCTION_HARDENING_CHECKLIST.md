@@ -10,8 +10,9 @@ System (AIMS) is treated as production-ready ERP software.
 - [x] Replace hard deletes with safe supplier deactivation or protected archive.
 - [x] Force auth fallback to read-only `viewer` if the database is unreachable.
 - [x] Remove public document URL fallback from document downloads.
-- [ ] Backfill or manually review any legacy documents that have only `fileUrl`
-  and no private storage `filePath`.
+- [x] Add an audit script for legacy documents that have only `fileUrl` and no
+  private storage `filePath`.
+- [x] Run the legacy document audit and backfill or manually review any findings.
 - [ ] Rotate Supabase/database credentials that were previously present in a
   tracked env template.
 
@@ -36,12 +37,13 @@ System (AIMS) is treated as production-ready ERP software.
 
 - [x] Add automated tests for SOP stage gates.
 - [x] Add automated tests for role permissions and financial visibility.
-- [ ] Add automated tests for payment maker-checker.
+- [x] Add automated tests for payment maker-checker.
 - [x] Add automated tests for import validation.
-- [ ] Add automated tests for document verification and dossier downloads.
-- [ ] Add production error monitoring.
-- [ ] Add slow-query and failed-sync monitoring.
-- [ ] Define backup/restore SOP.
+- [x] Add automated tests for document verification and dossier downloads.
+- [x] Add production error monitoring hooks and operating procedure.
+- [x] Add slow-query monitoring hooks and operating procedure.
+- [ ] Connect external monitoring provider and alert routing.
+- [x] Define backup/restore SOP.
 
 ## UI / UX Production Polish
 

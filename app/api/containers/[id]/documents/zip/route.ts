@@ -3,22 +3,12 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { requireSession } from "@/lib/auth";
 import { logActivity } from "@/lib/activity";
-import { DOCUMENT_TYPE_LABELS, STORAGE_BUCKET } from "@/lib/constants";
+import { STORAGE_BUCKET } from "@/lib/constants";
+import { dossierArchiveName, dossierDocumentFileName } from "@/lib/document-dossier";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
-import type { DocumentType } from "@/types";
 
 export const runtime = "nodejs";
-
-function safeFileName(name: string): string {
-  return name.replace(/[^\w.\-() ]+/g, "_").replace(/\s+/g, "_");
-}
-
-function extensionFromName(name: string | null): string {
-  if (!name) return ".bin";
-  const match = name.match(/\.[A-Za-z0-9]{1,8}$/);
-  return match?.[0] ?? ".bin";
-}
 
 async function fetchDocumentBytes(filePath: string): Promise<ArrayBuffer | null> {
   const supabase = await createClient();
@@ -91,12 +81,13 @@ export async function GET(
         continue;
       }
 
-      const label = DOCUMENT_TYPE_LABELS[doc.type as DocumentType] ?? doc.type;
-      const ext = extensionFromName(doc.fileName);
-      const docNo = doc.docNo ? `_${doc.docNo}` : "";
-      const fileName = safeFileName(
-        `${String(added + 1).padStart(2, "0")}_${label}${docNo}_${doc.status}${ext}`
-      );
+      const fileName = dossierDocumentFileName({
+        index: added + 1,
+        type: doc.type,
+        docNo: doc.docNo,
+        status: doc.status,
+        fileName: doc.fileName,
+      });
 
       zip.file(fileName, bytes);
       manifest.push(`- ${fileName}`);
@@ -126,9 +117,7 @@ export async function GET(
       summary: `Downloaded document dossier for ${container.containerNo} (${added} files)`,
     });
 
-    const archiveName = safeFileName(
-      `${container.containerNo}_${container.blNo}_dossier.zip`
-    );
+    const archiveName = dossierArchiveName(container.containerNo, container.blNo);
 
     return new NextResponse(new Uint8Array(zipBuffer), {
       headers: {

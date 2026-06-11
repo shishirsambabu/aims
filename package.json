@@ -13,7 +13,8 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "ops:audit-legacy-docs": "node scripts/ops/audit-legacy-documents.mjs"
   },
   "prisma": {
     "seed": "node --experimental-strip-types prisma/seed.ts"
