@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   type ColumnDef,
@@ -10,7 +10,17 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowUpDown, Columns3, Flag, Rows3, TrendingDown, TrendingUp } from "lucide-react";
+import {
+  ArrowUpDown,
+  Columns3,
+  Flag,
+  PackageSearch,
+  Rows3,
+  Save,
+  Trash2,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -22,6 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +46,30 @@ import { CONTAINER_STATUSES, CONTAINER_STATUS_LABELS } from "@/lib/constants";
 import type { ContainerListRow } from "@/lib/data/containers";
 import type { ContainerStatus } from "@/types";
 
+const VIEW_STORAGE_KEY = "aims.containerTable.views.v1";
+
+type Density = "comfortable" | "compact";
+type SavedTableView = {
+  name: string;
+  density: Density;
+  columnVisibility: Record<string, boolean>;
+};
+
+function readSavedViews(): SavedTableView[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(VIEW_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeSavedViews(views: SavedTableView[]) {
+  window.localStorage.setItem(VIEW_STORAGE_KEY, JSON.stringify(views));
+}
+
 export function ContainerTable({
   data,
   showFinancials = true,
@@ -46,10 +81,45 @@ export function ContainerTable({
 }) {
   const router = useRouter();
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [density, setDensity] = useState<"comfortable" | "compact">("comfortable");
+  const [density, setDensity] = useState<Density>("comfortable");
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
+  const [savedViews, setSavedViews] = useState<SavedTableView[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setSavedViews(readSavedViews());
+  }, []);
+
+  function saveCurrentView() {
+    const name = window.prompt("Name this table view:", "Operations review");
+    if (!name?.trim()) return;
+    const nextView: SavedTableView = {
+      name: name.trim(),
+      density,
+      columnVisibility,
+    };
+    const next = [
+      ...savedViews.filter((view) => view.name !== nextView.name),
+      nextView,
+    ].slice(-8);
+    setSavedViews(next);
+    writeSavedViews(next);
+    toast.success(`Saved view "${nextView.name}"`);
+  }
+
+  function applySavedView(view: SavedTableView) {
+    setDensity(view.density);
+    setColumnVisibility(view.columnVisibility);
+    toast.success(`Applied view "${view.name}"`);
+  }
+
+  function deleteSavedView(name: string) {
+    const next = savedViews.filter((view) => view.name !== name);
+    setSavedViews(next);
+    writeSavedViews(next);
+    toast.success(`Deleted view "${name}"`);
+  }
 
   function toggle(id: string) {
     setSelected((s) => {
@@ -252,6 +322,54 @@ export function ContainerTable({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
+                <Save className="h-4 w-4" /> Views
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuLabel>Saved table views</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {savedViews.length === 0 ? (
+                <p className="px-2 py-2 text-xs text-muted-foreground">
+                  No saved views yet. Save your current density and columns.
+                </p>
+              ) : (
+                savedViews.map((view) => (
+                  <div
+                    key={view.name}
+                    className="flex items-center gap-1 rounded-sm px-2 py-1 hover:bg-surface-alt"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => applySavedView(view)}
+                      className="min-w-0 flex-1 truncate text-left text-sm"
+                    >
+                      {view.name}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteSavedView(view.name)}
+                      className="rounded p-1 text-muted-foreground hover:text-danger"
+                      aria-label={`Delete ${view.name}`}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))
+              )}
+              <DropdownMenuSeparator />
+              <button
+                type="button"
+                onClick={saveCurrentView}
+                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-surface-alt"
+              >
+                <Save className="h-4 w-4" /> Save current view
+              </button>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
                 <Columns3 className="h-4 w-4" /> Columns
               </Button>
             </DropdownMenuTrigger>
@@ -393,15 +511,12 @@ export function ContainerTable({
                 colSpan={columns.length + (canEdit ? 1 : 0)}
                 className="h-40 text-center text-muted-foreground"
               >
-                <div className="mx-auto max-w-sm">
-                  <p className="font-heading text-base font-semibold text-foreground">
-                    No containers match this view
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Try clearing a filter, changing the date range, or searching
-                    by Container No / BL No.
-                  </p>
-                </div>
+                <EmptyState
+                  icon={PackageSearch}
+                  title="No containers match this view"
+                  description="Try clearing a filter, changing the date range, or searching by Container No / BL No."
+                  className="border-0 bg-transparent py-6"
+                />
               </TableCell>
             </TableRow>
           )}

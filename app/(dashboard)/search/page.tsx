@@ -3,6 +3,7 @@ import { Package, FileText, CreditCard, Search } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/containers/StatusBadge";
 import { requireSession } from "@/lib/auth";
 import { searchAll, type SearchResults } from "@/lib/data/search";
@@ -40,14 +41,17 @@ export default async function SearchPage({
       />
       <div className="space-y-6 p-6">
         {!q ? (
-          <div className="flex flex-col items-center gap-2 py-16 text-center text-muted-foreground">
-            <Search className="h-8 w-8" />
-            <p>Type a Container No, BL No, Doc No, item or reference above.</p>
-          </div>
+          <EmptyState
+            icon={Search}
+            title="Search across AIMS"
+            description="Type a Container No, BL No, Doc No, item or payment reference in the command bar above."
+          />
         ) : total === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No matches for “{q}”.
-          </p>
+          <EmptyState
+            icon={Search}
+            title={`No matches for "${q}"`}
+            description="Try a shorter search term, remove punctuation, or search by the exact Container No or BL No."
+          />
         ) : (
           <>
             {results.containers.length > 0 && (

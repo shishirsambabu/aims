@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Check, Loader2, Pencil, Plus, Trash2, Truck, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { SupplierRecord } from "@/lib/data/suppliers";
 
 type FormState = {
@@ -250,9 +251,14 @@ export function SupplierManager({
               <TableRow>
                 <TableCell
                   colSpan={canEdit || canApprove ? 6 : 5}
-                  className="h-24 text-center text-muted-foreground"
+                  className="h-40 text-center text-muted-foreground"
                 >
-                  No suppliers yet.
+                  <EmptyState
+                    icon={Truck}
+                    title="No suppliers yet"
+                    description="Add suppliers here first so containers, imports and document records use approved master data."
+                    className="border-0 bg-transparent py-6"
+                  />
                 </TableCell>
               </TableRow>
             ) : (

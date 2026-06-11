@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Wallet, Trash2, Check, X } from "lucide-react";
+import { Wallet, Trash2, Check, X, ReceiptText } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PaymentStatusBadge } from "@/components/containers/StatusBadge";
+import { EmptyState } from "@/components/ui/empty-state";
 import { formatMoney, formatDate, cn, expiryLevel } from "@/lib/utils";
 import type { PaymentRow } from "@/lib/data/payments";
 
@@ -146,7 +147,12 @@ export function PaymentsTable({
           {data.length === 0 ? (
             <TableRow className="hover:bg-transparent">
               <TableCell colSpan={10} className="h-32 text-center text-muted-foreground">
-                No payment requests yet.
+                <EmptyState
+                  icon={ReceiptText}
+                  title="No payment requests yet"
+                  description="Payment requests will appear here after finance raises them against containers. Approved requests can then be paid."
+                  className="border-0 bg-transparent py-6"
+                />
               </TableCell>
             </TableRow>
           ) : (

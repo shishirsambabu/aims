@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ExternalLink, Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
+import { ExternalLink, Trash2, CheckCircle2, AlertTriangle, FileSearch } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DocStatusBadge } from "@/components/containers/StatusBadge";
+import { EmptyState } from "@/components/ui/empty-state";
 import { cn, formatDate, expiryLevel } from "@/lib/utils";
 import { DOCUMENT_TYPE_LABELS } from "@/lib/constants";
 import type { DocumentRow } from "@/lib/data/documents";
@@ -100,7 +101,12 @@ export function DocumentsTable({
           {data.length === 0 ? (
             <TableRow className="hover:bg-transparent">
               <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">
-                No documents match your filters.
+                <EmptyState
+                  icon={FileSearch}
+                  title="No documents in this view"
+                  description="Try another document type, clear filters, or upload the next required dossier document from a container page."
+                  className="border-0 bg-transparent py-6"
+                />
               </TableCell>
             </TableRow>
           ) : (
