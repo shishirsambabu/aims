@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { ArrowLeft, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Info, WifiOff } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { TeamTable, type TeamMember } from "@/components/settings/TeamTable";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -48,18 +49,17 @@ export default async function TeamPage() {
       />
       <div className="space-y-4 p-6">
         {!canManage && (
-          <p className="text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 rounded-2xl border border-border bg-card/80 px-4 py-3 text-sm text-muted-foreground">
+            <Info className="h-4 w-4 text-primary" />
             You can view the team. Only admins can change roles.
-          </p>
+          </div>
         )}
         {loadError ? (
-          <div className="flex items-start gap-3 rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm">
-            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[#9A6212]" />
-            <p className="text-muted-foreground">
-              The database isn&apos;t reachable. Set a reachable{" "}
-              <code>DATABASE_URL</code> to manage your team.
-            </p>
-          </div>
+          <EmptyState
+            icon={WifiOff}
+            title="Team could not load"
+            description="The database is not reachable. Set a reachable DATABASE_URL to manage your team."
+          />
         ) : (
           <TeamTable
             members={members}

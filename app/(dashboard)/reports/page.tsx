@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { AlertTriangle, Lock } from "lucide-react";
+import { BarChart3, Lock, WifiOff } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Table,
   TableBody,
@@ -32,9 +33,12 @@ export default async function ReportsPage({ searchParams }: PageProps) {
     return (
       <div>
         <PageHeader title="Reports" description="Financial reporting." />
-        <div className="m-6 flex items-center gap-2 rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
-          <Lock className="h-4 w-4" /> You don&apos;t have access to financial
-          reports.
+        <div className="p-6">
+          <EmptyState
+            icon={Lock}
+            title="Financial reports are restricted"
+            description="Only roles with financial visibility can access management reports and exports."
+          />
         </div>
       </div>
     );
@@ -61,13 +65,11 @@ export default async function ReportsPage({ searchParams }: PageProps) {
         <ReportFilters />
 
         {loadError || !data ? (
-          <div className="flex items-start gap-3 rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm">
-            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[#9A6212]" />
-            <p className="text-muted-foreground">
-              The database isn&apos;t reachable. Set a working{" "}
-              <code>DATABASE_URL</code> and apply migrations.
-            </p>
-          </div>
+          <EmptyState
+            icon={WifiOff}
+            title="Reports could not load"
+            description="The database is not reachable. Set a working DATABASE_URL and apply migrations."
+          />
         ) : (
           <>
             <ExportCenter from={params.from} to={params.to} />
@@ -112,7 +114,12 @@ export default async function ReportsPage({ searchParams }: PageProps) {
                     {data.suppliers.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="h-20 text-center text-muted-foreground">
-                          No data in range.
+                          <EmptyState
+                            icon={BarChart3}
+                            title="No report data in this range"
+                            description="Try widening the date range or confirm containers have approved sales and cost data."
+                            className="border-0 bg-transparent py-6"
+                          />
                         </TableCell>
                       </TableRow>
                     ) : (

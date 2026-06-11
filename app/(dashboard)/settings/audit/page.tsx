@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { ArrowLeft, Lock } from "lucide-react";
+import { ArrowLeft, FileClock, Lock, WifiOff } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Table,
   TableBody,
@@ -24,9 +25,12 @@ export default async function AuditPage() {
     return (
       <div>
         <PageHeader title="Audit Log" description="Activity trail." />
-        <div className="m-6 flex items-center gap-2 rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
-          <Lock className="h-4 w-4" /> Only admins, managers and auditors can view
-          the audit log.
+        <div className="p-6">
+          <EmptyState
+            icon={Lock}
+            title="Audit log is restricted"
+            description="Only admins, managers and auditors can view the immutable activity trail."
+          />
         </div>
       </div>
     );
@@ -55,9 +59,11 @@ export default async function AuditPage() {
       />
       <div className="p-6">
         {loadError ? (
-          <p className="text-sm text-muted-foreground">
-            The database isn&apos;t reachable.
-          </p>
+          <EmptyState
+            icon={WifiOff}
+            title="Audit log could not load"
+            description="The database is not reachable from this environment. Check DATABASE_URL and retry."
+          />
         ) : (
           <div className="overflow-hidden rounded-lg border border-border bg-card">
             <Table>
@@ -74,7 +80,12 @@ export default async function AuditPage() {
                 {rows.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                      No activity recorded yet.
+                      <EmptyState
+                        icon={FileClock}
+                        title="No audit activity yet"
+                        description="System changes, approvals and operational mutations will appear here once users begin working."
+                        className="border-0 bg-transparent py-6"
+                      />
                     </TableCell>
                   </TableRow>
                 ) : (

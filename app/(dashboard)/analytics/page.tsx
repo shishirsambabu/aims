@@ -8,11 +8,14 @@ import {
   AlertTriangle,
   Clock,
   Ship,
+  BarChart3,
+  DatabaseZap,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { KPICard } from "@/components/dashboard/KPICard";
 import { AnalyticsCharts } from "@/components/dashboard/AnalyticsCharts";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Card,
   CardContent,
@@ -191,7 +194,12 @@ export default async function AnalyticsPage() {
                 {data.supplierSummary.length === 0 ? (
                   <TableRow className="hover:bg-transparent">
                     <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                      No supplier data yet.
+                      <EmptyState
+                        icon={DatabaseZap}
+                        title="No supplier analytics yet"
+                        description="Supplier performance appears after containers have approved sales and landed-cost data."
+                        className="border-0 bg-transparent py-6"
+                      />
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -255,7 +263,12 @@ function ProfitTable({
             {rows.length === 0 ? (
               <TableRow className="hover:bg-transparent">
                 <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                  No data yet.
+                  <EmptyState
+                    icon={BarChart3}
+                    title="No ranked containers yet"
+                    description="This ranking appears once containers have approved sales and profit calculations."
+                    className="border-0 bg-transparent py-6"
+                  />
                 </TableCell>
               </TableRow>
             ) : (

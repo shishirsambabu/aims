@@ -27,6 +27,7 @@ import { CostPanel } from "@/components/containers/CostPanel";
 import { SalesPanel } from "@/components/containers/SalesPanel";
 import { DocumentUpload } from "@/components/documents/DocumentUpload";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { cn, formatUSD, formatDate, daysUntil, expiryLevel } from "@/lib/utils";
 import {
   CONTAINER_STATUSES,
@@ -388,7 +389,12 @@ function SectionCard({
       <CardContent className="pt-6">
         <h3 className="mb-4 font-heading text-base font-semibold">{title}</h3>
         {empty ? (
-          <p className="text-sm text-muted-foreground">{empty}</p>
+          <EmptyState
+            icon={FileText}
+            title={`${title} is not populated yet`}
+            description={empty}
+            className="border-0 bg-transparent py-6"
+          />
         ) : (
           children
         )}

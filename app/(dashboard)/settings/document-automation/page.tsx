@@ -1,7 +1,8 @@
-import { Bot, CheckCircle2, KeyRound, Mail, ScanText } from "lucide-react";
+import { Bot, CheckCircle2, KeyRound, Lock, Mail, ScanText } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { requireSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -33,9 +34,13 @@ export default async function DocumentAutomationPage() {
       <div className="space-y-6 p-6">
         {!canView ? (
           <Card>
-            <CardContent className="py-10 text-sm text-muted-foreground">
-              You can view settings, but only document verifiers, managers and
-              admins can access automation jobs.
+            <CardContent className="py-6">
+              <EmptyState
+                icon={Lock}
+                title="Automation queue is restricted"
+                description="Only document verifiers, managers and admins can access email/OCR automation jobs."
+                className="border-0 bg-transparent"
+              />
             </CardContent>
           </Card>
         ) : (
@@ -90,10 +95,12 @@ export default async function DocumentAutomationPage() {
                   update operational records.
                 </p>
                 {jobs.length === 0 ? (
-                  <div className="mt-6 rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-                    No automation jobs yet. This is expected until email/OCR
-                    provider keys are connected.
-                  </div>
+                  <EmptyState
+                    icon={Mail}
+                    title="No automation jobs yet"
+                    description="This is expected until Outlook/email and OCR provider keys are connected. Manual uploads and dossier ZIPs are already live."
+                    className="mt-6"
+                  />
                 ) : (
                   <ul className="mt-4 divide-y divide-border">
                     {jobs.map((job) => (

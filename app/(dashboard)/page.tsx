@@ -12,12 +12,14 @@ import {
   Clock3,
   ClipboardCheck,
   Warehouse,
+  BarChart3,
 } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AlertActions } from "@/components/alerts/AlertActions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { requireSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { getAnalytics, type Analytics } from "@/lib/data/analytics";
@@ -459,7 +461,12 @@ function RankCard({
       <CardContent className="pt-6">
         <h3 className="mb-3 font-heading text-base font-semibold">{title}</h3>
         {rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No data yet.</p>
+          <EmptyState
+            icon={BarChart3}
+            title="No ranked containers yet"
+            description="Rankings appear once containers have approved sales and profit calculations."
+            className="border-0 bg-transparent py-6"
+          />
         ) : (
           <ul className="divide-y divide-border">
             {rows.map((r) => (

@@ -53,4 +53,4 @@ System (AIMS) is treated as production-ready ERP software.
 - [x] Add mobile task-first dashboard action dock.
 - [x] Add density controls for high-volume tables.
 - [x] Add business-friendly empty states to core container, document, payment, supplier and search views.
-- [ ] Expand empty/error/loading states to every secondary settings and analytics module.
+- [x] Expand empty/error/loading states to secondary settings, analytics and reports modules.

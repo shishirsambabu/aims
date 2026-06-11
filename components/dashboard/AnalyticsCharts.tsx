@@ -16,7 +16,9 @@ import {
 } from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { Analytics } from "@/lib/data/analytics";
+import { BarChart3 } from "lucide-react";
 
 const BRAND = "#0070D2";
 const SUCCESS = "#2E844A";
@@ -162,8 +164,11 @@ export function AnalyticsCharts({ data }: { data: Analytics }) {
 
 function Empty() {
   return (
-    <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
-      No profit data yet.
-    </div>
+    <EmptyState
+      icon={BarChart3}
+      title="No chart data yet"
+      description="Charts populate after containers have enough operational, cost and sales history."
+      className="h-[300px] border-0 bg-transparent"
+    />
   );
 }

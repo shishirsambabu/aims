@@ -1,7 +1,8 @@
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, ReceiptText } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { PaymentFilters } from "@/components/payments/PaymentFilters";
 import { PaymentForm } from "@/components/payments/PaymentForm";
 import { PaymentsTable } from "@/components/payments/PaymentsTable";
@@ -67,9 +68,12 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
         {!loadError && (
           <div className="space-y-2">
             {byCurrency.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No payment requests yet.
-              </p>
+              <EmptyState
+                icon={ReceiptText}
+                title="No payment summary yet"
+                description="Currency summaries appear after payment requests are raised against containers."
+                className="max-w-none py-6"
+              />
             ) : (
               byCurrency.map((s) => (
                 <div key={s.currency} className="grid gap-4 sm:grid-cols-3">

@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Lock } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { ImportWizard } from "@/components/settings/ImportWizard";
 import { requireSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
@@ -17,9 +18,13 @@ export default async function ImportPage() {
     return (
       <div>
         <PageHeader title="Import" description="Bulk-load from your tracker sheet." />
-        <p className="p-6 text-sm text-muted-foreground">
-          Only managers and admins can import data.
-        </p>
+        <div className="p-6">
+          <EmptyState
+            icon={Lock}
+            title="Import is restricted"
+            description="Only managers and admins can bulk-load tracker sheets into AIMS."
+          />
+        </div>
       </div>
     );
   }

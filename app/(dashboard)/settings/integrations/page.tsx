@@ -1,7 +1,8 @@
-import { Plug, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Plug, ShieldCheck, AlertTriangle, Lock } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { requireSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -42,8 +43,13 @@ export default async function IntegrationsPage() {
       <div className="space-y-6 p-6">
         {!canManage ? (
           <Card>
-            <CardContent className="py-10 text-sm text-muted-foreground">
-              Only admins and master-data managers can configure integrations.
+            <CardContent className="py-6">
+              <EmptyState
+                icon={Lock}
+                title="Integration settings are restricted"
+                description="Only admins and master-data managers can configure external provider connections."
+                className="border-0 bg-transparent"
+              />
             </CardContent>
           </Card>
         ) : (
