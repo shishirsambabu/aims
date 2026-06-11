@@ -1,16 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 export function ThemeToggle({ className }: { className?: string }) {
-  const [dark, setDark] = useState(() =>
-    typeof document === "undefined"
-      ? false
-      : document.documentElement.classList.contains("dark")
-  );
+  const [mounted, setMounted] = useState(false);
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setDark(document.documentElement.classList.contains("dark"));
+      setMounted(true);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   function toggle() {
     const next = !dark;
@@ -33,7 +38,13 @@ export function ThemeToggle({ className }: { className?: string }) {
         className
       )}
     >
-      {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      {!mounted ? (
+        <span className="h-4 w-4" aria-hidden="true" />
+      ) : dark ? (
+        <Sun className="h-4 w-4" />
+      ) : (
+        <Moon className="h-4 w-4" />
+      )}
     </button>
   );
 }
