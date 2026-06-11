@@ -56,7 +56,13 @@ export async function POST(request: NextRequest) {
       });
       if (!supplier) {
         supplier = await prisma.supplier.create({
-          data: { orgId: session.orgId, name: key },
+          data: {
+            orgId: session.orgId,
+            name: key,
+            approvalStatus: "PendingApproval",
+            requestedById: session.userId,
+            reviewNotes: "Created during import; supplier approval required.",
+          },
           select: { id: true },
         });
       }

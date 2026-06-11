@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Check, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,17 @@ type FormState = {
   phone: string;
 };
 
+function pendingActionLabel(pendingChanges: unknown) {
+  if (
+    pendingChanges &&
+    typeof pendingChanges === "object" &&
+    "action" in pendingChanges
+  ) {
+    return String(pendingChanges.action ?? "Change");
+  }
+  return "Change";
+}
+
 const empty: FormState = {
   name: "",
   country: "",
@@ -45,9 +56,11 @@ const empty: FormState = {
 export function SupplierManager({
   suppliers,
   canEdit,
+  canApprove,
 }: {
   suppliers: SupplierRecord[];
   canEdit: boolean;
+  canApprove: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -60,6 +73,7 @@ export function SupplierManager({
     setForm(empty);
     setOpen(true);
   }
+
   function openEdit(s: SupplierRecord) {
     setEditing(s);
     setForm({
@@ -86,7 +100,11 @@ export function SupplierManager({
         toast.error(json.error ?? "Failed to save");
         return;
       }
-      toast.success(editing ? "Supplier updated" : "Supplier added");
+      toast.success(
+        editing
+          ? "Supplier update submitted for approval"
+          : "Supplier submitted for approval"
+      );
       setOpen(false);
       router.refresh();
     } finally {
@@ -96,7 +114,7 @@ export function SupplierManager({
 
   async function remove(s: SupplierRecord) {
     const reason = window.prompt(
-      `Why are you archiving supplier "${s.name}"? This will be kept in the audit trail.`
+      `Why are you requesting archive for supplier "${s.name}"?`
     );
     if (!reason?.trim()) return;
     const res = await fetch(`/api/suppliers/${s.id}`, {
@@ -106,10 +124,32 @@ export function SupplierManager({
     });
     if (!res.ok) {
       const j = await res.json();
-      toast.error(j.error ?? "Failed to delete");
+      toast.error(j.error ?? "Failed to request archive");
       return;
     }
-    toast.success("Supplier archived");
+    toast.success("Supplier archive submitted for approval");
+    router.refresh();
+  }
+
+  async function review(s: SupplierRecord, action: "approve" | "reject") {
+    const reason =
+      action === "reject"
+        ? window.prompt(`Why are you rejecting the supplier change for "${s.name}"?`)
+        : window.prompt(`Approval note for "${s.name}" (optional):`) ?? "";
+    if (action === "reject" && !reason?.trim()) return;
+    const res = await fetch(`/api/suppliers/${s.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, reason }),
+    });
+    if (!res.ok) {
+      const j = await res.json();
+      toast.error(j.error ?? "Failed to review supplier");
+      return;
+    }
+    toast.success(
+      action === "approve" ? "Supplier change approved" : "Supplier change rejected"
+    );
     router.refresh();
   }
 
@@ -183,7 +223,7 @@ export function SupplierManager({
                 </Button>
                 <Button onClick={save} disabled={busy}>
                   {busy && <Loader2 className="animate-spin" />}
-                  {editing ? "Save" : "Add"}
+                  Submit for Approval
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -198,14 +238,20 @@ export function SupplierManager({
               <TableHead>Name</TableHead>
               <TableHead>Country</TableHead>
               <TableHead>Contact</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead className="text-right">Containers</TableHead>
-              {canEdit && <TableHead className="text-right">Actions</TableHead>}
+              {(canEdit || canApprove) && (
+                <TableHead className="text-right">Actions</TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
             {suppliers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={canEdit ? 5 : 4} className="h-24 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={canEdit || canApprove ? 6 : 5}
+                  className="h-24 text-center text-muted-foreground"
+                >
                   No suppliers yet.
                 </TableCell>
               </TableRow>
@@ -213,30 +259,64 @@ export function SupplierManager({
               suppliers.map((s) => (
                 <TableRow key={s.id}>
                   <TableCell className="font-medium">{s.name}</TableCell>
-                  <TableCell>{s.country ?? "—"}</TableCell>
+                  <TableCell>{s.country ?? "-"}</TableCell>
                   <TableCell className="text-muted-foreground">
-                    {s.contactName ?? s.email ?? "—"}
+                    {s.contactName ?? s.email ?? "-"}
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                        {s.approvalStatus}
+                      </span>
+                      {!!s.pendingChanges && (
+                        <p className="max-w-xs truncate text-xs text-muted-foreground">
+                          Pending: {pendingActionLabel(s.pendingChanges)}
+                        </p>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="font-financial text-right">
                     {s.containerCount}
                   </TableCell>
-                  {canEdit && (
+                  {(canEdit || canApprove) && (
                     <TableCell>
                       <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => openEdit(s)}
-                          className="rounded p-1.5 text-muted-foreground hover:bg-surface-alt hover:text-primary"
-                          title="Edit"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => remove(s)}
-                          className="rounded p-1.5 text-muted-foreground hover:bg-surface-alt hover:text-danger"
-                          title="Delete"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        {canApprove && s.approvalStatus === "PendingApproval" && (
+                          <>
+                            <button
+                              onClick={() => review(s, "approve")}
+                              className="rounded p-1.5 text-muted-foreground hover:bg-surface-alt hover:text-success"
+                              title="Approve"
+                            >
+                              <Check className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => review(s, "reject")}
+                              className="rounded p-1.5 text-muted-foreground hover:bg-surface-alt hover:text-danger"
+                              title="Reject"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
+                        {canEdit && (
+                          <>
+                            <button
+                              onClick={() => openEdit(s)}
+                              className="rounded p-1.5 text-muted-foreground hover:bg-surface-alt hover:text-primary"
+                              title="Edit"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => remove(s)}
+                              className="rounded p-1.5 text-muted-foreground hover:bg-surface-alt hover:text-danger"
+                              title="Request archive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </TableCell>
                   )}

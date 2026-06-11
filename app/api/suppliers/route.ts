@@ -46,15 +46,22 @@ export async function POST(request: NextRequest) {
     }
 
     const supplier = await prisma.supplier.create({
-      data: { orgId: session.orgId, ...input },
+      data: {
+        orgId: session.orgId,
+        ...input,
+        approvalStatus: "PendingApproval",
+        requestedById: session.userId,
+        reviewNotes: "New supplier pending master-data approval.",
+      },
     });
     await logActivity({
       orgId: session.orgId,
       userId: session.userId,
-      action: "created_supplier",
+      action: "requested_supplier_create",
       entityType: "supplier",
       entityId: supplier.id,
-      summary: `Added supplier ${supplier.name}`,
+      summary: `Requested supplier ${supplier.name}`,
+      metadata: { after: supplier },
     });
     return NextResponse.json({ data: supplier }, { status: 201 });
   } catch (err) {

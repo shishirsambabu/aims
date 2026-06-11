@@ -59,6 +59,23 @@ export async function POST(request: NextRequest) {
       input.portCode ??
       PORTS.find((p) => p.name === input.port)?.code ??
       undefined;
+    if (input.supplierId) {
+      const supplier = await prisma.supplier.findFirst({
+        where: {
+          id: input.supplierId,
+          orgId: session.orgId,
+          deletedAt: null,
+          approvalStatus: "Approved",
+        },
+        select: { id: true },
+      });
+      if (!supplier) {
+        return NextResponse.json(
+          { error: "Supplier must be approved before it can be used" },
+          { status: 409 }
+        );
+      }
+    }
 
     // Free time auto-calculated from ETA + free days when not given explicitly.
     let lastFreeDate = input.lastFreeDate;

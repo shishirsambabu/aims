@@ -30,7 +30,11 @@ export default async function ShipmentsPage({ searchParams }: PageProps) {
         supplierId: params.supplierId,
       }, { includeFinancials: false }),
       prisma.supplier.findMany({
-        where: { orgId: session.orgId, deletedAt: null },
+        where: {
+          orgId: session.orgId,
+          deletedAt: null,
+          approvalStatus: "Approved",
+        },
         orderBy: { name: "asc" },
         select: { id: true, name: true },
       }),

@@ -135,6 +135,12 @@ model Supplier {
   deletedAt   DateTime? @map("deleted_at")
   deletedById String?  @map("deleted_by_id")
   deleteReason String? @map("delete_reason")
+  approvalStatus ApprovalStatus @default(Approved) @map("approval_status")
+  pendingChanges Json? @map("pending_changes")
+  requestedById String? @map("requested_by_id")
+  reviewedById String? @map("reviewed_by_id")
+  reviewedAt DateTime? @map("reviewed_at")
+  reviewNotes String? @map("review_notes")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 

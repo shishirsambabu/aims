@@ -15,6 +15,7 @@ export const dynamic = "force-dynamic";
 export default async function MasterDataPage() {
   const session = await requireSession();
   const canEdit = can(session.role, "masterdata.write");
+  const canApprove = can(session.role, "masterdata.approve");
 
   let suppliers: SupplierRecord[] = [];
   let loadError = false;
@@ -49,7 +50,11 @@ export default async function MasterDataPage() {
               </p>
             </div>
           ) : (
-            <SupplierManager suppliers={suppliers} canEdit={canEdit} />
+            <SupplierManager
+              suppliers={suppliers}
+              canEdit={canEdit}
+              canApprove={canApprove}
+            />
           )}
         </div>
 

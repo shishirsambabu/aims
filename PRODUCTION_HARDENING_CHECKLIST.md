@@ -21,7 +21,7 @@ System (AIMS) is treated as production-ready ERP software.
 - [x] Imported payments should enter a reviewable state before becoming payable.
 - [x] Add reason prompts for destructive, financial and workflow reversal actions.
 - [x] Add explicit audit metadata for before/after values on key financial edits.
-- [ ] Add approval controls for supplier master data changes.
+- [x] Add approval controls for supplier master data changes.
 
 ## Security / Dependency Risk
 

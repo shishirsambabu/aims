@@ -47,7 +47,7 @@ export default async function ContainersPage({ searchParams }: PageProps) {
         dateTo: params.dateTo,
       }, { includeFinancials: showFinancials }),
       prisma.supplier.findMany({
-        where: { orgId, deletedAt: null },
+        where: { orgId, deletedAt: null, approvalStatus: "Approved" },
         orderBy: { name: "asc" },
         select: { id: true, name: true },
       }),

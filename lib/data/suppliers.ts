@@ -1,6 +1,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
+import type { ApprovalStatus } from "@/types";
 
 export interface SupplierRecord {
   id: string;
@@ -10,6 +11,9 @@ export interface SupplierRecord {
   email: string | null;
   phone: string | null;
   containerCount: number;
+  approvalStatus: ApprovalStatus;
+  pendingChanges: unknown;
+  reviewNotes: string | null;
 }
 
 export async function listSuppliers(orgId: string): Promise<SupplierRecord[]> {
@@ -25,6 +29,9 @@ export async function listSuppliers(orgId: string): Promise<SupplierRecord[]> {
     contactName: string | null;
     email: string | null;
     phone: string | null;
+    approvalStatus: ApprovalStatus;
+    pendingChanges: unknown;
+    reviewNotes: string | null;
     _count: { containers: number };
   }) => ({
     id: s.id,
@@ -34,5 +41,8 @@ export async function listSuppliers(orgId: string): Promise<SupplierRecord[]> {
     email: s.email,
     phone: s.phone,
     containerCount: s._count.containers,
+    approvalStatus: s.approvalStatus,
+    pendingChanges: s.pendingChanges,
+    reviewNotes: s.reviewNotes,
   }));
 }
