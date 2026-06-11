@@ -27,9 +27,10 @@ System (AIMS) is treated as production-ready ERP software.
 
 - [x] Upgrade vulnerable `next` version through a controlled framework upgrade.
 - [x] Replace or isolate vulnerable `xlsx` usage.
-- [ ] Add rate limits to all mutation, upload, export and import endpoints.
-- [ ] Add stricter upload scanning/validation for documents and spreadsheets.
-- [ ] Add production security headers/CSP review.
+- [x] Add rate limits to all mutation, upload, export and import endpoints.
+- [x] Add stricter upload validation for document metadata and private storage paths.
+- [ ] Add malware scanning for uploads once a scanning provider is selected.
+- [x] Add production security headers/CSP review.
 
 ## Reliability / Operations
 

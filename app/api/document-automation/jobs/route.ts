@@ -5,6 +5,7 @@ import { Prisma } from "@prisma/client";
 import { requireSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { validateDocumentUploadMetadata } from "@/lib/upload-security";
 
 const createJobSchema = z.object({
   source: z.enum(["Email", "OCR", "Manual", "Import"]),
@@ -12,6 +13,7 @@ const createJobSchema = z.object({
   documentId: z.string().optional(),
   fileName: z.string().optional(),
   filePath: z.string().optional(),
+  fileSize: z.coerce.number().int().optional(),
   sender: z.string().optional(),
   subject: z.string().optional(),
   matchSummary: z.string().optional(),
@@ -61,6 +63,33 @@ export async function POST(request: NextRequest) {
     }
 
     const input = parsed.data;
+    if (input.filePath || input.fileName || input.fileSize != null) {
+      if (!input.containerId) {
+        return NextResponse.json(
+          { error: "Container is required when queueing a file automation job" },
+          { status: 422 }
+        );
+      }
+      const container = await prisma.container.findFirst({
+        where: { id: input.containerId, orgId: session.orgId, deletedAt: null },
+        select: { id: true },
+      });
+      if (!container) {
+        return NextResponse.json({ error: "Container not found" }, { status: 404 });
+      }
+      const uploadError = validateDocumentUploadMetadata({
+        orgId: session.orgId,
+        containerId: input.containerId,
+        type: "Other",
+        filePath: input.filePath,
+        fileName: input.fileName,
+        fileSize: input.fileSize,
+      });
+      if (uploadError) {
+        return NextResponse.json({ error: uploadError }, { status: 422 });
+      }
+    }
+
     const job = await prisma.documentAutomationJob.create({
       data: {
         orgId: session.orgId,

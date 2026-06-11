@@ -7,6 +7,7 @@ import { logActivity } from "@/lib/activity";
 import { listDocuments } from "@/lib/data/documents";
 import { createDocumentSchema } from "@/lib/validations/document";
 import { DOCUMENT_TYPE_LABELS } from "@/lib/constants";
+import { validateDocumentUploadMetadata } from "@/lib/upload-security";
 import type { DocumentStatus, DocumentType } from "@/types";
 
 export async function GET(request: NextRequest) {
@@ -62,6 +63,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const uploadError = validateDocumentUploadMetadata({
+      orgId: session.orgId,
+      containerId: container.id,
+      type: input.type,
+      filePath: input.filePath,
+      fileName: input.fileName,
+      fileSize: input.fileSize,
+      fileUrl: input.fileUrl,
+    });
+    if (uploadError) {
+      return NextResponse.json({ error: uploadError }, { status: 422 });
+    }
+
     const doc = await prisma.document.create({
       data: {
         orgId: session.orgId,
@@ -75,7 +89,7 @@ export async function POST(request: NextRequest) {
         expiryDate: input.expiryDate,
         status: input.status,
         filePath: input.filePath,
-        fileUrl: input.fileUrl,
+        fileUrl: null,
         fileName: input.fileName,
         fileSize: input.fileSize,
       },
