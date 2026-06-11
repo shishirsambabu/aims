@@ -9,6 +9,11 @@ import {
   Circle,
   Download,
   ExternalLink,
+  AlertCircle,
+  Ship,
+  Anchor,
+  Warehouse,
+  PackageCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -248,6 +253,127 @@ function DemurrageCountdown({ date }: { date: string | null }) {
   );
 }
 
+function LifecycleTimeline({
+  container,
+  ctx,
+}: {
+  container: DetailData;
+  ctx: WorkflowContext;
+}) {
+  const currentIndex = CONTAINER_STATUSES.indexOf(container.status);
+  const timeline = CONTAINER_STATUSES.map((status, index) => {
+    const requirement = stageRequirement(status);
+    const transition = canTransition(container.status, status, ctx);
+    const isCurrent = status === container.status;
+    const isDone = index < currentIndex;
+    const isBlocked = index > currentIndex && !transition.ok;
+    const Icon =
+      status === "Booked"
+        ? PackageCheck
+        : status === "InTransit"
+          ? Ship
+          : status === "AtPort" || status === "CustomsClearance"
+            ? Anchor
+            : status === "InWarehouse" || status === "EmptyReturned"
+              ? Warehouse
+              : CheckCircle2;
+
+    return { status, requirement, isCurrent, isDone, isBlocked, Icon };
+  });
+
+  return (
+    <Card className="command-surface rounded-[1.5rem]">
+      <CardContent className="pt-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="label-caps">SOP Lifecycle</p>
+            <h3 className="font-heading text-xl font-bold tracking-tight">
+              Container movement timeline
+            </h3>
+          </div>
+          <div className="rounded-full border border-primary/15 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+            Current: {CONTAINER_STATUS_LABELS[container.status]}
+          </div>
+        </div>
+
+        <div className="mt-6 overflow-x-auto pb-2 scrollbar-thin">
+          <ol className="grid min-w-[980px] grid-cols-9 gap-3">
+            {timeline.map(({ status, requirement, isCurrent, isDone, isBlocked, Icon }) => (
+              <li key={status} className="relative">
+                <div
+                  className={cn(
+                    "absolute left-1/2 top-5 h-0.5 w-full bg-border",
+                    status === CONTAINER_STATUSES[CONTAINER_STATUSES.length - 1] &&
+                      "hidden"
+                  )}
+                />
+                <div className="relative z-10 flex flex-col items-center text-center">
+                  <div
+                    className={cn(
+                      "flex h-11 w-11 items-center justify-center rounded-2xl border bg-card shadow-sm",
+                      isDone && "border-success/30 bg-success/10 text-success",
+                      isCurrent && "border-primary/40 bg-primary text-white shadow-primary/25",
+                      isBlocked && "border-warning/30 bg-warning/10 text-[#9A6212]"
+                    )}
+                  >
+                    {isBlocked ? (
+                      <AlertCircle className="h-5 w-5" />
+                    ) : (
+                      <Icon className="h-5 w-5" />
+                    )}
+                  </div>
+                  <p
+                    className={cn(
+                      "mt-3 text-xs font-semibold leading-tight",
+                      isCurrent && "text-primary",
+                      isDone && "text-success",
+                      isBlocked && "text-[#9A6212]"
+                    )}
+                  >
+                    {CONTAINER_STATUS_LABELS[status]}
+                  </p>
+                  {(requirement.docs.length > 0 || requirement.needsSales) && (
+                    <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+                      {requirement.docs
+                        .map((doc) => DOCUMENT_TYPE_LABELS[doc])
+                        .concat(requirement.needsSales ? ["Sales"] : [])
+                        .join(", ")}
+                    </p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          <TimelineFact label="ETA" value={formatDate(container.eta)} />
+          <TimelineFact label="ATA" value={formatDate(container.ata)} />
+          <TimelineFact
+            label="Last Free Date"
+            value={<DemurrageCountdown date={container.lastFreeDate} />}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function TimelineFact({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border border-border/70 bg-background/70 p-3">
+      <p className="label-caps">{label}</p>
+      <div className="mt-1 text-sm font-semibold">{value}</div>
+    </div>
+  );
+}
+
 function SectionCard({
   title,
   children,
@@ -401,6 +527,8 @@ function OverviewTab({
           />
         </dl>
       </SectionCard>
+
+      <LifecycleTimeline container={container} ctx={ctx} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <SectionCard title="Schedule">

@@ -10,7 +10,7 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowUpDown, Flag, TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowUpDown, Columns3, Flag, Rows3, TrendingDown, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -22,6 +22,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { StatusBadge } from "@/components/containers/StatusBadge";
 import { cn, formatINR, marginColor } from "@/lib/utils";
 import { CONTAINER_STATUSES, CONTAINER_STATUS_LABELS } from "@/lib/constants";
@@ -39,6 +46,8 @@ export function ContainerTable({
 }) {
   const router = useRouter();
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [density, setDensity] = useState<"comfortable" | "compact">("comfortable");
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
 
@@ -99,6 +108,7 @@ export function ContainerTable({
       {
         accessorKey: "containerNo",
         header: "Container No",
+        enableHiding: false,
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             {row.original.flagged && (
@@ -132,6 +142,7 @@ export function ContainerTable({
       {
         accessorKey: "status",
         header: "Status",
+        enableHiding: false,
         cell: ({ row }) => <StatusBadge status={row.original.status} />,
       },
       {
@@ -205,14 +216,69 @@ export function ContainerTable({
   const table = useReactTable({
     data,
     columns,
-    state: { sorting },
+    state: { sorting, columnVisibility },
     onSortingChange: setSorting,
+    onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
 
   return (
     <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border/80 bg-card/90 p-2 shadow-sm">
+        <div className="flex items-center gap-2 px-2 text-xs text-muted-foreground">
+          <Rows3 className="h-4 w-4" />
+          <span>Table view</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="rounded-xl border border-border bg-background p-1">
+            {(["comfortable", "compact"] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setDensity(mode)}
+                className={cn(
+                  "rounded-lg px-3 py-1.5 text-xs font-semibold capitalize transition",
+                  density === mode
+                    ? "bg-primary text-white shadow-sm"
+                    : "text-muted-foreground hover:bg-surface-alt hover:text-foreground"
+                )}
+              >
+                {mode}
+              </button>
+            ))}
+          </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Columns3 className="h-4 w-4" /> Columns
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Visible columns</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {table
+                .getAllLeafColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => (
+                  <label
+                    key={column.id}
+                    className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-surface-alt"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={column.getIsVisible()}
+                      onChange={column.getToggleVisibilityHandler()}
+                    />
+                    {String(column.columnDef.header ?? column.id)}
+                  </label>
+                ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
       {canEdit && selected.size > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-accent/40 px-3 py-2 text-sm">
           <span className="font-medium">{selected.size} selected</span>
@@ -309,7 +375,10 @@ export function ContainerTable({
                   </TableCell>
                 )}
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
+                  <TableCell
+                    key={cell.id}
+                    className={density === "compact" ? "py-2" : undefined}
+                  >
                     {flexRender(
                       cell.column.columnDef.cell,
                       cell.getContext()

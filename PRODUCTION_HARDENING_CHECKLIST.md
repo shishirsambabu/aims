@@ -47,9 +47,9 @@ System (AIMS) is treated as production-ready ERP software.
 
 ## UI / UX Production Polish
 
-- [ ] Add lifecycle timeline to container detail.
-- [ ] Add saved table views and column visibility.
+- [x] Add lifecycle timeline to container detail.
+- [x] Add local column visibility controls for the container table.
 - [x] Add sticky table headers and improved table empty states.
 - [x] Add mobile task-first dashboard action dock.
-- [ ] Add density controls for high-volume tables.
+- [x] Add density controls for high-volume tables.
 - [ ] Add empty/error/loading states with business-friendly recovery actions across all modules.
