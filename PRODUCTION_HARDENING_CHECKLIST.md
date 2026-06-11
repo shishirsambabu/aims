@@ -34,10 +34,10 @@ System (AIMS) is treated as production-ready ERP software.
 
 ## Reliability / Operations
 
-- [ ] Add automated tests for SOP stage gates.
-- [ ] Add automated tests for role permissions and financial visibility.
+- [x] Add automated tests for SOP stage gates.
+- [x] Add automated tests for role permissions and financial visibility.
 - [ ] Add automated tests for payment maker-checker.
-- [ ] Add automated tests for import validation.
+- [x] Add automated tests for import validation.
 - [ ] Add automated tests for document verification and dossier downloads.
 - [ ] Add production error monitoring.
 - [ ] Add slow-query and failed-sync monitoring.

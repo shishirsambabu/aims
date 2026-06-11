@@ -70,6 +70,7 @@
 - [ ] Connect email provider keys (Microsoft Graph or Gmail)
 - [ ] Connect OCR provider keys (Document AI / Azure / Textract / Mindee)
 - [ ] Build human OCR review/accept screen after provider choice
+- [ ] Add malware scanning for uploads once a scanning provider is selected
 - [ ] Manual dossier ZIP test on localhost:3001
 - [ ] Revisit GoDaddy/domain email ingestion provider path; Outlook is not currently used
 
