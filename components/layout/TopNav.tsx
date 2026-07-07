@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Search, LogOut, ChevronRight, Menu } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/actions/auth";
 import { useUiStore } from "@/store/useUiStore";
+import { CommandPalette } from "@/components/layout/CommandPalette";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ROLE_LABELS, isRole } from "@/lib/permissions";
@@ -35,9 +36,8 @@ function initials(name: string | null, email: string) {
 
 export function TopNav({ user }: TopNavProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const toggleMobileSidebar = useUiStore((s) => s.toggleMobileSidebar);
-  const [query, setQuery] = useState("");
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   const SEGMENT_LABELS: Record<string, string> = {
     containers: "Containers",
@@ -80,14 +80,6 @@ export function TopNav({ user }: TopNavProps) {
           (/^[0-9a-f-]{16,}$/i.test(segment) ? "Detail" : segment)
         );
 
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    const q = query.trim();
-    if (!q) return;
-    // Search spans Container No AND BL No on the containers list.
-    router.push(`/search?q=${encodeURIComponent(q)}`);
-  }
-
   return (
     <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-4 border-b border-border bg-surface px-4 md:px-6">
       {/* Mobile menu toggle */}
@@ -115,18 +107,26 @@ export function TopNav({ user }: TopNavProps) {
         ))}
       </nav>
 
-      {/* Global search */}
-      <form onSubmit={handleSearch} className="ml-auto w-full max-w-md">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search Container No or BL No…"
-            className="h-8 w-full rounded-md border border-input bg-background pl-8 pr-3 text-[13px] outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
-          />
-        </div>
-      </form>
+      {/* Global search — opens the command palette */}
+      <button
+        type="button"
+        onClick={() => setPaletteOpen(true)}
+        className="ml-auto flex h-8 w-full max-w-md items-center gap-2 rounded-md border border-input bg-background px-2.5 text-[13px] text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+      >
+        <Search className="h-4 w-4 shrink-0" />
+        <span className="flex-1 truncate text-left">
+          Search containers, pages, actions…
+        </span>
+        <kbd className="hidden shrink-0 items-center gap-0.5 rounded border border-border bg-surface-alt px-1.5 py-0.5 font-mono text-[10px] font-medium sm:inline-flex">
+          Ctrl K
+        </kbd>
+      </button>
+
+      <CommandPalette
+        role={user.role}
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+      />
 
       <ThemeToggle />
 

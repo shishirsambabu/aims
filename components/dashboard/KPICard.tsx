@@ -19,12 +19,12 @@ export function KPICard({
   valueClass?: string;
 }) {
   return (
-    <Card className={cn("border-t-4", accent)}>
-      <CardContent className="pt-6">
+    <Card className={cn("border-t-2", accent)}>
+      <CardContent className="p-4">
         <div className="flex items-start justify-between">
           <div className="min-w-0">
-            <p className="text-sm text-muted-foreground">{label}</p>
-            <p className={cn("font-financial mt-2 text-2xl font-bold", valueClass)}>
+            <p className="label-caps">{label}</p>
+            <p className={cn("font-financial mt-1.5 text-xl font-bold", valueClass)}>
               {value}
             </p>
             {hint && (

@@ -25,6 +25,8 @@ const securityHeaders = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Allows CI/agent builds to run beside a live dev server (.next stays untouched).
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   async headers() {
     return [
       {

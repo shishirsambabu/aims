@@ -15,6 +15,11 @@ export interface ContainerFilters {
 
 export interface ContainerListOptions {
   includeFinancials?: boolean;
+  /** 1-based page number; when set with pageSize, results are paginated. */
+  page?: number;
+  pageSize?: number;
+  /** Hard row cap (e.g. for typeahead search). Ignored when page is set. */
+  take?: number;
 }
 
 type ContainerWhere = NonNullable<
@@ -82,8 +87,16 @@ export async function listContainers(
   options: ContainerListOptions = {}
 ): Promise<ContainerListRow[]> {
   const includeFinancials = options.includeFinancials ?? false;
+  const pagination: { skip?: number; take?: number } = {};
+  if (options.page != null) {
+    pagination.skip = (options.page - 1) * (options.pageSize ?? 50);
+    pagination.take = options.pageSize ?? 50;
+  } else if (options.take != null) {
+    pagination.take = options.take;
+  }
   const rows = await prisma.container.findMany({
     where: buildWhere(orgId, filters),
+    ...pagination,
     orderBy: [{ slNo: "asc" }, { createdAt: "desc" }],
     select: {
       id: true,
@@ -166,6 +179,46 @@ export async function listContainers(
       r.documents.filter((d) => d.status === "Verified").map((d) => d.type)
     ).size,
   }));
+}
+
+export interface ContainerListSummary {
+  total: number;
+  flagged: number;
+  /** Sum of approved profit across all matched rows; null when financials hidden. */
+  netProfit: number | null;
+}
+
+/** Aggregates across ALL matched rows (not just the current page). */
+export async function getContainerListSummary(
+  orgId: string,
+  filters: ContainerFilters = {},
+  options: ContainerListOptions = {}
+): Promise<ContainerListSummary> {
+  const where = buildWhere(orgId, filters);
+  const includeFinancials = options.includeFinancials ?? false;
+
+  const [total, flagged, profitRows] = await Promise.all([
+    prisma.container.count({ where }),
+    prisma.container.count({ where: { ...where, flagged: true } }),
+    includeFinancials
+      ? prisma.container.findMany({
+          where,
+          select: { sale: { select: { profit: true, approvalStatus: true } } },
+        })
+      : Promise.resolve(null),
+  ]);
+
+  const netProfit = profitRows
+    ? profitRows.reduce(
+        (sum: number, row: { sale: { profit: unknown; approvalStatus: string } | null }) =>
+          row.sale?.approvalStatus === "Approved"
+            ? sum + (dec(row.sale.profit) ?? 0)
+            : sum,
+        0
+      )
+    : null;
+
+  return { total, flagged, netProfit };
 }
 
 export async function getContainerById(

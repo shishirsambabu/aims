@@ -3,8 +3,8 @@ import {
   ArrowRight,
   BarChart3,
   BellRing,
-  Clock3,
   ClipboardCheck,
+  Clock3,
   CreditCard,
   FileSpreadsheet,
   FileText,
@@ -17,15 +17,15 @@ import {
   TrendingUp,
   Users2,
   Warehouse,
+  type LucideIcon,
 } from "lucide-react";
 
 import { AlertActions } from "@/components/alerts/AlertActions";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireSession } from "@/lib/auth";
-import { BRAND_SHORT_NAME } from "@/lib/branding";
 import { can } from "@/lib/permissions";
 import { getAnalytics, type Analytics } from "@/lib/data/analytics";
 import {
@@ -45,8 +45,7 @@ const MODULES = [
     icon: FileText,
     status: "Live",
     description: "Container tracker, linked docs, status pipeline, and exceptions.",
-    submodules: ["Container tracker", "Document manager", "Shipments", "Payments"],
-    tone: "from-sky-500/25 to-blue-500/10",
+    submodules: ["Containers", "Documents", "Shipments", "Payments"],
   },
   {
     id: "warehouse",
@@ -56,8 +55,7 @@ const MODULES = [
     icon: Warehouse,
     status: "Live",
     description: "Stock receipt, FEFO lots, cycle counts, and dispatch control.",
-    submodules: ["Receiving", "Grading", "Cycle counts", "Dispatch queue"],
-    tone: "from-emerald-500/20 to-teal-500/10",
+    submodules: ["Receiving", "Grading", "Cycle counts", "Dispatch"],
   },
   {
     id: "procurement",
@@ -67,8 +65,7 @@ const MODULES = [
     icon: FileSpreadsheet,
     status: "Coming soon",
     description: "Supplier onboarding, purchase planning, and import sourcing.",
-    submodules: ["Suppliers", "Purchase plans", "Negotiation", "Approvals"],
-    tone: "from-slate-500/20 to-slate-400/10",
+    submodules: ["Suppliers", "Purchase plans", "Approvals"],
   },
   {
     id: "sales",
@@ -78,8 +75,7 @@ const MODULES = [
     icon: ShoppingCart,
     status: "Live",
     description: "Quotes, orders, approvals, amendments, and conversion flow.",
-    submodules: ["Quotes", "Orders", "Price lists", "Forecast view"],
-    tone: "from-amber-500/20 to-orange-500/10",
+    submodules: ["Quotes", "Orders", "Price lists"],
   },
   {
     id: "crm",
@@ -89,8 +85,7 @@ const MODULES = [
     icon: Users2,
     status: "Live",
     description: "Leads, opportunities, follow-ups, reminders, and customer control.",
-    submodules: ["Pipeline", "Tasks", "KYC", "Credit control"],
-    tone: "from-fuchsia-500/20 to-pink-500/10",
+    submodules: ["Pipeline", "Tasks", "Credit control"],
   },
   {
     id: "finance",
@@ -100,8 +95,7 @@ const MODULES = [
     icon: CreditCard,
     status: "Live",
     description: "Receipts, payables, collections, and margin visibility.",
-    submodules: ["Payments", "Receipts", "Outstanding", "Profit views"],
-    tone: "from-lime-500/20 to-green-500/10",
+    submodules: ["Payments", "Receipts", "Outstanding"],
   },
   {
     id: "reports",
@@ -111,8 +105,7 @@ const MODULES = [
     icon: BarChart3,
     status: "Live",
     description: "Operational, financial, and management reporting surfaces.",
-    submodules: ["KPI cards", "Exports", "Aging", "Management pack"],
-    tone: "from-cyan-500/20 to-sky-500/10",
+    submodules: ["KPIs", "Exports", "Aging"],
   },
   {
     id: "settings",
@@ -122,8 +115,7 @@ const MODULES = [
     icon: Settings,
     status: "Live",
     description: "Roles, permissions, defaults, workflows, and system config.",
-    submodules: ["Users", "Roles", "Workflow rules", "Master data"],
-    tone: "from-indigo-500/20 to-violet-500/10",
+    submodules: ["Users", "Roles", "Master data"],
   },
 ] as const;
 
@@ -157,22 +149,35 @@ export default async function DashboardHome({ searchParams }: PageProps) {
   }
 
   const k = data?.kpis;
+  const criticalCount = workbench?.criticalCount ?? 0;
+  const detention = workbench?.detentionCount ?? 0;
+  const apRows = data?.paymentOutstandingByCurrency ?? [];
 
   return (
     <div>
       <PageHeader
-        title={`${BRAND_SHORT_NAME} Command Cockpit`}
-        description="Decision desk for imported-fruit operations: risk, money, documents, stock flow, and next actions before module navigation."
+        title="Dashboard"
+        description="Operational overview: exceptions, money, documents, and module workspaces."
         actions={
-          <Button asChild>
-            <Link href="/sop">
-              Open SOP center <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
+          <>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/sop">SOP Center</Link>
+            </Button>
+            <Button asChild size="sm">
+              <Link href="/alerts">
+                Alerts
+                {criticalCount > 0 && (
+                  <span className="font-financial ml-1 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-white/25 px-1 text-[10px] font-semibold">
+                    {criticalCount}
+                  </span>
+                )}
+              </Link>
+            </Button>
+          </>
         }
       />
 
-      <div className="space-y-6 p-6">
+      <div className="space-y-5 p-5 md:p-6">
         {loadError ? (
           <div className="rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm text-muted-foreground">
             Couldn&apos;t load dashboard data. The database is not reachable from
@@ -180,11 +185,71 @@ export default async function DashboardHome({ searchParams }: PageProps) {
           </div>
         ) : (
           <>
-            <DecisionCockpit
-              data={data}
-              workbench={workbench}
-              showFinancials={showFinancials}
-            />
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <Kpi
+                label="Active Containers"
+                value={(k?.totalContainers ?? 0).toLocaleString("en-IN")}
+                hint="Total tracked"
+                icon={Package}
+              />
+              {showFinancials ? (
+                <Kpi
+                  label="Total Profit"
+                  value={formatINR(k?.totalProfit ?? 0)}
+                  hint="Net of damages and cost"
+                  icon={(k?.totalProfit ?? 0) >= 0 ? TrendingUp : TrendingDown}
+                  tone={(k?.totalProfit ?? 0) >= 0 ? "text-success" : "text-danger"}
+                />
+              ) : (
+                <Kpi
+                  label="Financials"
+                  value="Restricted"
+                  hint="Hidden for this role"
+                  icon={Percent}
+                />
+              )}
+              {showFinancials && (
+                <Kpi
+                  label="Avg Margin"
+                  value={typeof k?.avgMargin === "number" ? `${k.avgMargin.toFixed(1)}%` : "—"}
+                  hint="Across sold containers"
+                  icon={Percent}
+                  tone={marginColor(k?.avgMargin ?? null)}
+                />
+              )}
+              <Kpi
+                label="Pending Documents"
+                value={(k?.pendingDocs ?? 0).toLocaleString("en-IN")}
+                hint="Completeness queue"
+                icon={ClipboardCheck}
+                tone={(k?.pendingDocs ?? 0) > 0 ? "text-warning" : undefined}
+              />
+              <Kpi
+                label="Detention Watch"
+                value={detention.toLocaleString("en-IN")}
+                hint="Inside free-day danger window"
+                icon={Clock3}
+                tone={detention > 0 ? "text-danger" : "text-success"}
+              />
+              <Kpi
+                label="Critical Alerts"
+                value={criticalCount.toLocaleString("en-IN")}
+                hint="Need action first"
+                icon={ShieldAlert}
+                tone={criticalCount > 0 ? "text-danger" : "text-success"}
+              />
+              {showFinancials &&
+                apRows.map((row) => (
+                  <Kpi
+                    key={row.currency}
+                    label={`Outstanding (${row.currency})`}
+                    value={formatMoney(row.amount, row.currency)}
+                    hint={`${row.count} open payment${row.count === 1 ? "" : "s"}`}
+                    icon={CreditCard}
+                    tone={row.amount > 0 ? "text-danger" : undefined}
+                  />
+                ))}
+            </div>
 
             <Workbench data={workbench} role={session.role} />
 
@@ -201,107 +266,47 @@ export default async function DashboardHome({ searchParams }: PageProps) {
               <ModuleLauncher />
             )}
 
-            {false && (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <Kpi
-                label="Active Containers"
-                value={(k?.totalContainers ?? 0).toLocaleString("en-IN")}
-                hint="Total tracked"
-                icon={Package}
-                accent="border-t-primary"
-              />
-              {showFinancials ? (
-                <Kpi
-                  label="Total Profit"
-                  value={formatINR(k?.totalProfit ?? 0)}
-                  hint="Net of damages and cost"
-                  icon={(k?.totalProfit ?? 0) >= 0 ? TrendingUp : TrendingDown}
-                  accent={
-                    (k?.totalProfit ?? 0) >= 0
-                      ? "border-t-success"
-                      : "border-t-danger"
-                  }
-                  tone={
-                    (k?.totalProfit ?? 0) >= 0 ? "text-success" : "text-danger"
-                  }
-                />
-              ) : (
-                <Kpi
-                  label="Invoice Value"
-                  value="Restricted"
-                  hint="Financials hidden for this role"
-                  icon={Percent}
-                  accent="border-t-primary"
-                />
-              )}
-              {showFinancials && (
-                <Kpi
-                  label="Avg Margin"
-                  value={typeof k?.avgMargin === "number" ? `${(k?.avgMargin ?? 0).toFixed(1)}%` : "—"}
-                  hint="Across sold containers"
-                  icon={Percent}
-                  accent="border-t-warning"
-                  tone={marginColor(k?.avgMargin ?? null)}
-                />
-              )}
-              <Kpi
-                label="Pending Documents"
-                value={(k?.pendingDocs ?? 0).toLocaleString("en-IN")}
-                hint="Expiring within 30 days"
-                icon={ClipboardCheck}
-                accent="border-t-warning"
-              />
-              {showFinancials &&
-                (data?.paymentOutstandingByCurrency ?? []).map((row) => (
-                  <Kpi
-                    key={row.currency}
-                    label={`Outstanding (${row.currency})`}
-                    value={formatMoney(row.amount, row.currency)}
-                    hint={`${row.count} open payment${row.count === 1 ? "" : "s"}`}
-                    icon={CreditCard}
-                    accent="border-t-danger"
-                    tone={row.amount > 0 ? "text-danger" : "text-muted-foreground"}
-                  />
-                ))}
-            </div>
-            )}
-
             {showFinancials && (
-              <div className="grid gap-6 lg:grid-cols-2">
+              <div className="grid gap-4 lg:grid-cols-2">
                 <RankCard title="Top 5 Profitable" rows={data?.top5 ?? []} />
-                <RankCard
-                  title="Bottom 5 / Loss-Making"
-                  rows={data?.bottom5 ?? []}
-                />
+                <RankCard title="Bottom 5 / Loss-Making" rows={data?.bottom5 ?? []} />
               </div>
             )}
-
-            <div className="sticky bottom-4 z-10 flex flex-wrap gap-2 rounded-2xl border border-border/80 bg-background/85 p-2 shadow-card backdrop-blur md:static md:border-0 md:bg-transparent md:p-0 md:shadow-none md:backdrop-blur-0">
-              <Button asChild variant="outline" size="sm">
-                <Link href="/?module=import-docs">Import Docs</Link>
-              </Button>
-              <Button asChild variant="outline" size="sm">
-                <Link href="/?module=warehouse">Warehouse</Link>
-              </Button>
-              <Button asChild variant="outline" size="sm">
-                <Link href="/?module=crm">CRM</Link>
-              </Button>
-              <Button asChild variant="outline" size="sm">
-                <Link href="/?module=sales">Sales</Link>
-              </Button>
-              {showFinancials && (
-                <Button asChild variant="outline" size="sm">
-                  <Link href="/?module=finance">Finance</Link>
-                </Button>
-              )}
-              <Button asChild variant="outline" size="sm">
-                <Link href="/?module=reports">Reports</Link>
-              </Button>
-            </div>
           </>
         )}
       </div>
     </div>
+  );
+}
+
+function Kpi({
+  label,
+  value,
+  hint,
+  icon: Icon,
+  tone,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+  icon: LucideIcon;
+  tone?: string;
+}) {
+  return (
+    <Card>
+      <CardContent className="flex items-start justify-between gap-3 p-4">
+        <div className="min-w-0">
+          <p className="label-caps">{label}</p>
+          <p className={cn("font-financial mt-1.5 truncate text-xl font-bold", tone)}>
+            {value}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
+        </div>
+        <div className="rounded-md bg-accent p-2 text-accent-foreground">
+          <Icon className="h-4 w-4" />
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -317,31 +322,24 @@ function ModuleDashboardTabs({
   );
 
   return (
-    <section className="rounded-[1.5rem] border border-border bg-card p-3 shadow-card">
-      <div className="flex flex-wrap items-center gap-2">
-        <Button asChild variant={selectedModule ? "ghost" : "default"} size="sm">
-          <Link href="/">Overall dashboard</Link>
-        </Button>
-        {visibleModules.map((module) => {
-          const Icon = module.icon;
-          const active = selectedModule === module.id;
-          return (
-            <Button
-              key={module.id}
-              asChild
-              variant={active ? "default" : "outline"}
-              size="sm"
-              className="justify-start"
-            >
-              <Link href={module.href}>
-                <Icon className="h-4 w-4" />
-                {module.title}
-              </Link>
-            </Button>
-          );
-        })}
-      </div>
-    </section>
+    <div className="flex flex-wrap items-center gap-1.5 border-b border-border pb-3">
+      <Button asChild variant={selectedModule ? "ghost" : "secondary"} size="sm">
+        <Link href="/">Overview</Link>
+      </Button>
+      {visibleModules.map((module) => {
+        const active = selectedModule === module.id;
+        return (
+          <Button
+            key={module.id}
+            asChild
+            variant={active ? "secondary" : "ghost"}
+            size="sm"
+          >
+            <Link href={module.href}>{module.title}</Link>
+          </Button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -358,7 +356,6 @@ function ModuleDecisionDashboard({
 }) {
   const selectedModuleConfig = MODULES.find((item) => item.id === moduleId) ?? MODULES[0];
   const Icon = selectedModuleConfig.icon;
-  const k = data?.kpis;
   const activeAlerts = workbench?.active ?? [];
   const relevantAlerts = activeAlerts.filter((alert) => {
     if (moduleId === "import-docs") return ["arrival", "demurrage", "docExpiry", "flagged"].includes(alert.category);
@@ -378,131 +375,105 @@ function ModuleDecisionDashboard({
   const actions = getModuleDashboardActions(moduleId, selectedModuleConfig.workspaceHref, showFinancials);
 
   return (
-    <section className="overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-card">
-      <div className={cn("relative overflow-hidden bg-gradient-to-br p-6 text-white", selectedModuleConfig.tone)}>
-        <div className="absolute inset-0 bg-slate-950/72" />
-        <div className="relative flex flex-wrap items-start justify-between gap-4">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/80">
-              <Icon className="h-4 w-4" />
-              {selectedModuleConfig.title} dashboard
-            </div>
-            <h2 className="mt-4 font-heading text-3xl font-bold">
-              {getModuleDashboardTitle(moduleId)}
+    <section className="overflow-hidden rounded-lg border border-border bg-card shadow-card">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="rounded-md bg-accent p-2 text-accent-foreground">
+            <Icon className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <h2 className="font-heading text-base font-bold">
+              {selectedModuleConfig.title}
             </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-white/78">
+            <p className="truncate text-[13px] text-muted-foreground">
               {getModuleDashboardDescription(moduleId)}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {actions.slice(0, 2).map((action, index) => (
-              <Button
-                key={action.href}
-                asChild
-                variant={index === 0 ? "secondary" : "outline"}
-                className={cn(
-                  index === 0
-                    ? "bg-white text-slate-950 hover:bg-sky-50"
-                    : "border-white/30 bg-white/10 text-white hover:bg-white/15 hover:text-white"
-                )}
-              >
-                <Link href={action.href}>{action.label}</Link>
-              </Button>
-            ))}
-          </div>
+        </div>
+        <div className="flex shrink-0 gap-2">
+          {actions.slice(0, 2).map((action, index) => (
+            <Button
+              key={action.href}
+              asChild
+              size="sm"
+              variant={index === 0 ? "default" : "outline"}
+            >
+              <Link href={action.href}>{action.label}</Link>
+            </Button>
+          ))}
         </div>
       </div>
 
-      <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 p-5 md:grid-cols-2 xl:grid-cols-4">
         {moduleMetrics.map((metric) => (
           <ModuleStat key={metric.label} {...metric} />
         ))}
       </div>
 
-      <div className="grid gap-5 border-t border-border p-5 xl:grid-cols-[1.2fr_0.8fr]">
-        <Card className="rounded-[1.25rem]">
-          <CardContent className="p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="label-caps">Decision queue</p>
-                <h3 className="mt-1 font-heading text-lg font-semibold">
-                  What needs attention in this module
-                </h3>
-              </div>
-              <Button asChild variant="outline" size="sm">
-                <Link href="/alerts">Open alerts</Link>
-              </Button>
-            </div>
-
-            <div className="mt-4 space-y-3">
-              {relevantAlerts.length === 0 ? (
-                <div className="rounded-2xl border border-success/20 bg-success/5 p-4 text-sm text-muted-foreground">
-                  No active module-specific blockers are visible for your role.
-                </div>
-              ) : (
-                relevantAlerts.slice(0, 5).map((alert) => (
-                  <Link
-                    key={alert.id}
-                    href={alert.href}
-                    className="block rounded-2xl border border-border bg-surface-alt/45 p-4 transition hover:border-primary/40 hover:bg-primary/5"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="font-medium">{alert.title}</p>
-                        <p className="mt-1 text-sm text-muted-foreground">{alert.subtitle}</p>
-                      </div>
-                      <span
-                        className={cn(
-                          "rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide",
-                          alert.severity === "critical"
-                            ? "bg-danger/10 text-danger"
-                            : "bg-warning/15 text-[#9A6212]"
-                        )}
-                      >
-                        {alert.severity}
-                      </span>
-                    </div>
-                  </Link>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-[1.25rem]">
-          <CardContent className="p-5">
-            <p className="label-caps">Open the actual workspace</p>
-            <h3 className="mt-1 font-heading text-lg font-semibold">
-              Dashboard first, transaction second
+      <div className="grid gap-4 border-t border-border p-5 xl:grid-cols-[1.2fr_0.8fr]">
+        <div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h3 className="font-heading text-sm font-semibold">
+              Needs attention in this module
             </h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Use this panel to decide what matters. Then open the operational
-              workspace to receive, approve, invoice, collect, dispatch, or report.
-            </p>
-            <div className="mt-4 grid gap-2">
-              {actions.map((action) => (
-                <Button key={action.href} asChild variant="outline" className="justify-between">
-                  <Link href={action.href}>
-                    {action.label}
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              ))}
-            </div>
-            <div className="mt-4 rounded-2xl border border-border bg-surface-alt/45 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                SOP link
-              </p>
-              <p className="mt-2 text-sm">
-                Follow the SOP Center for stakeholder handoff, exit gates, and
-                cold-storage control rules before completing the workflow.
-              </p>
-              <Button asChild variant="ghost" size="sm" className="mt-3 px-0">
-                <Link href="/sop">Open SOP Center</Link>
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/alerts">Open alerts</Link>
+            </Button>
+          </div>
+
+          <div className="mt-3 space-y-2">
+            {relevantAlerts.length === 0 ? (
+              <div className="rounded-md border border-border bg-surface-alt/50 p-3.5 text-[13px] text-muted-foreground">
+                No active module-specific blockers are visible for your role.
+              </div>
+            ) : (
+              relevantAlerts.slice(0, 5).map((alert) => (
+                <Link
+                  key={alert.id}
+                  href={alert.href}
+                  className="block rounded-md border border-border p-3.5 transition-colors hover:border-primary/40 hover:bg-accent/50"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">{alert.title}</p>
+                      <p className="mt-0.5 text-[13px] text-muted-foreground">{alert.subtitle}</p>
+                    </div>
+                    <span
+                      className={cn(
+                        "rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase",
+                        alert.severity === "critical"
+                          ? "bg-danger/10 text-danger"
+                          : "bg-warning/15 text-[#9A6212]"
+                      )}
+                    >
+                      {alert.severity}
+                    </span>
+                  </div>
+                </Link>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-md border border-border bg-surface-alt/40 p-4">
+          <h3 className="font-heading text-sm font-semibold">Workspace shortcuts</h3>
+          <div className="mt-3 grid gap-1.5">
+            {actions.map((action) => (
+              <Button key={action.href} asChild variant="outline" size="sm" className="justify-between">
+                <Link href={action.href}>
+                  {action.label}
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
               </Button>
-            </div>
-          </CardContent>
-        </Card>
+            ))}
+            <Button asChild variant="ghost" size="sm" className="justify-between">
+              <Link href="/sop">
+                SOP Center
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -634,40 +605,29 @@ function getModuleDashboardActions(moduleId: DashboardModuleId, workspaceHref: s
   ];
 }
 
-function getModuleDashboardTitle(moduleId: DashboardModuleId) {
-  if (moduleId === "warehouse") return "Cold-storage control before receiving, grading, picking, and dispatch.";
-  if (moduleId === "sales") return "Pricing, margin, quote-to-order, and credit discipline in one view.";
-  if (moduleId === "crm") return "Customer risk, onboarding, relationship flow, and account handoff.";
-  if (moduleId === "finance") return "Receipts, payables, settlements, journals, and close readiness.";
-  if (moduleId === "reports") return "Management reporting, exports, aging, and performance visibility.";
-  if (moduleId === "import-docs") return "Container, BL, document, clearance, and port-risk cockpit.";
-  if (moduleId === "procurement") return "Supplier sourcing and purchase planning control surface.";
-  return "System configuration, access, master data, and operating controls.";
-}
-
 function getModuleDashboardDescription(moduleId: DashboardModuleId) {
   if (moduleId === "warehouse") {
-    return "Use this dashboard to decide what to receive, what is blocked by documents or detention risk, and when to move into stock, cycle count, or dispatch execution.";
+    return "Receiving, document blockers, detention risk, stock, cycle count, and dispatch.";
   }
   if (moduleId === "sales") {
-    return "Use this dashboard before touching orders: verify day-price discipline, margin leakage, quote conversion, and customer credit pressure.";
+    return "Day-price discipline, margin leakage, quote conversion, and customer credit pressure.";
   }
   if (moduleId === "crm") {
-    return "Use this dashboard to see whether customers are safe to onboard, sell to, follow up with, or put through credit/collections review.";
+    return "Customer onboarding, follow-ups, and credit/collections review.";
   }
   if (moduleId === "finance") {
-    return "Use this dashboard to control cash exposure, receipts, payables, dispute credits, journals, and finance-period close readiness.";
+    return "Cash exposure, receipts, payables, journals, and close readiness.";
   }
   if (moduleId === "reports") {
-    return "Use this dashboard to decide what leadership needs to see, then export the management pack or drill into reports.";
+    return "Management pack exports and report drill-downs.";
   }
   if (moduleId === "import-docs") {
-    return "Use this dashboard to keep every container and BL moving through documentation, clearance, and shipment checkpoints before warehouse handoff.";
+    return "Containers and BLs through documentation, clearance, and shipment checkpoints.";
   }
   if (moduleId === "procurement") {
-    return "Use this dashboard as the future sourcing desk for supplier planning, purchase approvals, import sourcing, and negotiated terms.";
+    return "Supplier planning, purchase approvals, import sourcing, and negotiated terms.";
   }
-  return "Use this dashboard to verify roles, permissions, integrations, master data, and workflow configuration before scaling the ERP.";
+  return "Roles, permissions, integrations, master data, and workflow configuration.";
 }
 
 function ModuleStat({
@@ -682,31 +642,18 @@ function ModuleStat({
   tone?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-surface-alt/45 p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
-      <p className={cn("mt-2 font-financial text-2xl font-bold", tone)}>{value}</p>
-      <p className="mt-1 text-sm text-muted-foreground">{hint}</p>
+    <div className="rounded-md border border-border bg-surface-alt/40 p-3.5">
+      <p className="label-caps">{label}</p>
+      <p className={cn("font-financial mt-1.5 text-lg font-bold", tone)}>{value}</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
     </div>
   );
 }
 
 function ModuleLauncher() {
   return (
-    <section className="space-y-4">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <p className="label-caps">Module launcher</p>
-          <h2 className="mt-1 font-heading text-2xl font-bold">
-            Open the business area you want to work in
-          </h2>
-        </div>
-        <p className="hidden max-w-xl text-sm text-muted-foreground md:block">
-          Each module opens its own dashboard and sub-workflows. The home screen
-          is now the entry point, not the entire ERP.
-        </p>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <section className="space-y-3">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {MODULES.map((module) => {
           const Icon = module.icon;
           const comingSoon = module.status.toLowerCase().includes("coming");
@@ -716,308 +663,48 @@ function ModuleLauncher() {
               key={module.title}
               href={module.href}
               className={cn(
-                "group relative overflow-hidden rounded-[1.5rem] border border-border/70 bg-card p-5 shadow-card transition-all hover:-translate-y-0.5 hover:shadow-lg",
-                comingSoon && "opacity-85"
+                "group rounded-lg border border-border bg-card p-4 shadow-card transition-shadow hover:shadow-card-hover",
+                comingSoon && "opacity-70"
               )}
             >
-              <div
-                className={cn(
-                  "pointer-events-none absolute inset-0 bg-gradient-to-br opacity-90",
-                  module.tone
-                )}
-              />
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.35),transparent_38%)]" />
-              <div className="relative flex items-start justify-between gap-3">
-                <div className="space-y-3">
-                  <div className="inline-flex rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/85">
-                    {module.status}
-                  </div>
-                  <div className="rounded-2xl bg-slate-950/20 p-3 text-white ring-1 ring-white/10 backdrop-blur">
-                    <Icon className="h-5 w-5" />
-                  </div>
+              <div className="flex items-start justify-between gap-3">
+                <div className="rounded-md bg-accent p-2 text-accent-foreground">
+                  <Icon className="h-4 w-4" />
                 </div>
-                <ArrowRight className="mt-2 h-5 w-5 text-white/70 transition-transform group-hover:translate-x-0.5" />
+                <span
+                  className={cn(
+                    "rounded px-1.5 py-0.5 text-[11px] font-medium",
+                    comingSoon
+                      ? "bg-muted text-muted-foreground"
+                      : "bg-success-light text-success"
+                  )}
+                >
+                  {module.status}
+                </span>
               </div>
 
-              <div className="relative mt-6 space-y-2 text-white">
-                <h3 className="font-heading text-xl font-bold">{module.title}</h3>
-                <p className="text-sm leading-6 text-white/80">{module.description}</p>
-              </div>
+              <h3 className="mt-3 font-heading text-sm font-bold group-hover:text-primary">
+                {module.title}
+              </h3>
+              <p className="mt-1 text-[13px] leading-5 text-muted-foreground">
+                {module.description}
+              </p>
 
-              <div className="relative mt-5 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-1">
                 {module.submodules.map((item) => (
                   <span
                     key={item}
-                    className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white/85"
+                    className="rounded bg-surface-alt px-1.5 py-0.5 text-[11px] text-muted-foreground"
                   >
                     {item}
                   </span>
                 ))}
-              </div>
-
-              <div className="relative mt-5 text-sm font-semibold text-white/95">
-                {comingSoon ? "Planning in progress" : "Open module"}
               </div>
             </Link>
           );
         })}
       </div>
     </section>
-  );
-}
-
-function DecisionCockpit({
-  data,
-  workbench,
-  showFinancials,
-}: {
-  data: Analytics | null;
-  workbench: PersonalAlertSummary | null;
-  showFinancials: boolean;
-}) {
-  const k = data?.kpis;
-  const activeAlerts = workbench?.active ?? [];
-  const criticalAlerts = activeAlerts.filter((alert) => alert.severity === "critical");
-  const blockedDocs = k?.pendingDocs ?? 0;
-  const detention = workbench?.detentionCount ?? 0;
-  const margin = k?.avgMargin ?? null;
-  const lossRows = (data?.bottom5 ?? []).filter((row) => row.profit < 0);
-  const apRows = data?.paymentOutstandingByCurrency ?? [];
-  const apOpenCount = apRows.reduce((sum, row) => sum + row.count, 0);
-  const apExposureLabel =
-    apRows
-      .filter((row) => row.amount > 0)
-      .map((row) => formatMoney(row.amount, row.currency))
-      .join(" / ") || "Clear";
-
-  const decisions = [
-    {
-      label: "Critical decisions",
-      value: criticalAlerts.length,
-      text:
-        criticalAlerts.length > 0
-          ? "Resolve these first: they can stop clearance, dispatch, or cash flow."
-          : "No critical exception is currently visible to your role.",
-      href: "/alerts",
-      tone: criticalAlerts.length > 0 ? "danger" : "success",
-      icon: ShieldAlert,
-    },
-    {
-      label: "Detention watch",
-      value: detention,
-      text:
-        detention > 0
-          ? "Free-day risk exists. Clear port/warehouse blockers before charges build."
-          : "No detention-risk container is in your active alert queue.",
-      href: "/alerts",
-      tone: detention > 0 ? "warning" : "success",
-      icon: Clock3,
-    },
-    {
-      label: "Document blockers",
-      value: blockedDocs,
-      text:
-        blockedDocs > 0
-          ? "Docs need eyes before downstream clearance, finance, or delivery decisions."
-          : "Document queue looks clean from the dashboard summary.",
-      href: "/documents",
-      tone: blockedDocs > 0 ? "warning" : "success",
-      icon: ClipboardCheck,
-    },
-  ] as const;
-
-  return (
-    <section className="grid gap-5 xl:grid-cols-[1.25fr_0.75fr]">
-      <Card className="overflow-hidden rounded-[1.75rem] border-slate-300 bg-slate-950 text-white shadow-card dark:border-border">
-        <CardContent className="p-0">
-          <div className="grid min-h-[320px] gap-0 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="relative overflow-hidden p-6 md:p-8">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(14,165,233,0.36),transparent_24rem),radial-gradient(circle_at_85%_10%,rgba(245,158,11,0.28),transparent_22rem)]" />
-              <div className="relative">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-200">
-                  Aeden live decision desk
-                </p>
-                <h2 className="mt-4 max-w-2xl font-heading text-4xl font-bold tracking-tight md:text-5xl">
-                  Act on the bottleneck before it becomes loss.
-                </h2>
-                <p className="mt-4 max-w-xl text-sm leading-6 text-slate-200">
-                  This dashboard is ordered by business consequence: port risk,
-                  document blockers, credit exposure, margin leakage, and the next
-                  ERP workspace to open.
-                </p>
-                <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                  <DarkMetric
-                    label="Containers"
-                    value={(k?.totalContainers ?? 0).toLocaleString("en-IN")}
-                    hint="Live import trail"
-                  />
-                  <DarkMetric
-                    label="Avg Margin"
-                    value={showFinancials && margin != null ? `${margin.toFixed(1)}%` : "Restricted"}
-                    hint={showFinancials ? "Approved sales" : "Role hidden"}
-                    tone={showFinancials ? marginColor(margin) : undefined}
-                  />
-                  <DarkMetric
-                    label="Profit"
-                    value={showFinancials ? formatINR(k?.totalProfit ?? 0) : "Restricted"}
-                    hint={showFinancials ? "Net container result" : "Role hidden"}
-                    tone={showFinancials && (k?.totalProfit ?? 0) < 0 ? "text-red-300" : "text-emerald-300"}
-                  />
-                </div>
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <Button asChild className="bg-white text-slate-950 hover:bg-sky-50">
-                    <Link href="/alerts">Resolve exceptions</Link>
-                  </Button>
-                  <Button
-                    asChild
-                    variant="outline"
-                    className="border-white/30 bg-white/10 text-white hover:bg-white/15 hover:text-white"
-                  >
-                    <Link href="/sop">Open SOP for process</Link>
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid gap-3 border-t border-white/10 bg-white/[0.06] p-5 lg:border-l lg:border-t-0">
-              {decisions.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className={cn(
-                      "group rounded-2xl border p-4 transition hover:-translate-y-0.5",
-                      item.tone === "danger"
-                        ? "border-red-300/40 bg-red-400/15"
-                        : item.tone === "warning"
-                          ? "border-amber-200/40 bg-amber-300/15"
-                          : "border-emerald-200/30 bg-emerald-400/10"
-                    )}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-200">
-                          {item.label}
-                        </p>
-                        <p className="mt-2 font-financial text-4xl font-bold">
-                          {item.value}
-                        </p>
-                      </div>
-                      <Icon className="h-5 w-5 text-white/75 transition group-hover:scale-110" />
-                    </div>
-                    <p className="mt-3 text-sm leading-5 text-slate-200">{item.text}</p>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="rounded-[1.75rem] border-slate-300 bg-card shadow-card">
-        <CardContent className="space-y-5 p-6">
-          <div>
-            <p className="label-caps">Commercial pressure</p>
-            <h3 className="mt-1 font-heading text-xl font-bold">
-              Money and margin signals
-            </h3>
-            <p className="mt-1 text-sm text-slate-600 dark:text-muted-foreground">
-              Useful only for roles allowed to see finance.
-            </p>
-          </div>
-
-          {showFinancials ? (
-            <>
-              <div className="grid gap-3">
-                <LightMetric
-                  label="Outstanding AP exposure"
-                  value={apExposureLabel}
-                  hint={`${apOpenCount} open payments across currencies`}
-                  tone={apOpenCount > 0 ? "danger" : "neutral"}
-                />
-                <LightMetric
-                  label="Loss-making containers"
-                  value={lossRows.length.toString()}
-                  hint={lossRows.length > 0 ? "Review bottom performers before repeat buying" : "No loss rows in bottom-five summary"}
-                  tone={lossRows.length > 0 ? "danger" : "neutral"}
-                />
-                <LightMetric
-                  label="Customs speed"
-                  value={k?.avgCustomsDays == null ? "No data" : `${k.avgCustomsDays.toFixed(1)}d`}
-                  hint="Average ATA to BE date"
-                  tone={(k?.avgCustomsDays ?? 0) > 3 ? "warning" : "neutral"}
-                />
-              </div>
-              <Button asChild variant="outline" className="w-full">
-                <Link href="/reports">Open management reports</Link>
-              </Button>
-            </>
-          ) : (
-            <div className="rounded-2xl border border-slate-300 bg-slate-100 p-4 text-sm text-slate-700 dark:border-border dark:bg-surface-alt dark:text-muted-foreground">
-              Financial signals are hidden for this role. Operational risks remain visible in the workbench.
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </section>
-  );
-}
-
-function DarkMetric({
-  label,
-  value,
-  hint,
-  tone,
-}: {
-  label: string;
-  value: string;
-  hint: string;
-  tone?: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-300">{label}</p>
-      <p className={cn("mt-2 font-financial text-2xl font-bold text-white", tone)}>{value}</p>
-      <p className="mt-1 text-xs text-slate-300">{hint}</p>
-    </div>
-  );
-}
-
-function LightMetric({
-  label,
-  value,
-  hint,
-  tone,
-}: {
-  label: string;
-  value: string;
-  hint: string;
-  tone?: "danger" | "warning" | "neutral";
-}) {
-  return (
-    <div
-      className={cn(
-        "rounded-2xl border bg-slate-50 p-4 dark:bg-surface-alt",
-        tone === "danger" && "border-red-300 bg-red-50 dark:border-danger/30 dark:bg-danger/10",
-        tone === "warning" && "border-amber-300 bg-amber-50 dark:border-warning/30 dark:bg-warning/10",
-        (!tone || tone === "neutral") && "border-slate-300 dark:border-border"
-      )}
-    >
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:text-muted-foreground">
-        {label}
-      </p>
-      <p
-        className={cn(
-          "mt-2 font-financial text-2xl font-bold text-slate-950 dark:text-foreground",
-          tone === "danger" && "text-red-700 dark:text-danger",
-          tone === "warning" && "text-amber-700 dark:text-warning"
-        )}
-      >
-        {value}
-      </p>
-      <p className="mt-1 text-xs text-slate-600 dark:text-muted-foreground">{hint}</p>
-    </div>
   );
 }
 
@@ -1032,211 +719,69 @@ function Workbench({
   const topAlerts = active.slice(0, 5);
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[1.5fr_0.8fr]">
-      <Card className="command-surface overflow-hidden rounded-[1.5rem]">
-        <CardContent className="p-0">
-          <div className="border-b border-border/70 px-6 py-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="label-caps">Operations workbench</p>
-                <h2 className="mt-1 font-heading text-2xl font-bold">
-                  My work today
-                </h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Role-aware next actions for your {role.replace("_", " ")} queue.
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <BadgeStat label="Unread" value={data?.unreadCount ?? 0} />
-                <BadgeStat
-                  label="Critical"
-                  value={data?.criticalCount ?? 0}
-                  tone="danger"
-                />
-              </div>
-            </div>
-          </div>
-
-          {topAlerts.length === 0 ? (
-            <div className="flex items-center gap-3 px-6 py-8">
-              <div className="rounded-full bg-success/10 p-3 text-success">
-                <BellRing className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="font-medium">No active tasks in your queue.</p>
-                <p className="text-sm text-muted-foreground">
-                  The noisy stuff stays out until the SOP actually needs you.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <ul className="divide-y divide-border">
-              {topAlerts.map((a) => (
-                <li key={a.id} className="px-6 py-4">
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <Link href={a.href} className="group flex min-w-0 gap-3">
-                      <span
-                        className={cn(
-                          "mt-1 h-2.5 w-2.5 shrink-0 rounded-full",
-                          a.severity === "critical" ? "bg-danger" : "bg-warning"
-                        )}
-                      />
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="font-medium group-hover:text-primary">
-                            {a.title}
-                          </p>
-                          {a.isUnread && (
-                            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
-                              New
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">{a.subtitle}</p>
-                        <p className="mt-1 text-xs font-medium text-primary">
-                          Next: {a.primaryAction}
-                        </p>
-                      </div>
-                    </Link>
-                    <AlertActions alertKey={a.id} category={a.category} compact />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card className="lift-card overflow-hidden rounded-[1.5rem] border-warning/30 bg-gradient-to-br from-warning/15 via-card to-card">
-        <CardContent className="space-y-4 pt-6">
-          <div className="flex items-center gap-2">
-            <ShieldAlert className="h-5 w-5 text-[#9A6212]" />
-            <h3 className="font-heading text-base font-semibold">
-              Detention watch
-            </h3>
-          </div>
-          <p className="font-financial text-4xl font-bold">
-            {data?.detentionCount ?? 0}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Active containers are inside the free-day danger window or already
-            accruing charges.
-          </p>
-          <Button asChild variant="outline" className="w-full">
-            <Link href="/alerts">Open alert center</Link>
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function DashboardHero({
-  activeContainers,
-  pendingDocs,
-  detentionCount,
-  paymentOutstandingByCurrency,
-}: {
-  activeContainers: number;
-  pendingDocs: number;
-  detentionCount: number;
-  paymentOutstandingByCurrency: {
-    currency: "USD" | "AED" | "INR";
-    amount: number;
-    count: number;
-  }[];
-}) {
-  const pulseItems = [
-    {
-      label: "Containers live",
-      value: activeContainers.toLocaleString("en-IN"),
-      icon: Warehouse,
-    },
-    {
-      label: "Docs need eyes",
-      value: pendingDocs.toLocaleString("en-IN"),
-      icon: ClipboardCheck,
-    },
-    {
-      label: "Detention watch",
-      value: detentionCount.toLocaleString("en-IN"),
-      icon: Clock3,
-    },
-  ];
-
-  return (
-    <section className="mesh-panel fade-in-up overflow-hidden rounded-[2rem] p-6 text-white shadow-card md:p-8">
-      <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+    <Card>
+      <CardHeader className="flex-row items-center justify-between space-y-0 border-b border-border pb-4">
         <div>
-          <div className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-sky-100">
-            {BRAND_SHORT_NAME} live desk
-          </div>
-          <h2 className="mt-5 max-w-3xl font-heading text-4xl font-bold tracking-tight md:text-5xl">
-            Run imports, cold rooms, sales, finance, and customer risk from one command layer.
-          </h2>
-          <p className="mt-4 max-w-2xl text-sm leading-6 text-sky-100/80 md:text-base">
-            The top level is now a module hub. The operational cockpit still shows
-            what is late, what needs approval, and where money or documents are
-            blocking flow.
+          <CardTitle>My work today</CardTitle>
+          <p className="mt-1 text-[13px] text-muted-foreground">
+            Role-aware next actions for your {role.replace("_", " ")} queue.
           </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Button asChild className="bg-white text-slate-950 hover:bg-sky-50">
-              <Link href="/containers">Open operations board</Link>
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              className="border-white/25 bg-white/10 text-white hover:bg-white/15 hover:text-white"
-            >
-              <Link href="/alerts">Review exceptions</Link>
-            </Button>
-          </div>
         </div>
-
-        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-          {pulseItems.map((item, index) => {
-            const Icon = item.icon;
-            return (
-              <div
-                key={item.label}
-                className="rounded-2xl border border-white/[0.12] bg-white/10 p-4 shadow-2xl shadow-black/10 backdrop-blur"
-                style={{ animationDelay: `${index * 80}ms` }}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sky-100/70">
-                      {item.label}
-                    </p>
-                    <p className="font-financial mt-1 text-3xl font-bold">
-                      {item.value}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl bg-white/[0.12] p-3 text-sky-100">
-                    <Icon className="h-5 w-5" />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-          {paymentOutstandingByCurrency.map((row) => (
-            <div
-              key={row.currency}
-              className="rounded-2xl border border-amber-200/20 bg-amber-300/10 p-4 text-amber-50"
-            >
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-100/70">
-                Outstanding AP ({row.currency})
-              </p>
-              <p className="font-financial mt-1 text-2xl font-bold">
-                {formatMoney(row.amount, row.currency)}
-              </p>
-              <p className="mt-1 text-xs text-amber-100/80">
-                {row.count} open payment{row.count === 1 ? "" : "s"}
+        <div className="flex gap-2">
+          <BadgeStat label="Unread" value={data?.unreadCount ?? 0} />
+          <BadgeStat label="Critical" value={data?.criticalCount ?? 0} tone="danger" />
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        {topAlerts.length === 0 ? (
+          <div className="flex items-center gap-3 px-5 py-6">
+            <div className="rounded-full bg-success/10 p-2.5 text-success">
+              <BellRing className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-sm font-medium">No active tasks in your queue.</p>
+              <p className="text-[13px] text-muted-foreground">
+                Alerts appear here when the workflow needs you.
               </p>
             </div>
-          ))}
-        </div>
-      </div>
-    </section>
+          </div>
+        ) : (
+          <ul className="divide-y divide-border">
+            {topAlerts.map((a) => (
+              <li key={a.id} className="px-5 py-3">
+                <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                  <Link href={a.href} className="group flex min-w-0 gap-2.5">
+                    <span
+                      className={cn(
+                        "mt-1.5 h-2 w-2 shrink-0 rounded-full",
+                        a.severity === "critical" ? "bg-danger" : "bg-warning"
+                      )}
+                    />
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-medium group-hover:text-primary">
+                          {a.title}
+                        </p>
+                        {a.isUnread && (
+                          <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium text-primary">
+                            New
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[13px] text-muted-foreground">{a.subtitle}</p>
+                      <p className="mt-0.5 text-xs font-medium text-primary">
+                        Next: {a.primaryAction}
+                      </p>
+                    </div>
+                  </Link>
+                  <AlertActions alertKey={a.id} category={a.category} compact />
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -1252,62 +797,20 @@ function BadgeStat({
   return (
     <div
       className={cn(
-        "rounded-xl border bg-surface px-3 py-2 text-right shadow-sm",
-        tone === "danger" && "border-danger/25 bg-danger/5"
+        "rounded-md border border-border bg-surface px-2.5 py-1.5 text-right",
+        tone === "danger" && value > 0 && "border-danger/25 bg-danger/5"
       )}
     >
       <p className="label-caps">{label}</p>
       <p
         className={cn(
-          "font-financial text-xl font-bold",
-          tone === "danger" && "text-danger"
+          "font-financial text-base font-bold",
+          tone === "danger" && value > 0 && "text-danger"
         )}
       >
         {value}
       </p>
     </div>
-  );
-}
-
-function Kpi({
-  label,
-  value,
-  hint,
-  icon: Icon,
-  accent,
-  tone,
-}: {
-  label: string;
-  value: string;
-  hint: string;
-  icon: typeof Package;
-  accent: string;
-  tone?: string;
-}) {
-  return (
-    <Card
-      className={cn(
-        "group lift-card relative overflow-hidden rounded-[1.35rem] border-t-4",
-        accent
-      )}
-    >
-      <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-primary/10 blur-2xl transition-opacity group-hover:opacity-90" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-surface-alt/55 to-transparent opacity-70" />
-      <CardContent className="pt-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="label-caps">{label}</p>
-            <p className={cn("font-financial mt-2 text-3xl font-bold", tone)}>
-              {value}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
-          </div>
-          <div className="rounded-2xl bg-primary/10 p-3 text-primary ring-1 ring-primary/15">
-            <Icon className="h-5 w-5" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 
@@ -1324,9 +827,11 @@ function RankCard({
   }[];
 }) {
   return (
-    <Card className="lift-card overflow-hidden rounded-[1.5rem]">
-      <CardContent className="pt-6">
-        <h3 className="mb-3 font-heading text-base font-semibold">{title}</h3>
+    <Card>
+      <CardHeader className="border-b border-border pb-4">
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="pt-2">
         {rows.length === 0 ? (
           <EmptyState
             icon={BarChart3}
@@ -1341,18 +846,18 @@ function RankCard({
                 key={r.containerNo}
                 className="flex items-center justify-between py-2"
               >
-                <div>
+                <div className="min-w-0">
                   <Link
                     href={`/containers?q=${encodeURIComponent(r.containerNo)}`}
                     className="font-financial text-sm font-medium hover:text-primary"
                   >
                     {r.containerNo}
                   </Link>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="truncate text-xs text-muted-foreground">
                     {r.supplier ?? "—"}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="shrink-0 text-right">
                   <p
                     className={cn(
                       "font-financial text-sm font-medium",
@@ -1362,12 +867,7 @@ function RankCard({
                     {formatINR(r.profit)}
                   </p>
                   {r.marginPct != null && (
-                    <p
-                      className={cn(
-                        "font-financial text-xs",
-                        marginColor(r.marginPct)
-                      )}
-                    >
+                    <p className={cn("font-financial text-xs", marginColor(r.marginPct))}>
                       {r.marginPct.toFixed(1)}%
                     </p>
                   )}

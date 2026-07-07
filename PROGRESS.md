@@ -36,6 +36,7 @@
 | 22 | Document Automation + File Packaging | ✅ Foundation complete (2026-06-10) | Container dossier ZIP download; JPG/PNG upload compression; document automation job schema/API/settings page; email/OCR providers pending keys |
 | 23 | Analytics v2 + Export Center | ✅ Foundation complete (2026-06-10) | Management Excel/CSV exports; export center UI; analytics v2 decision metrics for detention leakage, ETA variance and customs cycle |
 | 24 | Integrations Layer | ✅ Foundation complete (2026-06-10) | Provider-agnostic connections, sync runs, sync errors and external references; Settings → Integrations; adapters pending provider credentials/admin access |
+| 25 | Enterprise Design Overhaul | ✅ Complete (2026-07-07) | Flat enterprise design language (see GAP_AUDIT_REPORT.md): DM Sans/Inter/JetBrains per spec; flat navy sidebar; compact primitives (button/card/table/input/select/tabs/badge); data-first dashboard rewrite; route-group loading skeleton; not-found page; breadcrumb labels; decorative utilities (mesh-panel/command-surface/glass) redefined flat |
 
 ### Phase 10 — Workflow State Machine (done)
 - [x] `lib/workflow.ts` — `canTransition`/`allowedTransitions`/`stageRequirement`
