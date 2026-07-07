@@ -15,6 +15,7 @@ export function reportToWorkbook(data: ReportData): XlsxSheet[] {
     ["Total Cost INR", money(data.summary.totalCost)],
     ["Sale Value INR", money(data.summary.saleValue)],
     ["Profit INR", money(data.summary.profit)],
+    ["Collections INR", money(data.summary.receiptValue)],
     [
       "Margin %",
         data.summary.marginPct == null
@@ -22,6 +23,9 @@ export function reportToWorkbook(data: ReportData): XlsxSheet[] {
           : Math.round(data.summary.marginPct * 100) / 100,
     ],
     ["Outstanding AP", money(data.summary.outstanding)],
+    ["Outstanding AR", money(data.summary.arOutstanding)],
+    ["Overdue AR", money(data.summary.arOverdue)],
+    ["Receipt Count", data.summary.receiptCount],
   ];
 
   const suppliers = [
@@ -60,11 +64,43 @@ export function reportToWorkbook(data: ReportData): XlsxSheet[] {
     ...data.aging.map((a) => [a.label, a.count, money(a.amount)]),
   ];
 
+  const arAging = [
+    ["Bucket", "Count", "Outstanding INR"],
+    ...data.receivablesAging.map((a) => [a.label, a.count, money(a.amount)]),
+  ];
+
+  const receivables = [
+    ["Customer", "Region", "Outstanding INR", "Overdue INR", "Oldest Due"],
+    ...data.receivables.map((r) => [
+      `${r.customerCode} - ${r.customerName}`,
+      r.region ?? "",
+      money(r.outstanding),
+      money(r.overdue),
+      r.oldestDueDate ?? "",
+    ]),
+  ];
+
+  const receipts = [
+    ["Receipt No", "Customer", "Date", "Method", "Currency", "Amount", "Status"],
+    ...data.recentReceipts.map((r) => [
+      r.receiptNo,
+      r.customerName,
+      r.receiptDate,
+      r.method,
+      r.currency,
+      money(r.amount),
+      r.status,
+    ]),
+  ];
+
   return [
     { name: "Summary", rows: summary },
     { name: "Supplier Performance", rows: suppliers },
     { name: "Ports", rows: ports },
     { name: "AP Aging", rows: aging },
+    { name: "AR Aging", rows: arAging },
+    { name: "Receivables", rows: receivables },
+    { name: "Recent Receipts", rows: receipts },
   ];
 }
 
@@ -79,7 +115,11 @@ export function reportToCsv(data: ReportData): string {
   lines.push(`Total Cost INR,${money(data.summary.totalCost)}`);
   lines.push(`Sale Value INR,${money(data.summary.saleValue)}`);
   lines.push(`Profit INR,${money(data.summary.profit)}`);
+  lines.push(`Collections INR,${money(data.summary.receiptValue)}`);
   lines.push(`Outstanding AP,${money(data.summary.outstanding)}`);
+  lines.push(`Outstanding AR,${money(data.summary.arOutstanding)}`);
+  lines.push(`Overdue AR,${money(data.summary.arOverdue)}`);
+  lines.push(`Receipt Count,${data.summary.receiptCount}`);
   lines.push("");
   lines.push("Supplier Performance");
   lines.push("Supplier,Containers,Invoice Value INR,Sale Value INR,Profit INR,Margin %");
@@ -100,6 +140,26 @@ export function reportToCsv(data: ReportData): string {
   lines.push("Bucket,Count,Outstanding INR");
   for (const a of data.aging) {
     lines.push([csvCell(a.label), a.count, money(a.amount)].join(","));
+  }
+  lines.push("");
+  lines.push("AR Aging");
+  lines.push("Bucket,Count,Outstanding INR");
+  for (const a of data.receivablesAging) {
+    lines.push([csvCell(a.label), a.count, money(a.amount)].join(","));
+  }
+  lines.push("");
+  lines.push("Receivables");
+  lines.push("Customer,Region,Outstanding INR,Overdue INR,Oldest Due");
+  for (const r of data.receivables) {
+    lines.push(
+      [
+        csvCell(`${r.customerCode} - ${r.customerName}`),
+        csvCell(r.region ?? ""),
+        money(r.outstanding),
+        money(r.overdue),
+        r.oldestDueDate ?? "",
+      ].join(",")
+    );
   }
   return lines.join("\n");
 }
@@ -133,7 +193,11 @@ export function reportToPdfBuffer(data: ReportData): Promise<Buffer> {
     metric(doc, "Total Cost INR", money(data.summary.totalCost).toLocaleString("en-IN"));
     metric(doc, "Sale Value INR", money(data.summary.saleValue).toLocaleString("en-IN"));
     metric(doc, "Profit INR", money(data.summary.profit).toLocaleString("en-IN"));
+    metric(doc, "Collections INR", money(data.summary.receiptValue).toLocaleString("en-IN"));
     metric(doc, "Outstanding AP", money(data.summary.outstanding).toLocaleString("en-IN"));
+    metric(doc, "Outstanding AR", money(data.summary.arOutstanding).toLocaleString("en-IN"));
+    metric(doc, "Overdue AR", money(data.summary.arOverdue).toLocaleString("en-IN"));
+    metric(doc, "Receipt Count", String(data.summary.receiptCount));
 
     section(doc, "Top Supplier Performance");
     tableHeader(doc, ["Supplier", "Containers", "Profit INR", "Margin %"]);
@@ -163,6 +227,27 @@ export function reportToPdfBuffer(data: ReportData): Promise<Buffer> {
         a.label,
         String(a.count),
         money(a.amount).toLocaleString("en-IN"),
+      ]);
+    }
+
+    section(doc, "AR Aging");
+    tableHeader(doc, ["Bucket", "Count", "Outstanding INR"]);
+    for (const a of data.receivablesAging) {
+      tableRow(doc, [
+        a.label,
+        String(a.count),
+        money(a.amount).toLocaleString("en-IN"),
+      ]);
+    }
+
+    section(doc, "Top Receivables");
+    tableHeader(doc, ["Customer", "Outstanding INR", "Overdue INR", "Oldest Due"]);
+    for (const r of data.receivables.slice(0, 12)) {
+      tableRow(doc, [
+        `${r.customerCode} - ${r.customerName}`,
+        money(r.outstanding).toLocaleString("en-IN"),
+        money(r.overdue).toLocaleString("en-IN"),
+        r.oldestDueDate ?? "-",
       ]);
     }
 

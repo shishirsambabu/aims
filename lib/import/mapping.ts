@@ -7,6 +7,8 @@ export interface MappedRow {
   slNo: number | null;
   supplierName: string | null;
   containerNo: string | null;
+  warehouseName: string | null;
+  warehouseCode: string | null;
   customer: string | null;
   port: string | null;
   pol: string | null;
@@ -25,6 +27,12 @@ export interface MappedRow {
   doUpto: string | null;
   emptyReturnDate: string | null;
   freeDays: number | null;
+  sourceStatus: string | null;
+  carrierExternalId: string | null;
+  wmsExternalId: string | null;
+  erpExternalId: string | null;
+  tallyExternalId: string | null;
+  icegateExternalId: string | null;
   // shipment item
   beNo: string | null;
   beDate: string | null;
@@ -61,6 +69,11 @@ const HEADER_MAP: Record<string, keyof MappedRow> = {
   suppliername: "supplierName",
   containerno: "containerNo",
   cntno: "containerNo",
+  warehouse: "warehouseName",
+  warehousename: "warehouseName",
+  storage: "warehouseName",
+  coldstore: "warehouseName",
+  warehousecode: "warehouseCode",
   customer: "customer",
   consignee: "customer",
   arrivalport: "port",
@@ -78,6 +91,20 @@ const HEADER_MAP: Record<string, keyof MappedRow> = {
   items: "item",
   item: "item",
   freedays: "freeDays",
+  status: "sourceStatus",
+  containerstatus: "sourceStatus",
+  currentstatus: "sourceStatus",
+  carrierid: "carrierExternalId",
+  carrierref: "carrierExternalId",
+  wmsid: "wmsExternalId",
+  wmsref: "wmsExternalId",
+  warehouseid: "wmsExternalId",
+  erpid: "erpExternalId",
+  erpref: "erpExternalId",
+  tallyid: "tallyExternalId",
+  tallyref: "tallyExternalId",
+  icegateid: "icegateExternalId",
+  icegateref: "icegateExternalId",
   doupto: "doUpto",
   do: "doUpto",
   emptyreturn: "emptyReturnDate",
@@ -163,11 +190,13 @@ function toDate(v: unknown): string | null {
 function blankRow(rowNumber: number): MappedRow {
   return {
     rowNumber,
-    slNo: null, supplierName: null, containerNo: null, customer: null,
+    slNo: null, supplierName: null, containerNo: null, warehouseName: null, warehouseCode: null, customer: null,
     port: null, pol: null, origin: null, line: null, vessel: null,
     transhipment: null, blNo: null, item: null, packageType: null,
     perPackageWeight: null, noOfBoxes: null, transitTime: null, etd: null,
-    eta: null, doUpto: null, emptyReturnDate: null, freeDays: null,
+    eta: null, doUpto: null, emptyReturnDate: null, freeDays: null, sourceStatus: null,
+    carrierExternalId: null, wmsExternalId: null, erpExternalId: null, tallyExternalId: null,
+    icegateExternalId: null,
     beNo: null, beDate: null, invoiceNo: null, packingListNo: null,
     netWeightKg: null, invoiceValueUsd: null,
     beInvoiceValueInr: null, customsDuty: null, clearingCharges: null,

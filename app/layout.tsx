@@ -1,18 +1,19 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Script from "next/script";
-import { Manrope, Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import { DM_Sans, Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { BRAND_FULL_NAME, BRAND_TAGLINE } from "@/lib/branding";
 import "./globals.css";
 
-const manrope = Manrope({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-manrope",
+  variable: "--font-inter",
   display: "swap",
 });
 
-const spaceGrotesk = Space_Grotesk({
+const dmSans = DM_Sans({
   subsets: ["latin"],
-  variable: "--font-space-grotesk",
+  variable: "--font-dm-sans",
   display: "swap",
 });
 
@@ -23,9 +24,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AIMS — Aeden Imports Management System",
-  description:
-    "Internal SaaS for managing fruit container imports: tracking, costing, documentation and profit analysis.",
+  title: BRAND_FULL_NAME,
+  description: BRAND_TAGLINE,
 };
 
 export default function RootLayout({
@@ -36,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${manrope.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} font-sans antialiased`}
+        className={`${inter.variable} ${dmSans.variable} ${jetbrainsMono.variable} font-sans antialiased`}
       >
         <Script id="aims-theme-init" strategy="beforeInteractive">
           {`(function(){try{var t=localStorage.getItem('aims-theme');var d=t? t==='dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark');}catch(e){}})();`}
@@ -47,3 +47,4 @@ export default function RootLayout({
     </html>
   );
 }
+

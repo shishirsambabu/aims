@@ -12,8 +12,23 @@ do $$
 declare t text;
 begin
   foreach t in array array[
-    'organizations','users','suppliers','containers','shipment_items',
-    'container_costs','sales','payments','documents','activity_log'
+    'organizations','users','suppliers','warehouses','containers',
+    'stock_items','stock_movements','gate_passes','gate_pass_lines',
+    'customers','customer_contacts','customer_kyc_documents',
+    'price_lists','price_list_items','sales_orders','sales_order_lines',
+    'sales_order_revisions','crm_leads','crm_opportunities','crm_tasks',
+    'sales_quotes','sales_quote_lines','sales_quote_revisions',
+    'warehouse_locations','warehouse_cycle_counts','warehouse_cycle_count_lines',
+    'customer_receipts','customer_receipt_allocations',
+    'sales_invoices','sales_invoice_lines','sales_returns','sales_return_lines','credit_notes',
+    'bank_statement_lines','journal_entries','journal_entry_lines',
+    'finance_period_closes','customer_disputes',
+    'cold_room_readings','temperature_breach_tasks',
+    'shipment_items',
+    'container_costs','sales','payments','documents','activity_log',
+    'user_alert_preferences','user_alert_states','document_automation_jobs',
+    'integration_connections','integration_runs','integration_errors',
+    'external_references'
   ]
   loop
     execute format('alter table public.%I enable row level security;', t);

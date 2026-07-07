@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { TopNav } from "@/components/layout/TopNav";
 import { getSessionContext } from "@/lib/auth";
 import { getPersonalNavCounts, type NavCounts } from "@/lib/data/notifications";
+import { normalizeRole } from "@/lib/permissions";
 
 export default async function DashboardLayout({
   children,
@@ -19,13 +20,14 @@ export default async function DashboardLayout({
   // Middleware should already gate this, but guard against direct render.
   if (!user) redirect("/login");
 
-  // Display profile is sourced from auth metadata; the DB profile (role,
-  // org) is wired in once the database is reachable (see PROGRESS blockers).
+  // Display profile is sourced from the DB-backed session context when
+  // available so role changes take effect immediately.
   const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
+  const ctx = await getSessionContext();
   const profile = {
     email: user.email ?? "",
-    fullName: (meta.full_name as string) ?? null,
-    role: (meta.role as string) ?? "viewer",
+    fullName: ctx?.fullName ?? (meta.full_name as string) ?? null,
+    role: ctx?.role ?? normalizeRole(meta.role as string) ?? "viewer",
   };
 
   // Notification badge counts (safe-fails to zeros if the DB is unreachable).
@@ -38,12 +40,11 @@ export default async function DashboardLayout({
     arrivalPrompts: 0,
     totalAlerts: 0,
   };
-  const ctx = await getSessionContext();
   if (ctx) counts = await getPersonalNavCounts(ctx);
 
   return (
     <div className="flex h-screen overflow-hidden bg-transparent">
-      <Sidebar counts={counts} />
+      <Sidebar counts={counts} role={profile.role} />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopNav user={profile} />
         <main className="flex-1 overflow-y-auto scrollbar-thin">{children}</main>

@@ -5,25 +5,25 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold ring-offset-background transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default:
-          "bg-gradient-to-r from-primary to-sky-500 text-primary-foreground shadow-sm shadow-primary/20 hover:from-primary/95 hover:to-sky-500/95 hover:shadow-md",
+          "bg-primary text-primary-foreground shadow-sm hover:bg-primary-dark",
         destructive: "bg-danger text-white shadow-sm hover:bg-danger/90",
         outline:
-          "border border-border bg-surface hover:bg-surface-alt hover:text-foreground",
+          "border border-input bg-surface shadow-sm hover:bg-surface-alt hover:text-foreground",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-surface-alt hover:text-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         success: "bg-success text-white shadow-sm hover:bg-success/90",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-lg px-3",
-        lg: "h-11 rounded-lg px-8",
-        icon: "h-10 w-10",
+        default: "h-9 px-3.5 py-2",
+        sm: "h-8 rounded-md px-3 text-[13px]",
+        lg: "h-10 rounded-md px-6",
+        icon: "h-9 w-9",
       },
     },
     defaultVariants: {

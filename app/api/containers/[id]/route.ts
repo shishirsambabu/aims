@@ -18,6 +18,9 @@ export async function GET(_request: NextRequest, { params }: Params) {
   try {
     const { id } = await params;
     const session = await requireSession();
+    if (!can(session.role, "container.view")) {
+      return NextResponse.json({ error: "Not permitted" }, { status: 403 });
+    }
     const container = await getContainerById(session.orgId, id, {
       includeFinancials: can(session.role, "financials.view"),
     });
@@ -47,6 +50,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         id: true,
         status: true,
         containerNo: true,
+        warehouseId: true,
         eta: true,
         ata: true,
         originalEta: true,
@@ -71,6 +75,25 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
 
     const input = parsed.data;
+    const nextWarehouseId = input.warehouseId ?? existing.warehouseId;
+    if (input.warehouseId && input.warehouseId !== existing.warehouseId) {
+      const warehouse = await prisma.warehouse.findFirst({
+        where: { id: input.warehouseId, orgId: session.orgId, deletedAt: null, isActive: true },
+        select: { id: true },
+      });
+      if (!warehouse) {
+        return NextResponse.json(
+          { error: "Warehouse not found or inactive" },
+          { status: 404 }
+        );
+      }
+      if (existing.status === "InWarehouse") {
+        return NextResponse.json(
+          { error: "Cannot change warehouse after the container has entered stock" },
+          { status: 409 }
+        );
+      }
+    }
     const statusChanged = input.status && input.status !== existing.status;
     const isReversal =
       statusChanged &&
@@ -100,10 +123,17 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         {
           verifiedDocTypes: docs.map((d: { type: DocumentType }) => d.type),
           hasSales: sale?.approvalStatus === "Approved" && sale.saleValue != null,
+          hasWarehouse: !!nextWarehouseId,
         }
       );
       if (!check.ok) {
         return NextResponse.json({ error: check.reason }, { status: 409 });
+      }
+      if (input.status === "InWarehouse" && !nextWarehouseId) {
+        return NextResponse.json(
+          { error: "Assign a warehouse before moving the container into stock" },
+          { status: 409 }
+        );
       }
     }
 
@@ -133,6 +163,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
 
     const justArrived = !!input.ata && !existing.ata;
+    const warehouseAssigned = input.warehouseId && input.warehouseId !== existing.warehouseId;
 
     const container = await prisma.container.update({
       where: { id },
@@ -140,6 +171,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         containerNo: input.containerNo,
         blNo: input.blNo,
         supplierId: input.supplierId,
+        warehouseId: input.warehouseId ?? undefined,
         customer: input.customer,
         port: input.port,
         portCode,
@@ -165,6 +197,18 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         freeDays: input.freeDays,
         lastFreeDate,
         remarks: input.remarks,
+        warehouseAssignedAt:
+          warehouseAssigned || (!existing.warehouseId && input.warehouseId)
+            ? new Date()
+            : undefined,
+        warehouseAssignedById:
+          warehouseAssigned || (!existing.warehouseId && input.warehouseId)
+            ? session.userId
+            : undefined,
+        warehouseInDate:
+          input.status === "InWarehouse" && existing.status !== "InWarehouse"
+            ? new Date()
+            : undefined,
       },
     });
 
@@ -194,6 +238,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         },
         after: {
           status: container.status,
+          warehouseId: container.warehouseId,
           eta: container.eta?.toISOString() ?? null,
           ata: container.ata?.toISOString() ?? null,
           originalEta: container.originalEta?.toISOString() ?? null,

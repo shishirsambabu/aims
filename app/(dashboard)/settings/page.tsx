@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  Coins,
   FileSpreadsheet,
   Users,
   Database,
@@ -26,6 +27,34 @@ const SECTIONS = [
     icon: Database,
   },
   {
+    href: "/settings/warehouses",
+    title: "Warehouses",
+    description:
+      "Create cold stores, define capacity and temperature bands, and assign containers.",
+    icon: Database,
+  },
+  {
+    href: "/customers",
+    title: "Customers / CRM",
+    description:
+      "Onboard buyers, manage KYC, assign reps and control credit exposure.",
+    icon: Users,
+  },
+  {
+    href: "/orders",
+    title: "Sales Orders",
+    description:
+      "Publish day prices, reserve stock, and review order approval flow.",
+    icon: FileSpreadsheet,
+  },
+  {
+    href: "/receipts",
+    title: "Receipts / AR",
+    description:
+      "Record customer collections, allocate them to orders, and manage overdue receivables.",
+    icon: Coins,
+  },
+  {
     href: "/settings/import",
     title: "Excel Import",
     description:
@@ -50,7 +79,7 @@ const SECTIONS = [
     href: "/settings/team",
     title: "Team Management",
     description:
-      "Invite members and manage roles (admin / manager / finance / clearing / viewer / auditor).",
+      "Invite members and manage roles (admin / gm / manager / sales / warehouse / finance / viewer / auditor).",
     icon: Users,
   },
   {

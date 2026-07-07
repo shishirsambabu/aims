@@ -1,9 +1,15 @@
 import {
   LayoutDashboard,
   Package,
+  UserRound,
+  Users2,
+  Warehouse,
   Ship,
+  ShoppingCart,
+  FileSpreadsheet,
   FileText,
   CreditCard,
+  Coins,
   BarChart3,
   FileBarChart,
   Bell,
@@ -20,15 +26,22 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: "Dashboard", href: "/", icon: LayoutDashboard },
-  { label: "Containers", href: "/containers", icon: Package },
+  { label: "Dashboards", href: "/", icon: LayoutDashboard },
+  { label: "CRM", href: "/crm", icon: Users2 },
+  { label: "Sales", href: "/sales", icon: ShoppingCart },
+  { label: "Import Docs", href: "/containers", icon: Package },
+  { label: "Customers", href: "/customers", icon: UserRound },
+  { label: "Warehouse", href: "/warehouse", icon: Warehouse },
+  { label: "Finance", href: "/finance", icon: CreditCard },
   { label: "Shipments", href: "/shipments", icon: Ship },
-  { label: "Documents", href: "/documents", icon: FileText },
-  { label: "Payments", href: "/payments", icon: CreditCard },
-  { label: "Analytics", href: "/analytics", icon: BarChart3 },
   { label: "Reports", href: "/reports", icon: FileBarChart },
   { label: "Alerts", href: "/alerts", icon: Bell },
+  { label: "Procurement", href: "/procurement", icon: FileSpreadsheet },
   { label: "Settings", href: "/settings", icon: Settings },
+  { label: "Documents", href: "/documents", icon: FileText },
+  { label: "Payments", href: "/payments", icon: CreditCard },
+  { label: "Receipts", href: "/receipts", icon: Coins },
+  { label: "Analytics", href: "/analytics", icon: BarChart3 },
 ];
 
 // Container status pipeline, in order.

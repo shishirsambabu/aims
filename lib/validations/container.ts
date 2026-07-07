@@ -49,6 +49,7 @@ export const createContainerSchema = z.object({
   // BL No is free-form (carriers use many formats).
   blNo: z.string().trim().min(1, "BL No is required"),
   supplierId: optionalString,
+  warehouseId: optionalString,
   customer: optionalString,
   port: optionalString, // Port of Discharge (arrival)
   portCode: optionalString,

@@ -14,6 +14,12 @@ export interface AnalyticsKpis {
   avgCustomsDays: number | null;
 }
 
+export interface PaymentOutstandingByCurrency {
+  currency: "USD" | "AED" | "INR";
+  amount: number;
+  count: number;
+}
+
 export interface NameValue {
   name: string;
   value: number;
@@ -43,6 +49,7 @@ export interface Analytics {
   top5: ContainerProfitRow[];
   bottom5: ContainerProfitRow[];
   supplierSummary: SupplierSummaryRow[];
+  paymentOutstandingByCurrency: PaymentOutstandingByCurrency[];
 }
 
 const num = (v: unknown): number => (v == null ? 0 : Number(v));
@@ -56,7 +63,7 @@ function monthKey(d: Date): string {
 }
 
 export async function getAnalytics(orgId: string): Promise<Analytics> {
-  const [containers, pendingDocs, paymentAgg] = await Promise.all([
+  const [containers, pendingDocs, paymentRows] = await Promise.all([
     prisma.container.findMany({
       where: { orgId, deletedAt: null },
       select: {
@@ -83,9 +90,9 @@ export async function getAnalytics(orgId: string): Promise<Analytics> {
     prisma.document.count({
       where: { orgId, deletedAt: null, status: { in: ["Pending", "Uploaded"] } },
     }),
-    prisma.payment.aggregate({
+    prisma.payment.findMany({
       where: { orgId, deletedAt: null, status: { not: "Paid" } },
-      _sum: { amountRequested: true, amountPaid: true },
+      select: { currency: true, amountRequested: true, amountPaid: true },
     }),
   ]);
 
@@ -183,10 +190,22 @@ export async function getAnalytics(orgId: string): Promise<Analytics> {
         ) / 10
       : null;
 
-  const outstandingUsd = Math.max(
-    num(paymentAgg._sum.amountRequested) - num(paymentAgg._sum.amountPaid),
-    0
-  );
+  const paymentOutstandingByCurrency: PaymentOutstandingByCurrency[] = [
+    { currency: "USD", amount: 0, count: 0 },
+    { currency: "AED", amount: 0, count: 0 },
+    { currency: "INR", amount: 0, count: 0 },
+  ];
+  for (const row of paymentRows) {
+    const idx = paymentOutstandingByCurrency.findIndex((item) => item.currency === row.currency);
+    if (idx === -1) continue;
+    const amount = Math.max(num(row.amountRequested) - num(row.amountPaid), 0);
+    if (amount <= 0) continue;
+    paymentOutstandingByCurrency[idx].amount += amount;
+    paymentOutstandingByCurrency[idx].count += 1;
+  }
+  const outstandingUsd = Math.round(
+    paymentOutstandingByCurrency.reduce((sum, row) => sum + row.amount, 0) * 100
+  ) / 100;
 
   const sortedByProfit = [...containerProfits].sort(
     (a, b) => b.profit - a.profit
@@ -216,7 +235,7 @@ export async function getAnalytics(orgId: string): Promise<Analytics> {
       totalProfit: Math.round(totalProfit * 100) / 100,
       avgMargin,
       pendingDocs,
-      outstandingUsd: Math.round(outstandingUsd * 100) / 100,
+      outstandingUsd,
       detentionChargesInr: Math.round(detentionChargesInr * 100) / 100,
       avgEtaVarianceDays,
       avgCustomsDays,
@@ -251,5 +270,6 @@ export async function getAnalytics(orgId: string): Promise<Analytics> {
     top5: sortedByProfit.slice(0, 5),
     bottom5: sortedByProfit.slice(-5).reverse(),
     supplierSummary,
+    paymentOutstandingByCurrency,
   };
 }

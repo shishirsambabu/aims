@@ -34,10 +34,11 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const PUBLIC_PATHS = ["/login", "/signup", "/auth", "/forgot-password"];
-  const isPublic = PUBLIC_PATHS.some((p) =>
-    request.nextUrl.pathname.startsWith(p)
-  );
+  const PUBLIC_PATH_PREFIXES = ["/login", "/signup", "/auth", "/forgot-password"];
+  const PUBLIC_API_PATHS = ["/api/health", "/api/sales-orders/release-expired"];
+  const isPublic =
+    PUBLIC_PATH_PREFIXES.some((path) => request.nextUrl.pathname.startsWith(path)) ||
+    PUBLIC_API_PATHS.includes(request.nextUrl.pathname);
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

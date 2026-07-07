@@ -32,12 +32,15 @@ import {
 } from "@/components/ui/table";
 import { requireSession } from "@/lib/auth";
 import { getAnalytics, type Analytics } from "@/lib/data/analytics";
-import { cn, formatINR, formatUSD, marginColor } from "@/lib/utils";
+import { cn, formatINR, formatMoney, marginColor } from "@/lib/utils";
+import { requirePageAccess } from "@/lib/page-access";
 
 export const dynamic = "force-dynamic";
 
 export default async function AnalyticsPage() {
-  const { orgId } = await requireSession();
+  const session = await requireSession();
+  requirePageAccess(session.role, ["financials.view"]);
+  const { orgId } = session;
 
   let data: Analytics | null = null;
   let loadError = false;
@@ -109,14 +112,17 @@ export default async function AnalyticsPage() {
             icon={FileWarning}
             accent="border-t-warning"
           />
-          <KPICard
-            label="Outstanding Payments"
-            value={formatUSD(k.outstandingUsd)}
-            hint="Unsettled (USD)"
-            icon={CreditCard}
-            accent="border-t-danger"
-            valueClass="text-danger"
-          />
+          {data.paymentOutstandingByCurrency.map((row) => (
+            <KPICard
+              key={row.currency}
+              label={`Outstanding (${row.currency})`}
+              value={formatMoney(row.amount, row.currency)}
+              hint={`${row.count} open payment${row.count === 1 ? "" : "s"}`}
+              icon={CreditCard}
+              accent="border-t-danger"
+              valueClass={row.amount > 0 ? "text-danger" : "text-muted-foreground"}
+            />
+          ))}
         </div>
 
         <Card className="border-primary/20 bg-primary/5">

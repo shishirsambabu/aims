@@ -1,0 +1,15 @@
+ALTER TABLE "gate_passes"
+  ADD COLUMN IF NOT EXISTS "vehicle_seal_no" TEXT,
+  ADD COLUMN IF NOT EXISTS "loading_photo_ref" TEXT,
+  ADD COLUMN IF NOT EXISTS "security_otp" TEXT,
+  ADD COLUMN IF NOT EXISTS "security_gate_out_at" TIMESTAMP(3),
+  ADD COLUMN IF NOT EXISTS "pod_ref" TEXT,
+  ADD COLUMN IF NOT EXISTS "pod_acknowledged_by" TEXT,
+  ADD COLUMN IF NOT EXISTS "pod_acknowledged_at" TIMESTAMP(3),
+  ADD COLUMN IF NOT EXISTS "route_name" TEXT,
+  ADD COLUMN IF NOT EXISTS "beat_name" TEXT,
+  ADD COLUMN IF NOT EXISTS "delivery_instructions" TEXT,
+  ADD COLUMN IF NOT EXISTS "return_crates_planned" INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS "return_crates_received" INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS "return_pallets_planned" INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS "return_pallets_received" INTEGER NOT NULL DEFAULT 0;

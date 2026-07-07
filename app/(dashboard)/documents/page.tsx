@@ -12,6 +12,7 @@ import {
   type DocumentRow,
 } from "@/lib/data/documents";
 import type { DocumentStatus, DocumentType } from "@/types";
+import { requirePageAccess } from "@/lib/page-access";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,7 @@ interface PageProps {
 export default async function DocumentsPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const session = await requireSession();
+  requirePageAccess(session.role, ["doc.view"]);
   const editable = can(session.role, "doc.write");
 
   let rows: DocumentRow[] = [];

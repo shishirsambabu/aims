@@ -5,22 +5,33 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { ContainerForm } from "@/components/containers/ContainerForm";
 import { requireSession } from "@/lib/auth";
+import { requirePageAccess } from "@/lib/page-access";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewContainerPage() {
-  const { orgId } = await requireSession();
+  const session = await requireSession();
+  requirePageAccess(session.role, ["container.write"]);
+  const { orgId } = session;
 
   let suppliers: { id: string; name: string }[] = [];
+  let warehouses: { id: string; name: string; code: string; city: string }[] = [];
   try {
-    suppliers = await prisma.supplier.findMany({
-      where: { orgId, deletedAt: null, approvalStatus: "Approved" },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
-    });
+    [suppliers, warehouses] = await Promise.all([
+      prisma.supplier.findMany({
+        where: { orgId, deletedAt: null, approvalStatus: "Approved" },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
+      prisma.warehouse.findMany({
+        where: { orgId, deletedAt: null, isActive: true },
+        orderBy: [{ city: "asc" }, { name: "asc" }],
+        select: { id: true, name: true, code: true, city: true },
+      }),
+    ]);
   } catch (err) {
-    console.error("[containers/new] supplier load failed", err);
+    console.error("[containers/new] master data load failed", err);
   }
 
   return (
@@ -37,7 +48,7 @@ export default async function NewContainerPage() {
         }
       />
       <div className="mx-auto max-w-3xl p-6">
-        <ContainerForm suppliers={suppliers} orgId={orgId} />
+        <ContainerForm suppliers={suppliers} warehouses={warehouses} orgId={orgId} />
       </div>
     </div>
   );

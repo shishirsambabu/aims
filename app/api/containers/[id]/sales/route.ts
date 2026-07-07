@@ -55,6 +55,21 @@ export async function PUT(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
+    const dispatchedOrderLines = await prisma.gatePassLine.count({
+      where: {
+        orgId: session.orgId,
+        stockItem: { containerId: container.id },
+        qtyDispatched: { gt: 0 },
+        gatePass: { salesOrderId: { not: null } },
+      },
+    });
+    if (dispatchedOrderLines > 0) {
+      return NextResponse.json(
+        { error: "Sales for this container are system-controlled from dispatched orders" },
+        { status: 409 }
+      );
+    }
+
     const body = await request.json();
     const parsed = saleSchema.safeParse(body);
     if (!parsed.success) {
@@ -156,6 +171,25 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     });
     if (!container || !container.sale) {
       return NextResponse.json({ error: "Sales record not found" }, { status: 404 });
+    }
+    if (container.sale.approvalStatus !== "PendingApproval") {
+      return NextResponse.json({ error: "Only pending sales can be reviewed" }, { status: 409 });
+    }
+    const submission = await prisma.activityLog.findFirst({
+      where: {
+        orgId: session.orgId,
+        entityType: "container",
+        entityId: container.id,
+        action: "submitted_sales_review",
+      },
+      orderBy: { createdAt: "desc" },
+      select: { userId: true },
+    });
+    if (submission?.userId === session.userId) {
+      return NextResponse.json(
+        { error: "Maker-checker control: the sales editor cannot review their own submission" },
+        { status: 409 }
+      );
     }
 
     const before = saleSnapshot(container.sale);

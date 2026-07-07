@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireSession } from "@/lib/auth";
+import { BRAND_FULL_NAME } from "@/lib/branding";
 import { can } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +32,7 @@ export default async function ExportCenterPage() {
     <div>
       <PageHeader
         title="Export Center"
-        description="Download Excel, CSV and PDF management packs for Aeden Imports Management System."
+        description={`Download Excel, CSV and PDF management packs for ${BRAND_FULL_NAME}.`}
       />
       <div className="grid gap-4 p-6 lg:grid-cols-3">
         <ExportCard

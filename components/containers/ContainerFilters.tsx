@@ -57,7 +57,7 @@ export function ContainerFilters({
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search Container No or BL No…"
+          placeholder="Search Container No or BL No"
           className="h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </form>
@@ -120,7 +120,7 @@ export function ContainerFilters({
         className="h-9 rounded-md border border-input bg-background px-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         aria-label="ETA from"
       />
-      <span className="text-muted-foreground">–</span>
+      <span className="text-muted-foreground">-</span>
       <input
         type="date"
         value={searchParams.get("dateTo") ?? ""}

@@ -27,6 +27,7 @@ export interface ContainerListRow {
   containerNo: string;
   blNo: string;
   supplierName: string | null;
+  warehouseName: string | null;
   port: string | null;
   item: string | null;
   noOfBoxes: number | null;
@@ -96,6 +97,7 @@ export async function listContainers(
       eta: true,
       flagged: true,
       supplier: { select: { name: true } },
+      warehouse: { select: { name: true } },
       documents: {
         where: { deletedAt: null },
         select: { type: true, status: true },
@@ -127,6 +129,7 @@ export async function listContainers(
     eta: Date | null;
     flagged: boolean;
     supplier: { name: string } | null;
+    warehouse: { name: string } | null;
       sale?: {
       saleValue: unknown;
       profit: unknown;
@@ -140,6 +143,7 @@ export async function listContainers(
     containerNo: r.containerNo,
     blNo: r.blNo,
     supplierName: r.supplier?.name ?? null,
+    warehouseName: r.warehouse?.name ?? null,
     port: r.port,
     item: r.item,
     noOfBoxes: r.noOfBoxes,
@@ -174,6 +178,7 @@ export async function getContainerById(
     where: { id, orgId, deletedAt: null },
     include: {
       supplier: true,
+      warehouse: true,
       shipmentItem: true,
       ...(includeFinancials ? { cost: true, sale: true } : {}),
       documents: {

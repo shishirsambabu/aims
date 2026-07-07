@@ -69,7 +69,7 @@ function LoginForm() {
       toast.error(error.message);
       return;
     }
-    toast.success("Magic link sent — check your inbox");
+    toast.success("Magic link sent - check your inbox");
   }
 
   return (
@@ -141,10 +141,7 @@ function LoginForm() {
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">
-        Need an account?{" "}
-        <Link href="/signup" className="font-medium text-primary hover:underline">
-          Request access
-        </Link>
+        Need access? Contact your AIMS administrator.
       </p>
     </div>
   );

@@ -30,11 +30,34 @@ interface ImportResult {
   imported: number;
   skipped: number;
   errors: { row: number; message: string }[];
+  warnings?: string[];
+  warehouseAssigned?: number;
+  warehouseMatched?: number;
+  warehouseUnresolved?: number;
 }
 
-export function ImportWizard({ existingNos }: { existingNos: string[] }) {
+function externalIdSummary(row: MappedRow) {
+  return [
+    row.carrierExternalId ? `Carrier:${row.carrierExternalId}` : null,
+    row.wmsExternalId ? `WMS:${row.wmsExternalId}` : null,
+    row.erpExternalId ? `ERP:${row.erpExternalId}` : null,
+    row.tallyExternalId ? `Tally:${row.tallyExternalId}` : null,
+    row.icegateExternalId ? `ICEGATE:${row.icegateExternalId}` : null,
+  ]
+    .filter(Boolean)
+    .join(" • ");
+}
+
+export function ImportWizard({
+  existingNos,
+  existingBlNos,
+}: {
+  existingNos: string[];
+  existingBlNos: string[];
+}) {
   const router = useRouter();
   const existing = new Set(existingNos);
+  const existingBl = new Set(existingBlNos);
 
   const [rows, setRows] = useState<MappedRow[]>([]);
   const [fileName, setFileName] = useState("");
@@ -50,9 +73,9 @@ export function ImportWizard({ existingNos }: { existingNos: string[] }) {
       const seenNos = new Set<string>();
       const usedSheets: string[] = [];
       for (const sheet of sheets) {
-        const mapped = mapSheetRows(sheet.data as unknown[][]);
-        if (mapped.length === 0) continue;
-        usedSheets.push(sheet.sheet);
+            const mapped = mapSheetRows(sheet.data as unknown[][]);
+            if (mapped.length === 0) continue;
+            usedSheets.push(sheet.sheet);
         for (const row of mapped) {
           const key = row.containerNo?.toUpperCase() ?? "";
           if (key && seenNos.has(key)) continue;
@@ -80,10 +103,17 @@ export function ImportWizard({ existingNos }: { existingNos: string[] }) {
   }
 
   const validRows = rows.filter(
-    (row) => row.containerNo && row.blNo && !existing.has(row.containerNo)
+    (row) =>
+      row.containerNo &&
+      row.blNo &&
+      !existing.has(row.containerNo) &&
+      !existingBl.has(row.blNo)
   );
   const dupCount = rows.filter(
-    (row) => row.containerNo && row.blNo && existing.has(row.containerNo)
+    (row) =>
+      row.containerNo &&
+      row.blNo &&
+      (existing.has(row.containerNo) || existingBl.has(row.blNo))
   ).length;
   const invalidCount = rows.filter((row) => !row.containerNo || !row.blNo).length;
 
@@ -185,14 +215,19 @@ export function ImportWizard({ existingNos }: { existingNos: string[] }) {
                     <TableHead>BL No</TableHead>
                     <TableHead>Supplier</TableHead>
                     <TableHead>Port</TableHead>
+                    <TableHead>Warehouse</TableHead>
+                    <TableHead>Sheet Status</TableHead>
+                    <TableHead>External IDs</TableHead>
                     <TableHead>Boxes</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Import Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {rows.slice(0, 10).map((row) => {
                     const dup =
-                      row.containerNo && row.blNo && existing.has(row.containerNo);
+                      row.containerNo &&
+                      row.blNo &&
+                      (existing.has(row.containerNo) || existingBl.has(row.blNo));
                     const bad = !row.containerNo || !row.blNo;
                     return (
                       <TableRow key={row.rowNumber}>
@@ -207,6 +242,11 @@ export function ImportWizard({ existingNos }: { existingNos: string[] }) {
                         </TableCell>
                         <TableCell>{row.supplierName ?? "-"}</TableCell>
                         <TableCell>{row.port ?? "-"}</TableCell>
+                        <TableCell>{row.warehouseName ?? row.warehouseCode ?? "-"}</TableCell>
+                        <TableCell>{row.sourceStatus ?? "-"}</TableCell>
+                        <TableCell className="max-w-[18rem] text-xs text-muted-foreground">
+                          {externalIdSummary(row) || "-"}
+                        </TableCell>
                         <TableCell className="font-financial">
                           {row.noOfBoxes ?? "-"}
                         </TableCell>
@@ -278,6 +318,23 @@ export function ImportWizard({ existingNos }: { existingNos: string[] }) {
                 <Button variant="outline" size="sm" onClick={downloadErrors}>
                   <Download className="h-4 w-4" /> Download error report (CSV)
                 </Button>
+              </div>
+            )}
+            {result.warnings?.length ? (
+              <div className="space-y-2 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">
+                <p className="font-medium">Import warnings</p>
+                <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+                  {result.warnings.map((warning, index) => (
+                    <li key={index}>{warning}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {typeof result.warehouseAssigned === "number" && (
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Stat label="Warehouse matched" value={result.warehouseMatched ?? 0} tone="text-success" />
+                <Stat label="Warehouse assigned" value={result.warehouseAssigned ?? 0} tone="text-primary" />
+                <Stat label="Warehouse unresolved" value={result.warehouseUnresolved ?? 0} tone="text-warning" />
               </div>
             )}
             <div className="flex gap-2">

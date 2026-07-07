@@ -9,8 +9,15 @@ import { createSupplierSchema } from "@/lib/validations/supplier";
 
 export async function GET() {
   try {
-    const { orgId } = await requireSession();
-    return NextResponse.json({ data: await listSuppliers(orgId) });
+    const session = await requireSession();
+    if (
+      !can(session.role, "container.view") &&
+      !can(session.role, "doc.view") &&
+      !can(session.role, "masterdata.write")
+    ) {
+      return NextResponse.json({ error: "Not permitted" }, { status: 403 });
+    }
+    return NextResponse.json({ data: await listSuppliers(session.orgId) });
   } catch (err) {
     return handleError(err);
   }

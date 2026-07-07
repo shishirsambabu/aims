@@ -1,6 +1,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
+import { listCustomerReceipts, listReceivableCustomers } from "@/lib/data/receivables";
 
 function n(v: unknown): number {
   if (v == null) return 0;
@@ -35,6 +36,33 @@ export interface AgingBucket {
   amount: number;
 }
 
+export interface ReceivableBucket {
+  label: string;
+  count: number;
+  amount: number;
+}
+
+export interface ReceivableRow {
+  customerId: string;
+  customerCode: string;
+  customerName: string;
+  region: string | null;
+  outstanding: number;
+  overdue: number;
+  oldestDueDate: string | null;
+  oldestAgeDays: number | null;
+}
+
+export interface ReceiptRow {
+  receiptNo: string;
+  customerName: string;
+  receiptDate: string;
+  method: string;
+  currency: string;
+  amount: number;
+  status: string;
+}
+
 export interface ReportData {
   summary: {
     containers: number;
@@ -44,10 +72,17 @@ export interface ReportData {
     profit: number;
     marginPct: number | null;
     outstanding: number;
+    arOutstanding: number;
+    arOverdue: number;
+    receiptValue: number;
+    receiptCount: number;
   };
   suppliers: SupplierRow[];
   ports: PortRow[];
   aging: AgingBucket[];
+  receivables: ReceivableRow[];
+  receivablesAging: ReceivableBucket[];
+  recentReceipts: ReceiptRow[];
 }
 
 function containerWhere(
@@ -173,6 +208,58 @@ export async function getReportData(
     buckets[idx].amount += due;
   }
 
+  const [receivableCustomers, customerReceipts] = await Promise.all([
+    listReceivableCustomers(orgId),
+    listCustomerReceipts(orgId),
+  ]);
+
+  const receivables = receivableCustomers
+    .filter((row) => row.outstanding > 0)
+    .map((row) => ({
+      customerId: row.id,
+      customerCode: row.code,
+      customerName: row.name,
+      region: row.region,
+      outstanding: row.outstanding,
+      overdue: row.overdue,
+      oldestDueDate: row.oldestDueDate,
+      oldestAgeDays: row.oldestAgeDays,
+    }))
+    .sort((a, b) => b.overdue - a.overdue);
+
+  const receivablesAging: ReceivableBucket[] = [
+    { label: "Not yet due", count: 0, amount: 0 },
+    { label: "1–30 days", count: 0, amount: 0 },
+    { label: "31–60 days", count: 0, amount: 0 },
+    { label: "61–90 days", count: 0, amount: 0 },
+    { label: "90+ days", count: 0, amount: 0 },
+  ];
+  const now = Date.now();
+  for (const row of receivables) {
+    const age = row.oldestDueDate ? Math.floor((now - new Date(row.oldestDueDate).getTime()) / (1000 * 60 * 60 * 24)) : null;
+    let idx = 0;
+    if (age == null || age <= 0) idx = 0;
+    else if (age <= 30) idx = 1;
+    else if (age <= 60) idx = 2;
+    else if (age <= 90) idx = 3;
+    else idx = 4;
+    receivablesAging[idx].count += 1;
+    receivablesAging[idx].amount += row.outstanding;
+  }
+
+  const recentReceipts = customerReceipts
+    .slice(0, 10)
+    .map((receipt) => ({
+      receiptNo: receipt.receiptNo,
+      customerName: receipt.customerName,
+      receiptDate: receipt.receiptDate,
+      method: receipt.method,
+      currency: receipt.currency,
+      amount: receipt.amount,
+      status: receipt.status,
+    }));
+  const receiptValue = customerReceipts.reduce((sum, receipt) => sum + n(receipt.amount), 0);
+
   return {
     summary: {
       containers: containers.length,
@@ -182,10 +269,17 @@ export async function getReportData(
       profit,
       marginPct: saleValue > 0 ? (profit / saleValue) * 100 : null,
       outstanding,
+      arOutstanding: receivableCustomers.reduce((sum, row) => sum + row.outstanding, 0),
+      arOverdue: receivableCustomers.reduce((sum, row) => sum + row.overdue, 0),
+      receiptValue,
+      receiptCount: customerReceipts.length,
     },
     suppliers,
     ports,
     aging: buckets,
+    receivables,
+    receivablesAging,
+    recentReceipts,
   };
 }
 

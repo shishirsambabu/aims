@@ -4,9 +4,11 @@ import { z } from "zod";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/activity";
+import { ALL_ROLES, can } from "@/lib/permissions";
+import type { Role } from "@/types";
 
 const schema = z.object({
-  role: z.enum(["admin", "manager", "clearing_agent", "finance", "viewer", "auditor"]).optional(),
+  role: z.enum(ALL_ROLES as [Role, ...Role[]]).optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -18,6 +20,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   try {
     const { id } = await params;
     const session = await requireSession();
+    if (!can(session.role, "team.manage")) {
+      return NextResponse.json({ error: "Not permitted" }, { status: 403 });
+    }
     if (session.role !== "admin") {
       return NextResponse.json(
         { error: "Only admins can manage the team" },

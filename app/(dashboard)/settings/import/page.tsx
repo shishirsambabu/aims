@@ -30,12 +30,14 @@ export default async function ImportPage() {
   }
 
   let existingNos: string[] = [];
+  let existingBlNos: string[] = [];
   try {
-    const rows: { containerNo: string }[] = await prisma.container.findMany({
+    const rows: { containerNo: string; blNo: string }[] = await prisma.container.findMany({
       where: { orgId: session.orgId },
-      select: { containerNo: true },
+      select: { containerNo: true, blNo: true },
     });
     existingNos = rows.map((r) => r.containerNo);
+    existingBlNos = rows.map((r) => r.blNo);
   } catch (err) {
     console.error("[settings/import] load failed", err);
   }
@@ -54,7 +56,7 @@ export default async function ImportPage() {
         }
       />
       <div className="mx-auto max-w-4xl p-6">
-        <ImportWizard existingNos={existingNos} />
+        <ImportWizard existingNos={existingNos} existingBlNos={existingBlNos} />
       </div>
     </div>
   );

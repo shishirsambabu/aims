@@ -14,6 +14,8 @@ export interface WorkflowContext {
   verifiedDocTypes: DocumentType[];
   /** Whether sales have been recorded (sale value present). */
   hasSales: boolean;
+  /** Whether the container has an assigned warehouse before inbound stock. */
+  hasWarehouse: boolean;
 }
 
 export interface StageRequirement {
@@ -82,6 +84,9 @@ export function canTransition(
     }
     if (req.needsSales && !ctx.hasSales) {
       missing.push(`Sales must be recorded for ${CONTAINER_STATUS_LABELS[stage]}`);
+    }
+    if (stage === "InWarehouse" && !ctx.hasWarehouse) {
+      missing.push("A warehouse must be assigned before entering In Warehouse");
     }
   }
 

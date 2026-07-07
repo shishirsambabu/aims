@@ -7,6 +7,7 @@ import { requireSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { listContainers, type ContainerListRow } from "@/lib/data/containers";
+import { requirePageAccess } from "@/lib/page-access";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ interface PageProps {
 export default async function ShipmentsPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const session = await requireSession();
+  requirePageAccess(session.role, ["container.view"]);
   const editable = can(session.role, "container.write");
 
   let rows: ContainerListRow[] = [];

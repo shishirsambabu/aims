@@ -93,13 +93,13 @@ export const ALERT_CATEGORY_LABELS: Record<AlertCategory, string> = {
 };
 
 const CATEGORY_ROLES: Record<AlertCategory, Role[]> = {
-  arrival: ["admin", "manager", "clearing_agent"],
-  demurrage: ["admin", "manager", "clearing_agent", "finance"],
-  docExpiry: ["admin", "manager", "clearing_agent"],
-  approval: ["admin", "manager", "finance"],
-  paymentOverdue: ["admin", "manager", "finance"],
-  lossMaking: ["admin", "manager", "finance", "auditor"],
-  flagged: ["admin", "manager", "auditor"],
+  arrival: ["admin", "gm", "manager", "warehouse", "clearing_agent"],
+  demurrage: ["admin", "gm", "manager", "warehouse", "clearing_agent", "finance"],
+  docExpiry: ["admin", "gm", "manager", "warehouse", "clearing_agent"],
+  approval: ["admin", "gm", "manager", "finance"],
+  paymentOverdue: ["admin", "gm", "manager", "finance"],
+  lossMaking: ["admin", "gm", "manager", "finance", "auditor"],
+  flagged: ["admin", "gm", "manager", "auditor"],
 };
 
 const CATEGORY_ACTIONS: Record<AlertCategory, string> = {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Loader2,
@@ -28,7 +28,7 @@ import { SalesPanel } from "@/components/containers/SalesPanel";
 import { DocumentUpload } from "@/components/documents/DocumentUpload";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { cn, formatUSD, formatDate, daysUntil, expiryLevel } from "@/lib/utils";
+import { cn, formatMoney, formatUSD, formatDate, daysUntil, expiryLevel, marginColor } from "@/lib/utils";
 import {
   CONTAINER_STATUSES,
   CONTAINER_STATUS_LABELS,
@@ -47,6 +47,7 @@ interface DetailData {
   id: string;
   containerNo: string;
   blNo: string;
+  warehouseId: string | null;
   customer: string | null;
   port: string | null;
   portCode: string | null;
@@ -73,6 +74,7 @@ interface DetailData {
   lastFreeDate: string | null;
   remarks: string | null;
   supplier: { name: string; country: string | null } | null;
+  warehouse: { name: string; code: string; city: string } | null;
   shipmentItem: Record<string, unknown> | null;
   cost: Record<string, unknown> | null;
   sale: Record<string, unknown> | null;
@@ -110,6 +112,27 @@ interface ActivityRow {
   user: { fullName: string | null; email: string } | null;
 }
 
+interface ExternalReferenceRow {
+  id: string;
+  provider: string;
+  entityType: string;
+  entityId: string;
+  entityLabel: string;
+  externalId: string;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const PROVIDERS = [
+  { key: "carrier", label: "Carrier / WMS" },
+  { key: "outlook", label: "Outlook" },
+  { key: "tally", label: "Tally" },
+  { key: "icegate", label: "ICEGATE" },
+  { key: "ocr", label: "OCR" },
+  { key: "email", label: "Email Bridge" },
+] as const;
+
 function num(v: unknown): number | null {
   if (v == null || v === "") return null;
   const n = Number(v);
@@ -130,16 +153,39 @@ export interface DetailPerms {
 export function ContainerDetail({
   container,
   activity,
+  warehouses,
   perms,
   orgId,
 }: {
   container: DetailData;
   activity: ActivityRow[];
+  warehouses: { id: string; name: string; code: string; city: string }[];
   perms: DetailPerms;
   orgId: string;
 }) {
+  const costValue = num(container.cost?.totalCost);
+  const saleValue = num(container.sale?.saleValue);
+  const profitValue = num(container.sale?.profit);
+  const marginValue = num(container.sale?.marginPct);
+  const profitTone = (profitValue ?? 0) >= 0 ? "text-success" : "text-danger";
   return (
     <div className="p-6">
+      {perms.financials && (
+        <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <MetricCard label="Landed Cost" value={formatUSD(costValue)} />
+          <MetricCard label="Sale Value" value={formatUSD(saleValue)} />
+          <MetricCard
+            label="Profit"
+            value={formatUSD(profitValue)}
+            tone={profitTone}
+          />
+          <MetricCard
+            label="Margin"
+            value={marginValue != null ? `${marginValue.toFixed(1)}%` : "-"}
+            tone={marginColor(marginValue)}
+          />
+        </div>
+      )}
       <Tabs defaultValue="overview">
         <TabsList className="w-full">
           <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -159,7 +205,11 @@ export function ContainerDetail({
 
         <div className="pt-6">
           <TabsContent value="overview">
-            <OverviewTab container={container} canEdit={perms.container} />
+            <OverviewTab
+              container={container}
+              warehouses={warehouses}
+              canEdit={perms.container}
+            />
           </TabsContent>
           <TabsContent value="customs">
             <CustomsTab item={container.shipmentItem} />
@@ -229,6 +279,25 @@ function DefItem({
         {value ?? <span className="text-muted-foreground">—</span>}
       </dd>
     </div>
+  );
+}
+
+function MetricCard({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: string;
+}) {
+  return (
+    <Card className="border-t-4 border-t-primary">
+      <CardContent className="pt-5">
+        <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+        <p className={cn("font-financial mt-1 text-2xl font-bold", tone)}>{value}</p>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -407,14 +476,31 @@ function SectionCard({
 
 function OverviewTab({
   container,
+  warehouses,
   canEdit,
 }: {
   container: DetailData;
+  warehouses: { id: string; name: string; code: string; city: string }[];
   canEdit: boolean;
 }) {
   const router = useRouter();
   const [status, setStatus] = useState<ContainerStatus>(container.status);
+  const [warehouseId, setWarehouseId] = useState(container.warehouseId ?? "");
   const [saving, setSaving] = useState(false);
+  const [refs, setRefs] = useState<ExternalReferenceRow[]>([]);
+  const [refsBusy, setRefsBusy] = useState(false);
+  const [refSaving, setRefSaving] = useState(false);
+  const [refForm, setRefForm] = useState({
+    provider: "carrier",
+    externalId: "",
+    metadata: JSON.stringify(
+      {
+        notes: "WMS mapping for pilot sync",
+      },
+      null,
+      2
+    ),
+  });
 
   // Workflow context for stage-gating.
   const ctx: WorkflowContext = {
@@ -424,11 +510,39 @@ function OverviewTab({
     hasSales:
       container.sale?.approvalStatus === "Approved" &&
       num(container.sale?.saleValue as unknown) != null,
+    hasWarehouse: !!container.warehouseId,
   };
   const nextStage =
     CONTAINER_STATUSES[CONTAINER_STATUSES.indexOf(status) + 1];
   const nextReq = nextStage ? stageRequirement(nextStage) : null;
   const presentSet = new Set(ctx.verifiedDocTypes);
+
+  useEffect(() => {
+    let ignore = false;
+    async function loadReferences() {
+      setRefsBusy(true);
+      try {
+        const res = await fetch("/api/external-references?entityType=container");
+        const json = await res.json();
+        if (!res.ok) {
+          toast.error(json.error ?? "Failed to load external mappings");
+          return;
+        }
+        const rows = (json.data as ExternalReferenceRow[]).filter(
+          (row) => row.entityId === container.id
+        );
+        if (!ignore) setRefs(rows);
+      } catch {
+        toast.error("Network error");
+      } finally {
+        if (!ignore) setRefsBusy(false);
+      }
+    }
+    void loadReferences();
+    return () => {
+      ignore = true;
+    };
+  }, [container.id]);
 
   async function markArrived() {
     const today = new Date().toISOString().slice(0, 10);
@@ -490,6 +604,87 @@ function OverviewTab({
     }
   }
 
+  async function saveWarehouse() {
+    if (!warehouseId) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/containers/${container.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ warehouseId: warehouseId || null }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(json.error ?? "Failed to assign warehouse");
+        return;
+      }
+      toast.success("Warehouse assigned");
+      router.refresh();
+    } catch {
+      toast.error("Network error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveReference() {
+    if (!refForm.externalId.trim()) {
+      toast.error("External ID is required");
+      return;
+    }
+    setRefSaving(true);
+    try {
+      let metadata: unknown = undefined;
+      try {
+        metadata = refForm.metadata.trim() ? JSON.parse(refForm.metadata) : undefined;
+      } catch {
+        toast.error("Metadata must be valid JSON");
+        return;
+      }
+
+      const res = await fetch("/api/external-references", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider: refForm.provider,
+          entityType: "container",
+          entityKey: container.containerNo,
+          externalId: refForm.externalId,
+          metadata,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        toast.error(json.error ?? "Failed to save mapping");
+        return;
+      }
+      toast.success("External mapping saved");
+      setRefForm((current) => ({ ...current, externalId: "" }));
+      const refresh = await fetch(`/api/external-references?entityType=container`);
+      const refreshJson = await refresh.json();
+      if (refresh.ok) {
+        setRefs(
+          (refreshJson.data as ExternalReferenceRow[]).filter((row) => row.entityId === container.id)
+        );
+      }
+    } catch {
+      toast.error("Network error");
+    } finally {
+      setRefSaving(false);
+    }
+  }
+
+  async function deleteReference(id: string) {
+    const res = await fetch(`/api/external-references/${id}`, { method: "DELETE" });
+    const json = await res.json();
+    if (!res.ok) {
+      toast.error(json.error ?? "Failed to delete mapping");
+      return;
+    }
+    toast.success("External mapping removed");
+    setRefs((current) => current.filter((row) => row.id !== id));
+  }
+
   return (
     <div className="space-y-6">
       <SectionCard title="Container Identity">
@@ -497,6 +692,53 @@ function OverviewTab({
           <DefItem label="Container No" value={container.containerNo} mono />
           <DefItem label="BL No" value={container.blNo} mono />
           <DefItem label="Supplier" value={container.supplier?.name} />
+          <div className="space-y-1 sm:col-span-2 lg:col-span-3">
+            <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+              Warehouse
+            </dt>
+            <dd className="space-y-2 text-sm">
+              <div>
+                {container.warehouse ? (
+                  <span className="font-medium">
+                    {container.warehouse.name} ({container.warehouse.code}){" "}
+                    <span className="text-muted-foreground">
+                      - {container.warehouse.city}
+                    </span>
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">Not assigned yet</span>
+                )}
+              </div>
+              {canEdit && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    value={warehouseId}
+                    onChange={(e) => setWarehouseId(e.target.value)}
+                    className="h-10 min-w-72 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="">Select a warehouse</option>
+                    {warehouses.map((w) => (
+                      <option key={w.id} value={w.id}>
+                        {w.name} ({w.code}) - {w.city}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={saveWarehouse}
+                    disabled={
+                      saving ||
+                      !warehouseId ||
+                      warehouseId === (container.warehouseId ?? "")
+                    }
+                  >
+                    {saving ? "Saving..." : "Assign Warehouse"}
+                  </Button>
+                </div>
+              )}
+            </dd>
+          </div>
           <DefItem label="Customer" value={container.customer} />
           <DefItem
             label="POD (Arrival Port)"
@@ -532,6 +774,107 @@ function OverviewTab({
             mono
           />
         </dl>
+      </SectionCard>
+
+      <SectionCard title="External IDs">
+        <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Link this container to a WMS, ERP, or carrier reference. Use the
+              Container No as the local key and keep the external ID beside it
+              for the pilot rollout.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-1.5 sm:col-span-2">
+                <label className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Provider
+                </label>
+                <select
+                  value={refForm.provider}
+                  onChange={(e) => setRefForm({ ...refForm, provider: e.target.value })}
+                  className="h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  {PROVIDERS.map((provider) => (
+                    <option key={provider.key} value={provider.key}>
+                      {provider.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid gap-1.5 sm:col-span-2">
+                <label className="text-xs uppercase tracking-wide text-muted-foreground">
+                  External ID
+                </label>
+                <input
+                  value={refForm.externalId}
+                  onChange={(e) => setRefForm({ ...refForm, externalId: e.target.value })}
+                  className="h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="WMS / ERP id"
+                />
+              </div>
+              <div className="grid gap-1.5 sm:col-span-2">
+                <label className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Metadata JSON
+                </label>
+                <textarea
+                  value={refForm.metadata}
+                  onChange={(e) => setRefForm({ ...refForm, metadata: e.target.value })}
+                  rows={6}
+                  className="rounded-md border border-input bg-background px-3 py-2 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <Button
+                type="button"
+                onClick={saveReference}
+                disabled={refSaving}
+                className="sm:col-span-2"
+              >
+                {refSaving ? "Saving..." : "Save External Mapping"}
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {refsBusy ? (
+              <div className="flex min-h-[180px] items-center justify-center text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin" />
+              </div>
+            ) : refs.length === 0 ? (
+              <EmptyState
+                icon={ExternalLink}
+                title="No external IDs mapped"
+                description="Add the WMS or ERP identifier for this container when the pilot system is ready."
+                className="border-0 bg-transparent py-6"
+              />
+            ) : (
+              refs.map((row) => (
+                <div key={row.id} className="rounded-xl border border-border p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        {row.provider}
+                      </p>
+                      <p className="text-sm font-medium">{row.externalId}</p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteReference(row.id)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                  {row.metadata && (
+                    <pre className="mt-2 overflow-x-auto rounded-lg bg-surface-alt/60 p-2 text-[11px] text-muted-foreground">
+                      {JSON.stringify(row.metadata, null, 2)}
+                    </pre>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </SectionCard>
 
       <LifecycleTimeline container={container} ctx={ctx} />
@@ -835,6 +1178,19 @@ function DocumentsTab({
 /* ------------------------------- tab 6 --------------------------------- */
 
 function PaymentsTab({ payments }: { payments: PaymentRow[] }) {
+  const byCurrency = ["USD", "AED", "INR"].map((currency) => {
+    const rows = payments.filter((p) => p.currency === currency);
+    const requested = rows.reduce((sum, row) => sum + (num(row.amountRequested) ?? 0), 0);
+    const paid = rows.reduce((sum, row) => sum + (num(row.amountPaid) ?? 0), 0);
+    return {
+      currency,
+      count: rows.length,
+      requested,
+      paid,
+      outstanding: Math.max(requested - paid, 0),
+    };
+  });
+
   return (
     <SectionCard
       title="Payments"
@@ -845,25 +1201,37 @@ function PaymentsTab({ payments }: { payments: PaymentRow[] }) {
       }
     >
       {payments.length > 0 && (
-        <ul className="divide-y divide-border">
-          {payments.map((p) => (
-            <li key={p.id} className="flex items-center justify-between py-2.5">
-              <div>
-                <p className="font-financial text-sm font-medium">
-                  {formatUSD(num(p.amountRequested))}
-                  <span className="text-muted-foreground">
-                    {" "}
-                    · paid {formatUSD(num(p.amountPaid))}
-                  </span>
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {p.supplierName ?? "—"} · due {formatDate(p.dueDate)}
-                </p>
-              </div>
-              <PaymentStatusBadge status={p.status} />
-            </li>
-          ))}
-        </ul>
+        <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {byCurrency.map((row) => (
+              <MetricCard
+                key={row.currency}
+                label={`Open AP (${row.currency})`}
+                value={formatMoney(row.outstanding, row.currency as "USD" | "AED" | "INR")}
+                tone={row.outstanding > 0 ? "text-danger" : "text-success"}
+              />
+            ))}
+          </div>
+          <ul className="divide-y divide-border">
+            {payments.map((p) => (
+              <li key={p.id} className="flex items-center justify-between py-2.5">
+                <div>
+                  <p className="font-financial text-sm font-medium">
+                    {formatMoney(num(p.amountRequested), p.currency as "USD" | "AED" | "INR")}
+                    <span className="text-muted-foreground">
+                      {" "}
+                      - paid {formatMoney(num(p.amountPaid), p.currency as "USD" | "AED" | "INR")}
+                    </span>
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {p.supplierName ?? "-"} - due {formatDate(p.dueDate)}
+                  </p>
+                </div>
+                <PaymentStatusBadge status={p.status} />
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </SectionCard>
   );

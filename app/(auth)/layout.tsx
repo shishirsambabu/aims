@@ -1,4 +1,12 @@
-import { Ship, Package, FileCheck2, TrendingUp } from "lucide-react";
+﻿import { Ship, Package, FileCheck2, TrendingUp } from "lucide-react";
+
+import {
+  BRAND_COMPANY_NAME,
+  BRAND_FULL_NAME,
+  BRAND_LOCATION,
+  BRAND_SHORT_NAME,
+  BRAND_TAGLINE,
+} from "@/lib/branding";
 
 export default function AuthLayout({
   children,
@@ -27,8 +35,10 @@ export default function AuthLayout({
             <Ship className="h-6 w-6" />
           </div>
           <div className="leading-tight">
-            <p className="heading-caps text-lg">AIMS</p>
-            <p className="text-xs text-white/50">Aeden Imports Management System</p>
+            <p className="heading-caps text-lg">{BRAND_SHORT_NAME}</p>
+            <p className="text-xs text-white/50">
+              {BRAND_FULL_NAME}
+            </p>
           </div>
         </div>
 
@@ -38,11 +48,10 @@ export default function AuthLayout({
             <span className="bg-gradient-to-r from-sky-300 to-primary bg-clip-text text-transparent">
               costed and tracked
             </span>{" "}
-            — from booking to fully sold.
+            from booking to fully sold.
           </h1>
           <p className="text-white/60">
-            The enterprise workspace for Aeden Fruits International — imports,
-            landing costs, documentation and profit, in one place.
+            {BRAND_TAGLINE}
           </p>
           <ul className="space-y-3 pt-2">
             {[
@@ -50,7 +59,10 @@ export default function AuthLayout({
               { icon: FileCheck2, text: "Documentation, customs & compliance" },
               { icon: TrendingUp, text: "Landed cost & real-time profit" },
             ].map((f) => (
-              <li key={f.text} className="flex items-center gap-3 text-sm text-white/80">
+              <li
+                key={f.text}
+                className="flex items-center gap-3 text-sm text-white/80"
+              >
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 ring-1 ring-white/15">
                   <f.icon className="h-4 w-4 text-sky-300" />
                 </span>
@@ -61,8 +73,9 @@ export default function AuthLayout({
         </div>
 
         <p className="relative z-10 text-xs text-white/40">
-          © {new Date().getFullYear()} Aeden Fruits International Pvt Ltd ·
-          Kochi, Kerala
+          Copyright {new Date().getFullYear()} {BRAND_COMPANY_NAME}
+          {" | "}
+          {BRAND_LOCATION}
         </p>
       </div>
 

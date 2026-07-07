@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/containers/StatusBadge";
 import { ContainerDetail } from "@/components/containers/ContainerDetail";
 import { requireSession } from "@/lib/auth";
+import { requirePageAccess } from "@/lib/page-access";
 import { can } from "@/lib/permissions";
 import {
   getContainerById,
   getContainerActivity,
 } from "@/lib/data/containers";
+import { getWarehouseOptions } from "@/lib/data/warehouses";
 import type { ContainerStatus } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -23,18 +25,21 @@ interface PageProps {
 export default async function ContainerDetailPage({ params }: PageProps) {
   const { id } = await params;
   const session = await requireSession();
+  requirePageAccess(session.role, ["container.view"]);
 
   let container: Awaited<ReturnType<typeof getContainerById>> = null;
   let activity: Awaited<ReturnType<typeof getContainerActivity>> = [];
+  let warehouses: Awaited<ReturnType<typeof getWarehouseOptions>> = [];
   let loadError = false;
 
   try {
-    container = await getContainerById(session.orgId, id, {
-      includeFinancials: can(session.role, "financials.view"),
-    });
-    if (container) {
-      activity = await getContainerActivity(session.orgId, id);
-    }
+    [container, activity, warehouses] = await Promise.all([
+      getContainerById(session.orgId, id, {
+        includeFinancials: can(session.role, "financials.view"),
+      }),
+      getContainerActivity(session.orgId, id),
+      getWarehouseOptions(session.orgId),
+    ]);
   } catch (err) {
     console.error("[containers/:id] load failed", err);
     loadError = true;
@@ -98,6 +103,7 @@ export default async function ContainerDetailPage({ params }: PageProps) {
       <ContainerDetail
         container={data}
         activity={activityData}
+        warehouses={JSON.parse(JSON.stringify(warehouses))}
         perms={{
           container: can(session.role, "container.write"),
           cost: can(session.role, "cost.write"),

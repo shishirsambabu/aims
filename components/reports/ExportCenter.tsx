@@ -30,8 +30,8 @@ export function ExportCenter({
             Management report pack
           </h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Export summary, supplier performance, port performance and AP aging
-            using the current report date filters.
+            Export summary, supplier performance, port performance, AP/AR aging,
+            customer receivables, and collections using the current report date filters.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

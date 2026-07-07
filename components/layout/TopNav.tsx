@@ -9,6 +9,7 @@ import { signOut } from "@/lib/actions/auth";
 import { useUiStore } from "@/store/useUiStore";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ROLE_LABELS, isRole } from "@/lib/permissions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,8 +39,46 @@ export function TopNav({ user }: TopNavProps) {
   const toggleMobileSidebar = useUiStore((s) => s.toggleMobileSidebar);
   const [query, setQuery] = useState("");
 
+  const SEGMENT_LABELS: Record<string, string> = {
+    containers: "Containers",
+    shipments: "Shipments",
+    documents: "Documents",
+    payments: "Payments",
+    receipts: "Receipts",
+    analytics: "Analytics",
+    reports: "Reports",
+    exports: "Export Center",
+    alerts: "Alerts",
+    settings: "Settings",
+    team: "Team",
+    suppliers: "Suppliers",
+    warehouses: "Warehouses",
+    warehouse: "Warehouse",
+    templates: "Templates",
+    procurement: "Procurement",
+    sales: "Sales",
+    quotes: "Quotes",
+    orders: "Orders",
+    crm: "CRM",
+    customers: "Customers",
+    finance: "Finance",
+    sop: "SOP Center",
+    search: "Search",
+    audit: "Audit Log",
+    import: "Excel Import",
+    integrations: "Integrations",
+    "document-automation": "Document Automation",
+    new: "New",
+  };
+
   const segments = pathname.split("/").filter(Boolean);
-  const crumbs = segments.length === 0 ? ["Dashboard"] : segments;
+  const crumbs =
+    segments.length === 0
+      ? ["Dashboard"]
+      : segments.map((segment) =>
+          SEGMENT_LABELS[segment] ??
+          (/^[0-9a-f-]{16,}$/i.test(segment) ? "Detail" : segment)
+        );
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -50,7 +89,7 @@ export function TopNav({ user }: TopNavProps) {
   }
 
   return (
-    <header className="glass sticky top-0 z-30 flex h-16 shrink-0 items-center gap-4 border-b border-border/80 px-4 md:px-6">
+    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-4 border-b border-border bg-surface px-4 md:px-6">
       {/* Mobile menu toggle */}
       <button
         onClick={toggleMobileSidebar}
@@ -61,13 +100,12 @@ export function TopNav({ user }: TopNavProps) {
       </button>
 
       {/* Breadcrumb */}
-      <nav className="hidden items-center gap-1 text-sm text-muted-foreground sm:flex">
+      <nav className="hidden items-center gap-1 text-[13px] text-muted-foreground sm:flex">
         {crumbs.map((c, i) => (
           <span key={i} className="flex items-center gap-1">
             {i > 0 && <ChevronRight className="h-3.5 w-3.5" />}
             <span
               className={cn(
-                "capitalize",
                 i === crumbs.length - 1 && "font-medium text-foreground"
               )}
             >
@@ -78,14 +116,14 @@ export function TopNav({ user }: TopNavProps) {
       </nav>
 
       {/* Global search */}
-      <form onSubmit={handleSearch} className="ml-auto w-full max-w-xl">
+      <form onSubmit={handleSearch} className="ml-auto w-full max-w-md">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search Container No or BL No…"
-            className="h-10 w-full rounded-2xl border border-input/80 bg-background/70 pl-10 pr-3 text-sm shadow-sm outline-none transition focus:border-primary/40 focus:bg-background focus:ring-4 focus:ring-primary/10"
+            className="h-8 w-full rounded-md border border-input bg-background pl-8 pr-3 text-[13px] outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/15"
           />
         </div>
       </form>
@@ -111,7 +149,7 @@ export function TopNav({ user }: TopNavProps) {
                 {user.email}
               </span>
               <span className="mt-1 inline-flex w-fit rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium capitalize text-primary">
-                {user.role}
+                {isRole(user.role) ? ROLE_LABELS[user.role] : user.role}
               </span>
             </div>
           </DropdownMenuLabel>

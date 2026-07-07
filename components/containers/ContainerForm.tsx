@@ -30,10 +30,18 @@ interface SupplierOption {
   name: string;
 }
 
+interface WarehouseOption {
+  id: string;
+  name: string;
+  code: string;
+  city: string;
+}
+
 interface FormValues {
   containerNo: string;
   blNo: string;
   supplierId: string;
+  warehouseId: string;
   customer: string;
   port: string;
   pol: string;
@@ -63,9 +71,11 @@ interface FormValues {
 
 export function ContainerForm({
   suppliers,
+  warehouses,
   orgId,
 }: {
   suppliers: SupplierOption[];
+  warehouses: WarehouseOption[];
   orgId: string;
 }) {
   const router = useRouter();
@@ -170,6 +180,20 @@ export function ContainerForm({
               {suppliers.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <Field label="Destination Warehouse" error={errors.warehouseId?.message}>
+            <select
+              {...register("warehouseId")}
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">Assign later</option>
+              {warehouses.map((warehouse) => (
+                <option key={warehouse.id} value={warehouse.id}>
+                  {warehouse.name} ({warehouse.code}) - {warehouse.city}
                 </option>
               ))}
             </select>

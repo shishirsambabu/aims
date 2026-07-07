@@ -12,6 +12,9 @@ import type { ContainerStatus } from "@/types";
 export async function GET(request: NextRequest) {
   try {
     const session = await requireSession();
+    if (!can(session.role, "container.view")) {
+      return NextResponse.json({ error: "Not permitted" }, { status: 403 });
+    }
     const sp = request.nextUrl.searchParams;
 
     const rows = await listContainers(session.orgId, {
@@ -76,6 +79,23 @@ export async function POST(request: NextRequest) {
         );
       }
     }
+    if (input.warehouseId) {
+      const warehouse = await prisma.warehouse.findFirst({
+        where: {
+          id: input.warehouseId,
+          orgId: session.orgId,
+          deletedAt: null,
+          isActive: true,
+        },
+        select: { id: true },
+      });
+      if (!warehouse) {
+        return NextResponse.json(
+          { error: "Warehouse not found or inactive" },
+          { status: 404 }
+        );
+      }
+    }
 
     // Free time auto-calculated from ETA + free days when not given explicitly.
     let lastFreeDate = input.lastFreeDate;
@@ -92,6 +112,7 @@ export async function POST(request: NextRequest) {
         containerNo: input.containerNo,
         blNo: input.blNo,
         supplierId: input.supplierId,
+        warehouseId: input.warehouseId,
         customer: input.customer,
         port: input.port,
         portCode,
@@ -116,6 +137,8 @@ export async function POST(request: NextRequest) {
         freeDays: input.freeDays,
         lastFreeDate,
         remarks: input.remarks,
+        warehouseAssignedAt: input.warehouseId ? new Date() : undefined,
+        warehouseAssignedById: input.warehouseId ? session.userId : undefined,
       },
     });
 

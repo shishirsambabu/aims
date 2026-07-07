@@ -7,6 +7,7 @@ import { STORAGE_BUCKET } from "@/lib/constants";
 import { dossierArchiveName, dossierDocumentFileName } from "@/lib/document-dossier";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
+import { can } from "@/lib/permissions";
 
 export const runtime = "nodejs";
 
@@ -30,6 +31,9 @@ export async function GET(
   try {
     const { id } = await params;
     const session = await requireSession();
+    if (!can(session.role, "doc.view")) {
+      return NextResponse.json({ error: "Not permitted" }, { status: 403 });
+    }
     const container = await prisma.container.findFirst({
       where: { id, orgId: session.orgId, deletedAt: null },
       select: {

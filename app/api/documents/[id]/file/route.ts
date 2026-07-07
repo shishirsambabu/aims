@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { logActivity } from "@/lib/activity";
 import { STORAGE_BUCKET } from "@/lib/constants";
+import { can } from "@/lib/permissions";
 
 /**
  * Issues a short-lived signed URL for a document file and redirects to it.
@@ -17,6 +18,9 @@ export async function GET(
   try {
     const { id } = await params;
     const session = await requireSession();
+    if (!can(session.role, "doc.view")) {
+      return NextResponse.json({ error: "Not permitted" }, { status: 403 });
+    }
     const doc = await prisma.document.findFirst({
       where: { id, orgId: session.orgId, deletedAt: null },
       select: { id: true, filePath: true, fileUrl: true, containerId: true, type: true },

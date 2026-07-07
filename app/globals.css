@@ -5,82 +5,83 @@
 @layer base {
   :root {
     /* ---- Light theme ---- */
-    --background: 215 35% 97%;
-    --foreground: 222 47% 11%;
+    --background: 210 20% 97%;
+    --foreground: 216 33% 14%;
 
     --surface: 0 0% 100%;
-    --surface-alt: 214 32% 95%;
+    --surface-alt: 210 20% 95%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 216 33% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 216 33% 14%;
 
     /* Salesforce blue #0070D2 */
     --primary: 208 100% 41%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 214 32% 93%;
-    --secondary-foreground: 222 47% 18%;
+    --secondary: 210 20% 93%;
+    --secondary-foreground: 216 33% 18%;
 
-    --muted: 214 32% 93%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 210 20% 94%;
+    --muted-foreground: 215 16% 42%;
 
-    --accent: 208 100% 95%;
+    --accent: 208 100% 96%;
     --accent-foreground: 208 100% 32%;
 
     --destructive: 2 53% 49%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 25% 88%;
-    --input: 214 25% 86%;
-    --ring: 208 100% 45%;
+    --border: 214 20% 88%;
+    --input: 214 20% 82%;
+    --ring: 208 100% 41%;
 
-    --sidebar: 222 47% 16%;
-    --sidebar-foreground: 210 40% 96%;
+    /* Sidebar: spec navy #16325C */
+    --sidebar: 216 61% 22%;
+    --sidebar-foreground: 210 40% 98%;
 
-    --radius: 0.85rem;
-    --shadow-color: 220 40% 30%;
+    --radius: 0.5rem;
+    --shadow-color: 216 40% 25%;
   }
 
   .dark {
     /* ---- Dark theme ---- */
-    --background: 222 47% 7%;
-    --foreground: 210 40% 96%;
+    --background: 220 25% 8%;
+    --foreground: 210 30% 94%;
 
-    --surface: 222 40% 11%;
-    --surface-alt: 222 38% 14%;
+    --surface: 220 22% 11%;
+    --surface-alt: 220 20% 14%;
 
-    --card: 222 40% 11%;
-    --card-foreground: 210 40% 96%;
+    --card: 220 22% 11%;
+    --card-foreground: 210 30% 94%;
 
-    --popover: 222 40% 11%;
-    --popover-foreground: 210 40% 96%;
+    --popover: 220 22% 11%;
+    --popover-foreground: 210 30% 94%;
 
-    --primary: 207 100% 56%;
-    --primary-foreground: 222 47% 9%;
+    --primary: 207 95% 55%;
+    --primary-foreground: 220 25% 8%;
 
-    --secondary: 217 33% 18%;
-    --secondary-foreground: 210 40% 92%;
+    --secondary: 219 20% 16%;
+    --secondary-foreground: 210 30% 92%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 62%;
+    --muted: 219 20% 15%;
+    --muted-foreground: 215 15% 62%;
 
-    --accent: 208 60% 20%;
-    --accent-foreground: 208 100% 80%;
+    --accent: 208 60% 18%;
+    --accent-foreground: 208 95% 78%;
 
     --destructive: 2 65% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 217 33% 20%;
-    --input: 217 33% 24%;
-    --ring: 207 100% 56%;
+    --border: 219 18% 19%;
+    --input: 219 18% 24%;
+    --ring: 207 95% 55%;
 
-    --sidebar: 222 47% 9%;
-    --sidebar-foreground: 210 40% 92%;
+    --sidebar: 220 30% 9%;
+    --sidebar-foreground: 210 30% 92%;
 
-    --shadow-color: 222 80% 2%;
+    --shadow-color: 220 80% 2%;
   }
 }
 
@@ -90,10 +91,7 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    background:
-      radial-gradient(circle at 12% 8%, hsl(var(--primary) / 0.12), transparent 32rem),
-      radial-gradient(circle at 85% 0%, hsl(31 95% 62% / 0.12), transparent 28rem),
-      linear-gradient(135deg, hsl(var(--background)), hsl(var(--surface-alt)));
+    font-size: 14px;
   }
   h1,
   h2,
@@ -114,51 +112,41 @@
     font-variant-numeric: tabular-nums;
   }
   .heading-caps {
-    @apply font-heading font-bold uppercase tracking-[0.06em];
+    @apply font-heading font-semibold;
   }
   .label-caps {
-    @apply text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground;
+    @apply text-[11px] font-medium uppercase tracking-[0.05em] text-muted-foreground;
   }
   .shadow-card {
-    box-shadow:
-      0 1px 2px -1px hsl(var(--shadow-color) / 0.12),
-      0 4px 16px -4px hsl(var(--shadow-color) / 0.12);
+    box-shadow: 0 1px 2px 0 hsl(var(--shadow-color) / 0.06);
   }
   .shadow-card-hover {
     box-shadow:
-      0 2px 4px -1px hsl(var(--shadow-color) / 0.16),
-      0 12px 28px -6px hsl(var(--shadow-color) / 0.22);
+      0 1px 2px 0 hsl(var(--shadow-color) / 0.06),
+      0 4px 12px -4px hsl(var(--shadow-color) / 0.12);
   }
   .gradient-text {
-    @apply bg-gradient-to-r from-primary to-sky-400 bg-clip-text text-transparent;
+    @apply text-primary;
   }
   .glass {
-    background: hsl(var(--surface) / 0.78);
-    backdrop-filter: blur(16px);
-    box-shadow: 0 1px 0 hsl(0 0% 100% / 0.45) inset;
+    background: hsl(var(--surface) / 0.92);
+    backdrop-filter: blur(8px);
   }
+  /* Legacy decorative surfaces — intentionally flattened for the enterprise
+     look. Consumers get a plain card / navy panel without per-page edits. */
   .command-surface {
-    position: relative;
-    overflow: hidden;
-    border: 1px solid hsl(var(--border) / 0.85);
-    background:
-      linear-gradient(135deg, hsl(var(--surface) / 0.96), hsl(var(--surface) / 0.82)),
-      radial-gradient(circle at top right, hsl(var(--primary) / 0.14), transparent 22rem);
-    box-shadow:
-      0 1px 0 hsl(0 0% 100% / 0.55) inset,
-      0 18px 50px -28px hsl(var(--shadow-color) / 0.55);
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--surface));
+    box-shadow: 0 1px 2px 0 hsl(var(--shadow-color) / 0.06);
   }
   .mesh-panel {
-    background:
-      linear-gradient(135deg, hsl(222 47% 13%), hsl(208 98% 27%)),
-      radial-gradient(circle at 20% 10%, hsl(198 100% 68% / 0.35), transparent 18rem),
-      radial-gradient(circle at 90% 20%, hsl(34 100% 64% / 0.24), transparent 16rem);
+    background: hsl(var(--sidebar));
   }
   .lift-card {
-    @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover;
+    @apply transition-shadow duration-150 hover:shadow-card-hover;
   }
   .fade-in-up {
-    animation: fade-in-up 0.45s ease both;
+    animation: fade-in-up 0.3s ease both;
   }
   .scrollbar-thin::-webkit-scrollbar {
     width: 8px;
@@ -176,7 +164,7 @@
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;

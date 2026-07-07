@@ -11,6 +11,13 @@ Imports Management System (AIMS).
    as priority incidents.
 4. When a provider is selected, connect `lib/monitoring.ts` to Sentry, Datadog,
    OpenTelemetry or the chosen logging platform.
+5. Poll `/api/health` every minute and alert after two consecutive `503` responses.
+
+## Reservation Release
+
+1. Set `CRON_SECRET` in Vercel; the scheduled job calls `/api/sales-orders/release-expired` every 15 minutes.
+2. Investigate any `EXPIRED_RESERVATION_STATE_CONFLICT` as an inventory incident.
+3. Managers can invoke the same endpoint while authenticated if an immediate release is required.
 
 ## Slow Query Monitoring
 

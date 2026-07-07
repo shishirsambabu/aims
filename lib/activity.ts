@@ -1,8 +1,10 @@
 import "server-only";
 
+import type { Prisma } from "@prisma/client";
+
 import { prisma } from "@/lib/prisma";
 
-interface LogInput {
+export interface LogInput {
   orgId: string;
   userId?: string | null;
   action: string;
@@ -10,6 +12,23 @@ interface LogInput {
   entityId?: string | null;
   summary?: string;
   metadata?: Record<string, unknown>;
+}
+
+export async function writeActivity(
+  tx: Prisma.TransactionClient,
+  input: LogInput
+): Promise<void> {
+  await tx.activityLog.create({
+    data: {
+      orgId: input.orgId,
+      userId: input.userId ?? null,
+      action: input.action,
+      entityType: input.entityType,
+      entityId: input.entityId ?? null,
+      summary: input.summary,
+      metadata: input.metadata as object | undefined,
+    },
+  });
 }
 
 /**

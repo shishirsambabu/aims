@@ -31,6 +31,14 @@ const APPROVAL_LABEL: Record<string, string> = {
   Draft: "Draft",
 };
 
+function dueLabel(dueDate: string | null, dueAgeDays: number | null) {
+  if (!dueDate) return "No due date";
+  if (dueAgeDays == null) return formatDate(dueDate);
+  if (dueAgeDays > 0) return `${formatDate(dueDate)} · overdue ${dueAgeDays}d`;
+  if (dueAgeDays === 0) return `${formatDate(dueDate)} · due today`;
+  return `${formatDate(dueDate)} · due in ${Math.abs(dueAgeDays)}d`;
+}
+
 export function PaymentsTable({
   data,
   canPay,
@@ -72,7 +80,7 @@ export function PaymentsTable({
 
   async function record(p: PaymentRow) {
     const input = window.prompt(
-      `Total amount paid so far for ${p.containerNo} (${p.currency}):`,
+      `Total amount paid so far for ${p.containerNo ?? "this container"} (${p.currency}):`,
       String(p.amountRequested)
     );
     if (input === null) return;
@@ -163,12 +171,12 @@ export function PaymentsTable({
               return (
                 <TableRow key={p.id}>
                   <TableCell className="font-financial font-medium">
-                    {p.containerNo ?? "—"}
+                    {p.containerNo ?? "-"}
                   </TableCell>
                   <TableCell className="font-financial text-muted-foreground">
-                    {p.blNo ?? "—"}
+                    {p.blNo ?? "-"}
                   </TableCell>
-                  <TableCell>{p.supplierName ?? "—"}</TableCell>
+                  <TableCell>{p.supplierName ?? "-"}</TableCell>
                   <TableCell className="font-financial text-right">
                     {formatMoney(p.amountRequested, p.currency)}
                   </TableCell>
@@ -190,7 +198,7 @@ export function PaymentsTable({
                         overdue && "font-medium text-danger"
                       )}
                     >
-                      {formatDate(p.dueDate)}
+                      {dueLabel(p.dueDate, p.dueAgeDays)}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -208,7 +216,6 @@ export function PaymentsTable({
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-1">
-                      {/* Checker approves/rejects a pending request (not their own) */}
                       {canApprove &&
                         p.approvalStatus === "PendingApproval" &&
                         p.requestedById !== currentUserId && (
@@ -231,7 +238,6 @@ export function PaymentsTable({
                             </button>
                           </>
                         )}
-                      {/* Pay only once approved */}
                       {canPay &&
                         p.approvalStatus === "Approved" &&
                         p.status !== "Paid" && (

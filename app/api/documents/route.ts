@@ -12,9 +12,12 @@ import type { DocumentStatus, DocumentType } from "@/types";
 
 export async function GET(request: NextRequest) {
   try {
-    const { orgId } = await requireSession();
+    const session = await requireSession();
+    if (!can(session.role, "doc.view")) {
+      return NextResponse.json({ error: "Not permitted" }, { status: 403 });
+    }
     const sp = request.nextUrl.searchParams;
-    const rows = await listDocuments(orgId, {
+    const rows = await listDocuments(session.orgId, {
       q: sp.get("q") ?? undefined,
       type: (sp.get("type") as DocumentType) ?? undefined,
       status: (sp.get("status") as DocumentStatus) ?? undefined,
@@ -30,6 +33,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await requireSession();
+    if (!can(session.role, "doc.view")) {
+      return NextResponse.json({ error: "Not permitted" }, { status: 403 });
+    }
     if (!can(session.role, "doc.write")) {
       return NextResponse.json(
         { error: "You do not have permission to add documents" },

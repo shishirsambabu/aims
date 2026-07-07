@@ -1,18 +1,75 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { requireSession } from "@/lib/auth";
-import { rateLimit } from "@/lib/ratelimit";
-import { can } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/activity";
 import { computeCost, computeProfit } from "@/lib/finance";
 import { PORTS } from "@/lib/constants";
+import { requireSession } from "@/lib/auth";
+import { getWarehouseOptions } from "@/lib/data/warehouses";
+import { prisma } from "@/lib/prisma";
+import { can } from "@/lib/permissions";
+import { rateLimit } from "@/lib/ratelimit";
 import type { MappedRow } from "@/lib/import/mapping";
 
 interface ImportResult {
   imported: number;
   skipped: number;
   errors: { row: number; message: string }[];
+  warnings: string[];
+  warehouseAssigned: number;
+  warehouseMatched: number;
+  warehouseUnresolved: number;
+}
+
+const CONTAINER_STATUSES = new Set([
+  "Booked",
+  "InTransit",
+  "AtPort",
+  "CustomsClearance",
+  "Cleared",
+  "InWarehouse",
+  "EmptyReturned",
+  "PartiallySold",
+  "FullySold",
+]);
+
+type ContainerStatusValue =
+  | "Booked"
+  | "InTransit"
+  | "AtPort"
+  | "CustomsClearance"
+  | "Cleared"
+  | "InWarehouse"
+  | "EmptyReturned"
+  | "PartiallySold"
+  | "FullySold";
+
+const STATUS_ALIASES: Record<string, string> = {
+  booked: "Booked",
+  intransit: "InTransit",
+  "in transit": "InTransit",
+  atport: "AtPort",
+  "at port": "AtPort",
+  customsclearance: "CustomsClearance",
+  "customs clearance": "CustomsClearance",
+  cleared: "Cleared",
+  inwarehouse: "InWarehouse",
+  "in warehouse": "InWarehouse",
+  partiallysold: "PartiallySold",
+  "partially sold": "PartiallySold",
+  fullysold: "FullySold",
+  "fully sold": "FullySold",
+  emptyreturned: "EmptyReturned",
+  "empty returned": "EmptyReturned",
+};
+
+function normalize(value: string | null | undefined): string {
+  return (value ?? "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function resolveStatus(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const key = value.trim().toLowerCase();
+  return STATUS_ALIASES[key] ?? STATUS_ALIASES[key.replace(/[^a-z0-9]/g, "")] ?? null;
 }
 
 export async function POST(request: NextRequest) {
@@ -20,7 +77,10 @@ export async function POST(request: NextRequest) {
     const session = await requireSession();
     const rl = rateLimit(`import:${session.userId}`, 5, 60_000);
     if (!rl.ok) {
-      return NextResponse.json({ error: `Too many imports — retry in ${rl.retryAfter}s` }, { status: 429 });
+      return NextResponse.json(
+        { error: `Too many imports - retry in ${rl.retryAfter}s` },
+        { status: 429 }
+      );
     }
     if (!can(session.role, "import")) {
       return NextResponse.json(
@@ -35,16 +95,46 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No rows to import" }, { status: 422 });
     }
 
-    const result: ImportResult = { imported: 0, skipped: 0, errors: [] };
+    const result: ImportResult = {
+      imported: 0,
+      skipped: 0,
+      errors: [],
+      warnings: [],
+      warehouseAssigned: 0,
+      warehouseMatched: 0,
+      warehouseUnresolved: 0,
+    };
 
-    // Existing container numbers for duplicate detection.
     const existing = await prisma.container.findMany({
       where: { orgId: session.orgId },
-      select: { containerNo: true },
+      select: { containerNo: true, blNo: true },
     });
-    const seen = new Set(existing.map((c: { containerNo: string }) => c.containerNo));
+    const seenContainerNos = new Set(existing.map((c) => c.containerNo));
+    const seenBlNos = new Set(existing.map((c) => c.blNo));
 
-    // Supplier name → id cache (find or create).
+    const activeWarehouses = await getWarehouseOptions(session.orgId);
+    const warehouseCache = new Map<string, (typeof activeWarehouses)[number]>();
+    for (const warehouse of activeWarehouses) {
+      for (const key of [
+        warehouse.id,
+        warehouse.code,
+        warehouse.name,
+        `${warehouse.code} ${warehouse.name}`,
+      ]) {
+        warehouseCache.set(normalize(key), warehouse);
+      }
+    }
+    const pilotWarehouse = activeWarehouses.length === 1 ? activeWarehouses[0] : null;
+
+    function resolveWarehouse(row: MappedRow) {
+      for (const candidate of [row.warehouseCode, row.warehouseName, row.customer]) {
+        if (!candidate) continue;
+        const found = warehouseCache.get(normalize(candidate));
+        if (found) return found;
+      }
+      return pilotWarehouse;
+    }
+
     const supplierCache = new Map<string, string>();
     async function resolveSupplier(name: string | null): Promise<string | null> {
       if (!name) return null;
@@ -83,7 +173,7 @@ export async function POST(request: NextRequest) {
         result.skipped += 1;
         result.errors.push({
           row: row.rowNumber,
-          message: "Missing Container No — skipped",
+          message: "Missing Container No - skipped",
         });
         continue;
       }
@@ -91,21 +181,38 @@ export async function POST(request: NextRequest) {
         result.skipped += 1;
         result.errors.push({
           row: row.rowNumber,
-          message: `Missing BL No for Container ${row.containerNo} — skipped`,
+          message: `Missing BL No for Container ${row.containerNo} - skipped`,
         });
         continue;
       }
-      if (seen.has(row.containerNo)) {
+      if (seenContainerNos.has(row.containerNo)) {
         result.skipped += 1;
         result.errors.push({
           row: row.rowNumber,
-          message: `Duplicate Container No ${row.containerNo} — skipped`,
+          message: `Duplicate Container No ${row.containerNo} - skipped`,
+        });
+        continue;
+      }
+      if (seenBlNos.has(row.blNo)) {
+        result.skipped += 1;
+        result.errors.push({
+          row: row.rowNumber,
+          message: `Duplicate BL No ${row.blNo} - skipped`,
         });
         continue;
       }
 
       try {
         const supplierId = await resolveSupplier(row.supplierName);
+        const warehouse = resolveWarehouse(row);
+        const resolvedStatus = resolveStatus(row.sourceStatus);
+        const status: ContainerStatusValue =
+          resolvedStatus && CONTAINER_STATUSES.has(resolvedStatus)
+            ? (resolvedStatus as ContainerStatusValue)
+            : warehouse
+              ? "InWarehouse"
+              : "Booked";
+
         const cost = computeCost(
           {
             beInvoiceValueInr: row.beInvoiceValueInr,
@@ -130,14 +237,12 @@ export async function POST(request: NextRequest) {
         );
 
         const portCode = row.port
-          ? PORTS.find((p) => p.name.toLowerCase() === row.port!.toLowerCase())
-              ?.code
+          ? PORTS.find((p) => p.name.toLowerCase() === row.port!.toLowerCase())?.code
           : undefined;
 
         nextSl += 1;
         const slNo = row.slNo ?? nextSl;
 
-        // Free time auto-calculated from ETA + free days.
         let lastFreeDate: Date | null = null;
         if (row.eta && row.freeDays) {
           const d = new Date(row.eta);
@@ -147,12 +252,12 @@ export async function POST(request: NextRequest) {
 
         await prisma.$transaction(async (tx) => {
           const container = await tx.container.create({
-              data: {
-                orgId: session.orgId,
-                slNo,
-                containerNo: row.containerNo!,
-                blNo: row.blNo!,
-                supplierId,
+            data: {
+              orgId: session.orgId,
+              slNo,
+              containerNo: row.containerNo!,
+              blNo: row.blNo!,
+              supplierId,
               customer: row.customer,
               port: row.port,
               portCode,
@@ -169,14 +274,22 @@ export async function POST(request: NextRequest) {
               etd: row.etd ? new Date(row.etd) : null,
               eta: row.eta ? new Date(row.eta) : null,
               doUpto: row.doUpto ? new Date(row.doUpto) : null,
-              emptyReturnDate: row.emptyReturnDate
-                ? new Date(row.emptyReturnDate)
-                : null,
+              emptyReturnDate: row.emptyReturnDate ? new Date(row.emptyReturnDate) : null,
               freeDays: row.freeDays,
               lastFreeDate,
-              status: "Booked",
+              warehouseId: warehouse?.id,
+              warehouseAssignedAt: warehouse ? new Date() : undefined,
+              warehouseAssignedById: warehouse ? session.userId : undefined,
+              status,
             },
           });
+
+          if (warehouse) {
+            result.warehouseMatched += 1;
+            result.warehouseAssigned += 1;
+          } else {
+            result.warehouseUnresolved += 1;
+          }
 
           const hasShipment =
             row.beNo ||
@@ -262,9 +375,57 @@ export async function POST(request: NextRequest) {
               },
             });
           }
+
+          const externalMappings = [
+            row.carrierExternalId
+              ? { provider: "carrier", externalId: row.carrierExternalId }
+              : null,
+            row.wmsExternalId ? { provider: "wms", externalId: row.wmsExternalId } : null,
+            row.erpExternalId ? { provider: "erp", externalId: row.erpExternalId } : null,
+            row.tallyExternalId ? { provider: "tally", externalId: row.tallyExternalId } : null,
+            row.icegateExternalId
+              ? { provider: "icegate", externalId: row.icegateExternalId }
+              : null,
+          ].filter((value): value is { provider: string; externalId: string } => !!value);
+
+          for (const mapping of externalMappings) {
+            await tx.externalReference.upsert({
+              where: {
+                orgId_provider_entityType_entityId: {
+                  orgId: session.orgId,
+                  provider: mapping.provider,
+                  entityType: "container",
+                  entityId: container.id,
+                },
+              },
+              create: {
+                orgId: session.orgId,
+                provider: mapping.provider,
+                entityType: "container",
+                entityId: container.id,
+                externalId: mapping.externalId.trim(),
+                metadata: {
+                  source: "Excel import",
+                  rowNumber: row.rowNumber,
+                  containerNo: row.containerNo,
+                  blNo: row.blNo,
+                },
+              },
+              update: {
+                externalId: mapping.externalId.trim(),
+                metadata: {
+                  source: "Excel import",
+                  rowNumber: row.rowNumber,
+                  containerNo: row.containerNo,
+                  blNo: row.blNo,
+                },
+              },
+            });
+          }
         });
 
-        seen.add(row.containerNo);
+        seenContainerNos.add(row.containerNo);
+        seenBlNos.add(row.blNo);
         result.imported += 1;
       } catch (err) {
         console.error(`[import] row ${row.rowNumber} failed`, err);
@@ -275,12 +436,25 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    if (result.warehouseUnresolved > 0) {
+      result.warnings.push(
+        `${result.warehouseUnresolved} row(s) had no warehouse match and were left unassigned`
+      );
+    }
+
     await logActivity({
       orgId: session.orgId,
       userId: session.userId,
       action: "imported",
       entityType: "container",
       summary: `Imported ${result.imported} containers (${result.skipped} skipped)`,
+      metadata: {
+        imported: result.imported,
+        skipped: result.skipped,
+        warehouseAssigned: result.warehouseAssigned,
+        warehouseMatched: result.warehouseMatched,
+        warehouseUnresolved: result.warehouseUnresolved,
+      },
     });
 
     return NextResponse.json({ data: result });

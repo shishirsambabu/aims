@@ -30,7 +30,7 @@ export function ReportFilters() {
         className="h-9 rounded-md border border-input bg-background px-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         aria-label="From"
       />
-      <span className="text-muted-foreground">–</span>
+      <span className="text-muted-foreground">-</span>
       <input
         type="date"
         value={searchParams.get("to") ?? ""}

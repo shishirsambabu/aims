@@ -205,6 +205,11 @@ export function ContainerTable({
         cell: ({ row }) => row.original.supplierName ?? "—",
       },
       {
+        accessorKey: "warehouseName",
+        header: "Warehouse",
+        cell: ({ row }) => row.original.warehouseName ?? "—",
+      },
+      {
         accessorKey: "port",
         header: "Port",
         cell: ({ row }) => row.original.port ?? "—",

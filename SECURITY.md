@@ -1,31 +1,30 @@
-# AIMS — Security Hardening (Phase 17)
+# AIMS ERP Security Controls
 
-## In-app protections (already built)
-- **Role-based access control** — central capability matrix (`lib/permissions.ts`);
-  every API route checks `can(role, capability)`. Field-level: viewers / clearing
-  agents don't see cost/profit/payment data.
-- **Maker-checker** — payments need a different approver; cost sheets lock on
-  finalize.
-- **Org scoping** — every Prisma query is scoped to the user's `org_id`.
-- **Private document storage** — files are served via short-lived **signed URLs**
-  (`/api/documents/[id]/file`), never public URLs. Uploads are type/size limited
-  (PDF/JPG/PNG ≤25MB).
-- **Audit trail** — every mutation and sensitive read (document open, P&L view) is
-  written to `activity_log` (viewable at Settings → Audit Log).
-- **Rate limiting** — expensive endpoints (`/api/import`, `/api/containers/bulk`)
-  are throttled per user (`lib/ratelimit.ts`).
-- **Soft-delete** — containers are archived (`deleted_at`), never hard-deleted.
+## Enforced in the application
 
-## One-time setup you should do
-1. **Enable RLS** — run `prisma/rls.sql` in the Supabase SQL Editor (defense in
-   depth against direct anon-key API access; the app keeps working via Prisma).
-2. **Make the storage bucket private** — Supabase → Storage → `aims-documents` →
-   set to **Private**. (Signed URLs already handle reads.)
-3. **🔴 Rotate the committed keys** — `.env.local.txt` in the repo contains live
-   Supabase keys. Rotate them (Supabase → Settings → API → roll keys) and remove
-   that file from git history.
-4. **Backups** — enable Point-in-Time Recovery on the Supabase project.
+- Database-backed, fail-closed sessions. Supabase metadata never grants an ERP role.
+- Invite-only access. A user must have an active `public.users` profile.
+- Central capability matrix for API, page, and navigation access.
+- Organization scoping on operational reads and writes.
+- Maker-checker controls for payments, customer changes, sales quotes, sales orders, and cycle-count posting.
+- Server-side floor-price and margin redaction, including revision snapshots.
+- Atomic document numbering and conditional stock updates.
+- Expiring stock reservations with audited automatic release.
+- Revenue recognition from dispatched sales-order quantities, not order approval.
+- Private document storage with signed reads and validated upload metadata.
+- RLS denial of direct `anon` and `authenticated` table access.
+- Transactional audit entries for critical sales, receipt, reservation, and numbering workflows.
 
-## Notes
-- The in-memory rate limiter is best-effort (per server instance). For strict
-  limits across instances, back it with Upstash/Redis later.
+## Required production configuration
+
+1. Keep the `aims-documents` Supabase bucket private.
+2. Set `CRON_SECRET` in Vercel for reservation-release jobs.
+3. Rotate any Supabase or database credential that has ever appeared in Git history.
+4. Enable Supabase point-in-time recovery and perform a documented restore drill.
+5. Connect application logs and `/api/health` to an external alerting provider.
+6. Add malware scanning before allowing untrusted external uploads.
+
+## Known residual controls
+
+- Expensive-route rate limiting is currently per server instance. Replace it with a shared Redis or database-backed limiter before exposing bulk endpoints outside the internal network.
+- Audit coverage is strongest for financial and inventory-critical paths; continue moving older CRUD logs into their mutation transactions.

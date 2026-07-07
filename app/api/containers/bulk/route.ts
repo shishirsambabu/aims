@@ -32,10 +32,10 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Scope to this org and not-deleted.
-    const owned: { id: string; status: ContainerStatus }[] =
+    const owned: { id: string; status: ContainerStatus; warehouseId: string | null }[] =
       await prisma.container.findMany({
       where: { id: { in: ids }, orgId: session.orgId, deletedAt: null },
-      select: { id: true, status: true },
+      select: { id: true, status: true, warehouseId: true },
     });
     const ownedIds = owned.map((c: { id: string }) => c.id);
 
@@ -80,6 +80,7 @@ export async function PATCH(request: NextRequest) {
             (d: { type: DocumentType }) => d.type
           ),
           hasSales: sale?.saleValue != null,
+          hasWarehouse: !!c.warehouseId,
         });
         if (!check.ok) {
           skipped += 1;

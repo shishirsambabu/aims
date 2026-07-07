@@ -3,6 +3,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import type { Role } from "@/types";
+import { normalizeRole } from "@/lib/permissions";
 
 // Single-tenant default for this internal deployment. New auth identities are
 // attached to this organisation on first sign-in.
@@ -31,42 +32,22 @@ export async function getSessionContext(): Promise<SessionContext | null> {
 
   if (!user) return null;
 
-  const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
-  const fullName = (meta.full_name as string) ?? null;
-  const metaRole = (meta.role as Role) ?? "viewer";
-
   try {
-    // Ensure the default organisation exists.
-    await prisma.organization.upsert({
-      where: { id: DEFAULT_ORG_ID },
-      update: {},
-      create: {
-        id: DEFAULT_ORG_ID,
-        name: DEFAULT_ORG_NAME,
-        city: "Kochi",
-        country: "India",
-      },
-    });
-
-    // Find or provision the app user profile for this auth identity.
-    const profile = await prisma.user.upsert({
+    // Access is invite-only. Supabase authentication proves identity, while
+    // the application profile is the sole authority for role and organisation.
+    const profile = await prisma.user.findUnique({
       where: { authId: user.id },
-      update: { email: user.email ?? undefined },
-      create: {
-        authId: user.id,
-        orgId: DEFAULT_ORG_ID,
-        email: user.email ?? `${user.id}@unknown.local`,
-        fullName,
-        role: metaRole,
-      },
       select: {
         id: true,
         orgId: true,
         email: true,
         fullName: true,
         role: true,
+        isActive: true,
       },
     });
+    if (!profile) throw new Error("ACCESS_NOT_PROVISIONED");
+    if (!profile.isActive) throw new Error("ACCOUNT_DISABLED");
 
     return {
       userId: profile.id,
@@ -74,24 +55,14 @@ export async function getSessionContext(): Promise<SessionContext | null> {
       orgId: profile.orgId,
       email: profile.email,
       fullName: profile.fullName,
-      role: profile.role as Role,
+      role: normalizeRole(profile.role) ?? profile.role,
     };
   } catch (err) {
-    // The database isn't reachable (e.g. DATABASE_URL not yet pointed at the
-    // Supabase pooler). Fall back to an auth-only context so pages render their
-    // graceful "database unreachable" states instead of crashing.
-    console.error(
-      "[auth] DB unreachable during session provisioning — using fallback context",
-      err
-    );
-    return {
-      userId: user.id,
-      authId: user.id,
-      orgId: DEFAULT_ORG_ID,
-      email: user.email ?? "",
-      fullName,
-      role: "viewer",
-    };
+    if (err instanceof Error && ["ACCESS_NOT_PROVISIONED", "ACCOUNT_DISABLED"].includes(err.message)) {
+      throw err;
+    }
+    console.error("[auth] Session profile lookup failed", err);
+    throw new Error("SESSION_PROFILE_UNAVAILABLE");
   }
 }
 
@@ -104,5 +75,13 @@ export async function requireSession(): Promise<SessionContext> {
 
 /** Roles permitted to mutate data. Viewers are read-only. */
 export function canWrite(role: Role): boolean {
-  return role === "admin" || role === "manager";
+  return [
+    "admin",
+    "gm",
+    "manager",
+    "finance",
+    "sales_executive",
+    "warehouse",
+    "clearing_agent",
+  ].includes(role);
 }

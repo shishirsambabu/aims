@@ -27,6 +27,7 @@ export interface PaymentRow {
   dueDate: string | null;
   paidDate: string | null;
   reference: string | null;
+  dueAgeDays: number | null;
 }
 
 export interface PaymentSummary {
@@ -34,6 +35,18 @@ export interface PaymentSummary {
   totalPaid: number;
   totalOutstanding: number;
   count: number;
+}
+
+export interface AgingBucket {
+  label: string;
+  count: number;
+  amount: number;
+}
+
+export interface PaymentAgingRow {
+  currency: Currency;
+  totalOutstanding: number;
+  buckets: AgingBucket[];
 }
 
 type PaymentWhere = NonNullable<
@@ -56,6 +69,26 @@ function buildWhere(
     };
   }
   return where;
+}
+
+function ageBucketIndex(dueDate: Date | null): number {
+  if (!dueDate) return 0;
+  const days = Math.floor((Date.now() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+  if (days <= 0) return 0;
+  if (days <= 30) return 1;
+  if (days <= 60) return 2;
+  if (days <= 90) return 3;
+  return 4;
+}
+
+function createBuckets(): AgingBucket[] {
+  return [
+    { label: "Not yet due", count: 0, amount: 0 },
+    { label: "1-30 days", count: 0, amount: 0 },
+    { label: "31-60 days", count: 0, amount: 0 },
+    { label: "61-90 days", count: 0, amount: 0 },
+    { label: "90+ days", count: 0, amount: 0 },
+  ];
 }
 
 export async function listPayments(
@@ -107,6 +140,9 @@ export async function listPayments(
       dueDate: r.dueDate ? r.dueDate.toISOString() : null,
       paidDate: r.paidDate ? r.paidDate.toISOString() : null,
       reference: r.reference,
+      dueAgeDays: r.dueDate
+        ? Math.floor((Date.now() - r.dueDate.getTime()) / (1000 * 60 * 60 * 24))
+        : null,
     };
   });
 }
@@ -175,6 +211,32 @@ export async function paymentSummaryByCurrency(
       (a: CurrencySummary, b: CurrencySummary) =>
         order.indexOf(a.currency) - order.indexOf(b.currency)
     );
+}
+
+export async function paymentAgingByCurrency(
+  orgId: string,
+  filters: PaymentFilters = {}
+): Promise<PaymentAgingRow[]> {
+  const rows = await listPayments(orgId, filters);
+  const currencies: Currency[] = ["USD", "AED", "INR"];
+  return currencies
+    .map((currency) => {
+      const currencyRows = rows.filter(
+        (row) => row.currency === currency && row.outstanding > 0
+      );
+      const buckets = createBuckets();
+      for (const row of currencyRows) {
+        const idx = ageBucketIndex(row.dueDate ? new Date(row.dueDate) : null);
+        buckets[idx].count += 1;
+        buckets[idx].amount += row.outstanding;
+      }
+      return {
+        currency,
+        totalOutstanding: currencyRows.reduce((sum, row) => sum + row.outstanding, 0),
+        buckets,
+      };
+    })
+    .filter((row) => row.totalOutstanding > 0);
 }
 
 /** Derive payment status from amounts. */
