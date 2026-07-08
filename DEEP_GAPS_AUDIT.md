@@ -2,6 +2,19 @@
 
 Companion to `ENTERPRISE_READINESS_AUDIT.md` (Part 1: communications, compliance, accounting, observability, testing, module features). This part covers the layer **underneath** those: master data, transactional correctness, scale behavior, deployment reality, and people/process. Every claim below was verified in code unless marked "verify in dashboard."
 
+> **Status update (2026-07-08, later):** Fixed in migration `20260708150000_deep_gaps_foundation`
+> (applied to the live DB) + code: **A1** item master with backfill + `/settings/items` UI;
+> **B1** idempotency keys (wired on payments POST); **B4** IST business-day math (`lib/dates.ts`,
+> swept through documents/payments/notifications/receivables/stock); **C1** analytics TTL cache;
+> **C2** per-request session cache; **D3** feature flags + maintenance-mode banner + `/settings/flags`;
+> **D5** prod CSP drops `unsafe-eval`; **D6** app version (build SHA) in the user menu;
+> **E1** deactivate/reactivate on the team page; **E2** `approval_delegations` and **E5**
+> `data_deletion_requests` tables in place (route wiring pending). Still open: B2 optimistic
+> locking, B3 paise-safe aggregation, A2 opening balances, A3 importers, A4 merge tools,
+> A5 storage lifecycle, C3 log retention, C4 realtime, D1 Vercel Pro, D2 staging, D4 custom SMTP
+> (dashboard actions), E3 sandbox, E4 a11y, E6 help pages. RLS for the new tables: run
+> `prisma/rls.sql` in the Supabase SQL editor.
+
 ---
 
 ## A. Master data & data lifecycle
