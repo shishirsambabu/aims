@@ -44,6 +44,9 @@ export function PaymentForm({
   const [dueDate, setDueDate] = useState("");
   const [reference, setReference] = useState("");
   const [notes, setNotes] = useState("");
+  // One key per logical submission: retries of the same form reuse it so the
+  // server can de-duplicate; a fresh form gets a fresh key.
+  const [idemKey, setIdemKey] = useState(() => crypto.randomUUID());
 
   function reset() {
     setContainerId(presetContainerId ?? "");
@@ -53,6 +56,7 @@ export function PaymentForm({
     setDueDate("");
     setReference("");
     setNotes("");
+    setIdemKey(crypto.randomUUID());
   }
 
   async function submit() {
@@ -64,7 +68,10 @@ export function PaymentForm({
     try {
       const res = await fetch("/api/payments", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": idemKey,
+        },
         body: JSON.stringify({
           containerId,
           amountRequested: amount,

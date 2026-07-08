@@ -27,6 +27,13 @@ const SECTIONS = [
     icon: Database,
   },
   {
+    href: "/settings/items",
+    title: "Items / Products",
+    description:
+      "The item master: codes, varieties, grades, HSN codes and default UoM used across stock, pricing and invoices.",
+    icon: Database,
+  },
+  {
     href: "/settings/warehouses",
     title: "Warehouses",
     description:
@@ -81,6 +88,13 @@ const SECTIONS = [
     description:
       "Invite members and manage roles (admin / gm / manager / sales / warehouse / finance / viewer / auditor).",
     icon: Users,
+  },
+  {
+    href: "/settings/flags",
+    title: "Feature Flags",
+    description:
+      "Kill switches and staged rollouts, including the maintenance-mode banner (admins).",
+    icon: Plug,
   },
   {
     href: "/settings/audit",

@@ -5,6 +5,11 @@ import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/activity";
 import { listPayments } from "@/lib/data/payments";
+import {
+  findIdempotentReplay,
+  readIdempotencyKey,
+  storeIdempotentResult,
+} from "@/lib/idempotency";
 import { createPaymentSchema } from "@/lib/validations/payment";
 import type { PaymentStatus } from "@/types";
 
@@ -44,6 +49,12 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       );
     }
+
+    // Duplicate-submission guard: retries with the same key replay the
+    // original response instead of creating a second payment request.
+    const idemKey = readIdempotencyKey(request);
+    const replay = await findIdempotentReplay(session, "payments.create", idemKey);
+    if (replay) return replay;
 
     const parsed = createPaymentSchema.safeParse(await request.json());
     if (!parsed.success) {
@@ -94,6 +105,10 @@ export async function POST(request: NextRequest) {
       entityType: "container",
       entityId: container.id,
       summary: `Payment request ${input.currency} ${input.amountRequested.toLocaleString()} for ${container.containerNo}`,
+    });
+
+    await storeIdempotentResult(session, "payments.create", idemKey, 201, {
+      data: { id: payment.id },
     });
 
     return NextResponse.json({ data: payment }, { status: 201 });

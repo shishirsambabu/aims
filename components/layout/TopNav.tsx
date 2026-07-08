@@ -68,6 +68,8 @@ export function TopNav({ user }: TopNavProps) {
     import: "Excel Import",
     integrations: "Integrations",
     "document-automation": "Document Automation",
+    items: "Items",
+    flags: "Feature Flags",
     new: "New",
   };
 
@@ -162,6 +164,11 @@ export function TopNav({ user }: TopNavProps) {
               </DropdownMenuItem>
             </button>
           </form>
+          <DropdownMenuSeparator />
+          <p className="px-2 py-1.5 text-[11px] text-muted-foreground">
+            AIMS build{" "}
+            <span className="font-mono">{process.env.NEXT_PUBLIC_APP_VERSION}</span>
+          </p>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>
