@@ -29,6 +29,16 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [magicLoading, setMagicLoading] = useState(false);
 
+  // MFA challenge step (shown when the account has a verified TOTP factor).
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
+
+  function finishSignIn() {
+    toast.success("Signed in");
+    router.replace(redirectedFrom);
+    router.refresh();
+  }
+
   async function handlePasswordLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -37,15 +47,56 @@ function LoginForm() {
       email,
       password,
     });
-    setLoading(false);
 
     if (error) {
+      setLoading(false);
       toast.error(error.message);
       return;
     }
-    toast.success("Signed in");
-    router.replace(redirectedFrom);
-    router.refresh();
+
+    // If the account has a verified second factor, step up to AAL2 before
+    // entering the app (server enforcement rejects AAL1 for protected roles).
+    const { data: aal } =
+      await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal?.nextLevel === "aal2" && aal.nextLevel !== aal.currentLevel) {
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const totp = factors?.totp?.find((f) => f.status === "verified");
+      if (totp) {
+        setMfaFactorId(totp.id);
+        setLoading(false);
+        return;
+      }
+    }
+
+    setLoading(false);
+    finishSignIn();
+  }
+
+  async function handleMfaVerify(e: React.FormEvent) {
+    e.preventDefault();
+    if (!mfaFactorId || mfaCode.trim().length < 6) {
+      toast.error("Enter the 6-digit code from your authenticator app");
+      return;
+    }
+    setLoading(true);
+    const supabase = createClient();
+    const challenge = await supabase.auth.mfa.challenge({ factorId: mfaFactorId });
+    if (challenge.error) {
+      setLoading(false);
+      toast.error(challenge.error.message);
+      return;
+    }
+    const verify = await supabase.auth.mfa.verify({
+      factorId: mfaFactorId,
+      challengeId: challenge.data.id,
+      code: mfaCode.trim(),
+    });
+    setLoading(false);
+    if (verify.error) {
+      toast.error(verify.error.message);
+      return;
+    }
+    finishSignIn();
   }
 
   async function handleMagicLink() {
@@ -70,6 +121,51 @@ function LoginForm() {
       return;
     }
     toast.success("Magic link sent - check your inbox");
+  }
+
+  if (mfaFactorId) {
+    return (
+      <div className="space-y-6">
+        <div className="space-y-1">
+          <h2 className="font-heading text-2xl font-bold">Two-factor code</h2>
+          <p className="text-sm text-muted-foreground">
+            Enter the 6-digit code from your authenticator app to finish
+            signing in.
+          </p>
+        </div>
+        <form onSubmit={handleMfaVerify} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="mfa-code">Verification code</Label>
+            <Input
+              id="mfa-code"
+              value={mfaCode}
+              onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ""))}
+              placeholder="123456"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              autoFocus
+              className="text-center font-mono text-lg tracking-[0.3em]"
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading && <Loader2 className="animate-spin" />}
+            Verify and sign in
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full"
+            onClick={() => {
+              setMfaFactorId(null);
+              setMfaCode("");
+            }}
+          >
+            Back to sign in
+          </Button>
+        </form>
+      </div>
+    );
   }
 
   return (

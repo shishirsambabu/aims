@@ -97,6 +97,13 @@ const SECTIONS = [
     icon: Plug,
   },
   {
+    href: "/settings/security",
+    title: "Security / MFA",
+    description:
+      "Two-factor authentication with an authenticator app — enroll before MFA enforcement is switched on.",
+    icon: Users,
+  },
+  {
     href: "/settings/audit",
     title: "Audit Log",
     description:

@@ -10,6 +10,7 @@ import {
   readIdempotencyKey,
   storeIdempotentResult,
 } from "@/lib/idempotency";
+import { notifyPaymentApprovalRequested } from "@/lib/email/notify";
 import { createPaymentSchema } from "@/lib/validations/payment";
 import type { PaymentStatus } from "@/types";
 
@@ -109,6 +110,16 @@ export async function POST(request: NextRequest) {
 
     await storeIdempotentResult(session, "payments.create", idemKey, 201, {
       data: { id: payment.id },
+    });
+
+    // Maker-checker: let approvers know a request is waiting.
+    await notifyPaymentApprovalRequested({
+      orgId: session.orgId,
+      requestedById: session.userId,
+      containerNo: container.containerNo,
+      currency: input.currency,
+      amount: Number(input.amountRequested),
+      supplierName: container.supplier?.name,
     });
 
     return NextResponse.json({ data: payment }, { status: 201 });

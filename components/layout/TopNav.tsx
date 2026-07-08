@@ -70,6 +70,7 @@ export function TopNav({ user }: TopNavProps) {
     "document-automation": "Document Automation",
     items: "Items",
     flags: "Feature Flags",
+    security: "Security",
     new: "New",
   };
 

@@ -1,16 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { requireCronAuth } from "@/lib/cron-auth";
 import { processEmailOutbox } from "@/lib/email/outbox";
 import { reportError } from "@/lib/observability";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  const expected = process.env.CRON_SECRET;
-  const provided = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  if (expected && provided !== expected) {
-    return NextResponse.json({ error: "Not permitted" }, { status: 403 });
-  }
+  const denied = requireCronAuth(request);
+  if (denied) return denied;
 
   try {
     const result = await processEmailOutbox(25);

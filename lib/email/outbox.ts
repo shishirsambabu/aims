@@ -1,5 +1,6 @@
 import "server-only";
 
+import { after } from "next/server";
 import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
@@ -21,7 +22,7 @@ export interface EnqueueEmailInput {
 export async function enqueueEmail(db: DbClient, input: EnqueueEmailInput) {
   const toEmail = input.toEmail?.trim();
   if (!toEmail) return null;
-  return db.emailOutbox.create({
+  const row = await db.emailOutbox.create({
     data: {
       orgId: input.orgId,
       toEmail,
@@ -33,6 +34,24 @@ export async function enqueueEmail(db: DbClient, input: EnqueueEmailInput) {
       scheduledAt: input.scheduledAt ?? new Date(),
     },
   });
+
+  // Drain shortly after the response is sent — by then the enclosing
+  // transaction has committed, so the fresh row is visible. The daily cron
+  // remains the retry sweeper. Skipped when the provider isn't configured
+  // (avoids burning retry attempts) or when called outside a request scope.
+  if (process.env.RESEND_API_KEY) {
+    try {
+      after(() =>
+        processEmailOutbox(10).catch((error) =>
+          reportError(error, { job: "email-outbox-inline" })
+        )
+      );
+    } catch {
+      // Not in a request scope (e.g. invoked from a job) — cron will drain.
+    }
+  }
+
+  return row;
 }
 
 async function sendWithResend(input: {
