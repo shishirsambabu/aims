@@ -59,6 +59,34 @@ export function TeamTable({
     }
   }
 
+  async function setActive(member: TeamMember, isActive: boolean) {
+    if (
+      !isActive &&
+      !confirm(
+        `Deactivate ${member.fullName || member.email}? They lose access on their next request. Reassign their open leads, tasks and approvals to a colleague.`
+      )
+    ) {
+      return;
+    }
+    setBusyId(member.id);
+    try {
+      const res = await fetch(`/api/team/${member.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive }),
+      });
+      if (!res.ok) {
+        const j = await res.json();
+        toast.error(j.error ?? "Failed to update member");
+        return;
+      }
+      toast.success(isActive ? "Member reactivated" : "Member deactivated");
+      router.refresh();
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <Table>
@@ -114,15 +142,27 @@ export function TeamTable({
                   )}
                 </TableCell>
                 <TableCell>
-                  <span
-                    className={
-                      m.isActive
-                        ? "text-xs text-success"
-                        : "text-xs text-muted-foreground"
-                    }
-                  >
-                    {m.isActive ? "Active" : "Inactive"}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={
+                        m.isActive
+                          ? "text-xs text-success"
+                          : "text-xs text-muted-foreground"
+                      }
+                    >
+                      {m.isActive ? "Active" : "Inactive"}
+                    </span>
+                    {canManage && !isSelf && (
+                      <button
+                        type="button"
+                        disabled={busyId === m.id}
+                        onClick={() => setActive(m, !m.isActive)}
+                        className="rounded border border-input bg-surface px-2 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+                      >
+                        {m.isActive ? "Deactivate" : "Reactivate"}
+                      </button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             );
