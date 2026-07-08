@@ -137,7 +137,7 @@ export default async function WarehouseTemplatesPage({ searchParams }: PageProps
         }
       />
       <div className="grid gap-6 p-6 xl:grid-cols-[0.35fr_0.65fr]">
-        <Card className="rounded-[1.5rem] print:hidden">
+        <Card className="rounded-lg print:hidden">
           <CardContent className="space-y-2 p-4">
             {Object.entries(TEMPLATES).map(([id, item]) => (
               <Button
@@ -152,7 +152,7 @@ export default async function WarehouseTemplatesPage({ searchParams }: PageProps
           </CardContent>
         </Card>
 
-        <Card className="rounded-[1.5rem]">
+        <Card className="rounded-lg">
           <CardContent className="p-8">
             <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
               <div>
@@ -178,7 +178,7 @@ export default async function WarehouseTemplatesPage({ searchParams }: PageProps
               ))}
             </div>
 
-            <div className="mt-6 rounded-2xl border border-primary/25 bg-primary/5 p-4">
+            <div className="mt-6 rounded-lg border border-primary/25 bg-primary/5 p-4">
               <div className="flex items-center gap-2">
                 <ClipboardList className="h-4 w-4 text-primary" />
                 <p className="font-heading font-semibold">SOP checkpoints</p>

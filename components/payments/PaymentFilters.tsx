@@ -28,6 +28,8 @@ export function PaymentFilters() {
         if (!v || v === ALL) params.delete(k);
         else params.set(k, v);
       }
+      // Filter changes always restart from page 1.
+      params.delete("page");
       router.push(`/payments?${params.toString()}`);
     },
     [router, searchParams]

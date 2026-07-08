@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { invalidateNavCounts } from "@/lib/data/notifications";
 
 const categorySchema = z.enum([
   "arrival",
@@ -56,6 +57,9 @@ export async function PATCH(request: Request) {
       },
       update: data,
     });
+
+    // Badge counts derive from alert state; refresh them immediately.
+    invalidateNavCounts(session.userId);
 
     return NextResponse.json({ ok: true });
   } catch (err) {

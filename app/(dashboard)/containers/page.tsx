@@ -10,7 +10,14 @@ import { ExportButton } from "@/components/containers/ExportButton";
 import { requireSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
-import { listContainers, type ContainerListRow } from "@/lib/data/containers";
+import {
+  listContainers,
+  getContainerListSummary,
+  type ContainerListRow,
+  type ContainerListSummary,
+} from "@/lib/data/containers";
+import { DEFAULT_PAGE_SIZE, parsePage } from "@/lib/pagination";
+import { PaginationBar } from "@/components/ui/pagination-bar";
 import { cn, formatINR } from "@/lib/utils";
 import type { ContainerStatus } from "@/types";
 import { requirePageAccess } from "@/lib/page-access";
@@ -25,6 +32,7 @@ interface PageProps {
     status?: string;
     dateFrom?: string;
     dateTo?: string;
+    page?: string;
   }>;
 }
 
@@ -35,25 +43,31 @@ export default async function ContainersPage({ searchParams }: PageProps) {
   const orgId = session.orgId;
   const showFinancials = can(session.role, "financials.view");
   const canEditContainers = can(session.role, "container.write");
+  const page = parsePage(params.page);
+  const filters = {
+    q: params.q,
+    port: params.port,
+    supplierId: params.supplierId,
+    status: params.status as ContainerStatus | undefined,
+    dateFrom: params.dateFrom,
+    dateTo: params.dateTo,
+  };
 
   let rows: ContainerListRow[] = [];
+  let summary: ContainerListSummary = { total: 0, flagged: 0, netProfit: null };
   let suppliers: { id: string; name: string }[] = [];
   let loadError = false;
 
   try {
-    [rows, suppliers] = await Promise.all([
-      listContainers(
-        orgId,
-        {
-          q: params.q,
-          port: params.port,
-          supplierId: params.supplierId,
-          status: params.status as ContainerStatus | undefined,
-          dateFrom: params.dateFrom,
-          dateTo: params.dateTo,
-        },
-        { includeFinancials: showFinancials }
-      ),
+    [rows, summary, suppliers] = await Promise.all([
+      listContainers(orgId, filters, {
+        includeFinancials: showFinancials,
+        page,
+        pageSize: DEFAULT_PAGE_SIZE,
+      }),
+      getContainerListSummary(orgId, filters, {
+        includeFinancials: showFinancials,
+      }),
       prisma.supplier.findMany({
         where: { orgId, deletedAt: null, approvalStatus: "Approved" },
         orderBy: { name: "asc" },
@@ -65,13 +79,13 @@ export default async function ContainersPage({ searchParams }: PageProps) {
     loadError = true;
   }
 
-  const totalContainers = rows.length;
-  const flaggedCount = rows.filter((row) => row.flagged).length;
+  const totalContainers = summary.total;
+  const flaggedCount = summary.flagged;
   const avgDocScore =
-    totalContainers > 0
-      ? rows.reduce((sum, row) => sum + row.docScore, 0) / totalContainers
+    rows.length > 0
+      ? rows.reduce((sum, row) => sum + row.docScore, 0) / rows.length
       : 0;
-  const netProfit = rows.reduce((sum, row) => sum + (row.profit ?? 0), 0);
+  const netProfit = summary.netProfit ?? 0;
 
   return (
     <div>
@@ -80,7 +94,7 @@ export default async function ContainersPage({ searchParams }: PageProps) {
         description="Every import container keeps Container No, BL No, costs, status, and profit in one place."
         actions={
           <div className="flex items-center gap-2">
-            {showFinancials && <ExportButton rows={rows} />}
+            {showFinancials && <ExportButton total={totalContainers} />}
             <Button asChild>
               <Link href="/containers/new">
                 <Plus className="h-4 w-4" /> New Container
@@ -121,8 +135,8 @@ export default async function ContainersPage({ searchParams }: PageProps) {
               />
               <SummaryCard
                 label="Doc Score Avg"
-                value={totalContainers > 0 ? `${avgDocScore.toFixed(1)}/9` : "0/9"}
-                hint="Document completeness"
+                value={rows.length > 0 ? `${avgDocScore.toFixed(1)}/9` : "0/9"}
+                hint="Completeness (this page)"
               />
               {showFinancials ? (
                 <SummaryCard
@@ -144,6 +158,12 @@ export default async function ContainersPage({ searchParams }: PageProps) {
               data={rows}
               showFinancials={showFinancials}
               canEdit={canEditContainers}
+            />
+
+            <PaginationBar
+              total={totalContainers}
+              page={page}
+              itemLabel="containers"
             />
           </>
         )}

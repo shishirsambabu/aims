@@ -49,7 +49,7 @@ export default async function TeamPage() {
       />
       <div className="space-y-4 p-6">
         {!canManage && (
-          <div className="flex items-center gap-2 rounded-2xl border border-border bg-card/80 px-4 py-3 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-card/80 px-4 py-3 text-sm text-muted-foreground">
             <Info className="h-4 w-4 text-primary" />
             You can view the team. Only admins can change roles.
           </div>

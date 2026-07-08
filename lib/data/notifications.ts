@@ -182,7 +182,44 @@ export async function getNavCounts(orgId: string): Promise<NavCounts> {
   }
 }
 
+// Nav badge counts are recomputed at most once per TTL per user. They are
+// rendered in the layout on every navigation, so an uncached version costs
+// the full personal-alert query fan-out on every click.
+const NAV_COUNTS_TTL_MS = 60_000;
+const navCountsCache = new Map<string, { at: number; value: Promise<NavCounts> }>();
+
+/** Drops cached nav counts for a user (or everyone) after alert/state mutations. */
+export function invalidateNavCounts(userId?: string) {
+  if (!userId) {
+    navCountsCache.clear();
+    return;
+  }
+  for (const key of navCountsCache.keys()) {
+    if (key.endsWith(`:${userId}`)) navCountsCache.delete(key);
+  }
+}
+
 export async function getPersonalNavCounts(
+  session: Pick<SessionContext, "orgId" | "userId" | "role">
+): Promise<NavCounts> {
+  const key = `${session.orgId}:${session.role}:${session.userId}`;
+  const now = Date.now();
+  const hit = navCountsCache.get(key);
+  if (hit && now - hit.at < NAV_COUNTS_TTL_MS) return hit.value;
+
+  // Opportunistic cleanup so the map doesn't grow with stale users.
+  if (navCountsCache.size > 500) {
+    for (const [k, v] of navCountsCache) {
+      if (now - v.at >= NAV_COUNTS_TTL_MS) navCountsCache.delete(k);
+    }
+  }
+
+  const value = computePersonalNavCounts(session);
+  navCountsCache.set(key, { at: now, value });
+  return value;
+}
+
+async function computePersonalNavCounts(
   session: Pick<SessionContext, "orgId" | "userId" | "role">
 ): Promise<NavCounts> {
   try {

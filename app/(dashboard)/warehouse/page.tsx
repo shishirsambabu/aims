@@ -416,7 +416,7 @@ function WarehouseFunctionMatrix({
           key={item.head}
           href={item.href}
           className={cn(
-            "rounded-2xl border bg-card p-4 shadow-sm transition hover:border-primary/60 hover:shadow-card",
+            "rounded-lg border bg-card p-4 shadow-sm transition hover:border-primary/60 hover:shadow-card",
             active === item.section && "border-primary bg-primary/5"
           )}
         >
@@ -445,7 +445,7 @@ function WarehouseSubnav({ active }: { active: WarehouseSection }) {
     { label: "Outward", href: "/warehouse?tab=outward", section: "outward" },
   ];
   return (
-    <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm">
+    <div className="flex flex-wrap gap-2 rounded-lg border border-border bg-card p-2 shadow-sm">
       {links.map((link) => (
         <Button
           key={link.section}
@@ -531,7 +531,7 @@ function WarehouseFlowMap({
   ];
 
   return (
-    <section className="rounded-[1.75rem] border border-border bg-card p-5 shadow-sm">
+    <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="label-caps">Warehouse control tower</p>
@@ -539,7 +539,7 @@ function WarehouseFlowMap({
             Live handoffs, blockers, and next actions.
           </h2>
         </div>
-        <div className="grid grid-cols-3 gap-2 rounded-2xl border border-border bg-surface-alt/40 p-2 text-center text-xs">
+        <div className="grid grid-cols-3 gap-2 rounded-lg border border-border bg-surface-alt/40 p-2 text-center text-xs">
           <div className="rounded-xl bg-background px-3 py-2">
             <p className="font-financial text-lg font-semibold">{metrics.readyToReceive}</p>
             <p className="text-muted-foreground">GRN ready</p>
@@ -559,7 +559,7 @@ function WarehouseFlowMap({
           <div
             key={step.id}
             className={cn(
-              "relative rounded-2xl border p-4",
+              "relative rounded-lg border p-4",
               active === step.id
                 ? "border-primary bg-primary/10"
                 : "border-border bg-surface-alt/30"

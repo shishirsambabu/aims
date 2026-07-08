@@ -148,7 +148,7 @@ export default async function CustomerPage({ params }: PageProps) {
         ) : (
           <>
             <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-              <Card className="rounded-[1.5rem]">
+              <Card className="rounded-lg">
                 <CardContent className="p-6">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
@@ -194,7 +194,7 @@ export default async function CustomerPage({ params }: PageProps) {
                 </CardContent>
               </Card>
 
-              <Card className={cn("rounded-[1.5rem]", riskTone === "danger" && "border-danger/30 bg-danger/5", riskTone === "warning" && "border-warning/30 bg-warning/10", riskTone === "watch" && "border-warning/20 bg-warning/5", riskTone === "success" && "border-success/25 bg-success/5")}>
+              <Card className={cn("rounded-lg", riskTone === "danger" && "border-danger/30 bg-danger/5", riskTone === "warning" && "border-warning/30 bg-warning/10", riskTone === "watch" && "border-warning/20 bg-warning/5", riskTone === "success" && "border-success/25 bg-success/5")}>
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3">
                     <ShieldAlert className="h-5 w-5 text-primary" />
@@ -224,7 +224,7 @@ export default async function CustomerPage({ params }: PageProps) {
                     <Stat label="Open Orders" value={openOrderCount.toString()} />
                     <Stat label="Last Order" value={lastOrderDate ? formatDate(lastOrderDate) : "No orders"} />
                   </div>
-                  <div className="mt-4 rounded-2xl border border-border bg-card/70 p-4">
+                  <div className="mt-4 rounded-lg border border-border bg-card/70 p-4">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">
                       Risk bands
                     </p>
@@ -239,7 +239,7 @@ export default async function CustomerPage({ params }: PageProps) {
               </Card>
             </div>
 
-            <Card className="rounded-[1.5rem]">
+            <Card className="rounded-lg">
               <CardContent className="p-6">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
@@ -268,7 +268,7 @@ export default async function CustomerPage({ params }: PageProps) {
                         "Assign sales rep, region, and primary contact",
                       ]
                   ).map((requirement) => (
-                    <div key={requirement} className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm">
+                    <div key={requirement} className="rounded-lg border border-border bg-surface px-4 py-3 text-sm">
                       {requirement}
                     </div>
                   ))}
@@ -277,7 +277,7 @@ export default async function CustomerPage({ params }: PageProps) {
             </Card>
 
             <div className="grid gap-6 xl:grid-cols-2">
-              <Card className="rounded-[1.5rem]">
+              <Card className="rounded-lg">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -289,7 +289,7 @@ export default async function CustomerPage({ params }: PageProps) {
                     <ShoppingCart className="h-5 w-5 text-primary" />
                   </div>
 
-                  <div className="mt-4 overflow-hidden rounded-2xl border border-border">
+                  <div className="mt-4 overflow-hidden rounded-lg border border-border">
                     <table className="w-full text-left text-sm">
                       <thead className="bg-surface">
                         <tr className="text-muted-foreground">
@@ -333,7 +333,7 @@ export default async function CustomerPage({ params }: PageProps) {
                 </CardContent>
               </Card>
 
-              <Card className="rounded-[1.5rem]">
+              <Card className="rounded-lg">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -352,7 +352,7 @@ export default async function CustomerPage({ params }: PageProps) {
                     <MiniInfo label="Aging" value={ledger.summary.oldestAgeDays == null ? "—" : `${ledger.summary.oldestAgeDays} days`} />
                   </div>
 
-                  <div className="mt-5 overflow-hidden rounded-2xl border border-border">
+                  <div className="mt-5 overflow-hidden rounded-lg border border-border">
                     <table className="w-full text-left text-sm">
                       <thead className="bg-surface">
                         <tr className="text-muted-foreground">
@@ -392,7 +392,7 @@ export default async function CustomerPage({ params }: PageProps) {
             </div>
 
             <div className="grid gap-6 xl:grid-cols-2">
-              <Card className="rounded-[1.5rem]">
+              <Card className="rounded-lg">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3">
                     <Users2 className="h-5 w-5 text-primary" />
@@ -410,7 +410,7 @@ export default async function CustomerPage({ params }: PageProps) {
                       />
                     ) : (
                       customer.contacts.map((contact) => (
-                        <div key={contact.id} className="rounded-2xl border border-border bg-surface px-4 py-3">
+                        <div key={contact.id} className="rounded-lg border border-border bg-surface px-4 py-3">
                           <div className="flex items-center justify-between gap-3">
                             <p className="font-medium">{contact.name}</p>
                             {contact.isPrimary && (
@@ -432,7 +432,7 @@ export default async function CustomerPage({ params }: PageProps) {
                 </CardContent>
               </Card>
 
-              <Card className="rounded-[1.5rem]">
+              <Card className="rounded-lg">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3">
                     <History className="h-5 w-5 text-primary" />
@@ -450,7 +450,7 @@ export default async function CustomerPage({ params }: PageProps) {
                       />
                     ) : (
                       customer.creditHoldTrail.map((entry) => (
-                        <div key={entry.id} className="rounded-2xl border border-border bg-surface px-4 py-3">
+                        <div key={entry.id} className="rounded-lg border border-border bg-surface px-4 py-3">
                           <div className="flex items-center justify-between gap-3">
                             <p className="font-medium">
                               {entry.from ? "Hold on" : "Hold off"} → {entry.to ? "Hold on" : "Hold off"}
@@ -473,7 +473,7 @@ export default async function CustomerPage({ params }: PageProps) {
               </Card>
             </div>
 
-            <Card className="rounded-[1.5rem]">
+            <Card className="rounded-lg">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between gap-3">
                   <div>
@@ -494,7 +494,7 @@ export default async function CustomerPage({ params }: PageProps) {
                     />
                   ) : (
                     customer.activityTimeline.map((entry) => (
-                      <div key={entry.id} className="rounded-2xl border border-border bg-surface px-4 py-3">
+                      <div key={entry.id} className="rounded-lg border border-border bg-surface px-4 py-3">
                         <div className="flex items-center justify-between gap-3">
                           <p className="font-medium">{entry.action}</p>
                           <p className="text-xs text-muted-foreground">
@@ -530,7 +530,7 @@ function Stat({
   tone?: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-surface px-4 py-3">
+    <div className="rounded-lg border border-border bg-surface px-4 py-3">
       <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className={cn("font-financial mt-1 text-xl font-bold", tone)}>{value}</p>
     </div>
@@ -545,7 +545,7 @@ function MiniInfo({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-surface px-4 py-3">
+    <div className="rounded-lg border border-border bg-surface px-4 py-3">
       <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="mt-1 text-sm font-medium">{value}</p>
     </div>

@@ -271,7 +271,7 @@ export function SupplierManager({
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
-                      <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                      <span className="inline-flex rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
                         {s.approvalStatus}
                       </span>
                       {!!s.pendingChanges && (

@@ -145,7 +145,7 @@ export default async function SalesModulePage() {
             </div>
 
             <div className="grid gap-6 xl:grid-cols-[1.4fr_0.9fr]">
-              <Card className="rounded-[1.5rem]">
+              <Card className="rounded-lg">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -170,7 +170,7 @@ export default async function SalesModulePage() {
                     />
                   </div>
 
-                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
                     <div>
                       <p className="font-medium">Daily price desk lives in Sales Orders</p>
                       <p className="text-sm text-muted-foreground">
@@ -182,7 +182,7 @@ export default async function SalesModulePage() {
                     </Button>
                   </div>
 
-                  <div className="mt-5 overflow-hidden rounded-2xl border border-border">
+                  <div className="mt-5 overflow-hidden rounded-lg border border-border">
                     <table className="w-full text-left text-sm">
                       <thead className="bg-surface">
                         <tr className="text-muted-foreground">
@@ -231,7 +231,7 @@ export default async function SalesModulePage() {
                     </table>
                   </div>
 
-                  <div className="mt-6 overflow-hidden rounded-2xl border border-border">
+                  <div className="mt-6 overflow-hidden rounded-lg border border-border">
                     <div className="flex items-center justify-between border-b border-border bg-surface px-4 py-3">
                       <div>
                         <p className="label-caps">Per-warehouse benchmark</p>
@@ -287,7 +287,7 @@ export default async function SalesModulePage() {
               </Card>
 
               <div className="space-y-6">
-                <Card className="rounded-[1.5rem] border-danger/20 bg-danger/5">
+                <Card className="rounded-lg border-danger/20 bg-danger/5">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-3">
                       <CreditCard className="h-5 w-5 text-danger" />
@@ -316,7 +316,7 @@ export default async function SalesModulePage() {
                   </CardContent>
                 </Card>
 
-                <Card className="rounded-[1.5rem]">
+                <Card className="rounded-lg">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-3">
                       <Target className="h-5 w-5 text-primary" />
@@ -336,7 +336,7 @@ export default async function SalesModulePage() {
             </div>
 
             {showFinancials && (
-              <Card className="rounded-[1.5rem]">
+              <Card className="rounded-lg">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -350,7 +350,7 @@ export default async function SalesModulePage() {
                     </Button>
                   </div>
 
-                  <div className="mt-4 overflow-hidden rounded-2xl border border-border">
+                  <div className="mt-4 overflow-hidden rounded-lg border border-border">
                     <table className="w-full text-left text-sm">
                       <thead className="bg-surface">
                         <tr className="text-muted-foreground">
@@ -464,7 +464,7 @@ function Metric({
   tone?: string;
 }) {
   return (
-    <Card className="rounded-[1.35rem]">
+    <Card className="rounded-lg">
       <CardContent className="pt-5">
         <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
         <p className={cn("font-financial mt-1 text-2xl font-bold", tone)}>{value}</p>
@@ -484,7 +484,7 @@ function BenchmarkCard({
   hint: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-surface px-4 py-4">
+    <div className="rounded-lg border border-border bg-surface px-4 py-4">
       <p className="label-caps">{label}</p>
       <p className="mt-1 font-heading text-lg font-semibold">{value}</p>
       <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
@@ -500,7 +500,7 @@ function SmallStat({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border/70 bg-card px-4 py-3">
+    <div className="rounded-lg border border-border/70 bg-card px-4 py-3">
       <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="font-financial mt-1 text-xl font-bold">{value}</p>
     </div>
@@ -519,7 +519,7 @@ function Shortcut({
   return (
     <Link
       href={href}
-      className="group flex items-center justify-between rounded-2xl border border-border/70 bg-card px-4 py-3 transition-colors hover:border-primary/30 hover:bg-primary/5"
+      className="group flex items-center justify-between rounded-lg border border-border/70 bg-card px-4 py-3 transition-colors hover:border-primary/30 hover:bg-primary/5"
     >
       <span className="flex items-center gap-3">
         <span className="rounded-xl bg-primary/10 p-2 text-primary">

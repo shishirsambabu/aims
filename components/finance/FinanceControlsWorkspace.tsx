@@ -195,7 +195,7 @@ export function FinanceControlsWorkspace({
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
-        <Card className="rounded-[1.35rem]">
+        <Card className="rounded-lg">
           <CardContent className="space-y-3 p-5">
             <p className="label-caps">Bank reconciliation</p>
             <h3 className="font-heading text-lg font-semibold">Upload bank credit</h3>
@@ -208,7 +208,7 @@ export function FinanceControlsWorkspace({
           </CardContent>
         </Card>
 
-        <Card className="rounded-[1.35rem]">
+        <Card className="rounded-lg">
           <CardContent className="space-y-3 p-5">
             <p className="label-caps">Journal posting</p>
             <h3 className="font-heading text-lg font-semibold">Balanced journal</h3>
@@ -220,7 +220,7 @@ export function FinanceControlsWorkspace({
           </CardContent>
         </Card>
 
-        <Card className="rounded-[1.35rem]">
+        <Card className="rounded-lg">
           <CardContent className="space-y-3 p-5">
             <p className="label-caps">Period close</p>
             <h3 className="font-heading text-lg font-semibold">Close finance month</h3>
@@ -236,7 +236,7 @@ export function FinanceControlsWorkspace({
           {data.bankLines.length === 0 ? (
             <EmptyState icon={Landmark} title="No bank lines" description="Upload bank credits and match them to receipts." />
           ) : data.bankLines.map((line) => (
-            <div key={line.id} className="rounded-2xl border border-border p-3">
+            <div key={line.id} className="rounded-lg border border-border p-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-medium">{line.bankName} - {line.referenceNo ?? "No ref"}</p>
@@ -290,7 +290,7 @@ export function FinanceControlsWorkspace({
           {data.disputes.length === 0 ? (
             <EmptyState icon={Scale} title="No disputes" description="High-value return and credit disputes will be managed here." />
           ) : data.disputes.map((dispute) => (
-            <div key={dispute.id} className="rounded-2xl border border-border p-3">
+            <div key={dispute.id} className="rounded-lg border border-border p-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-medium">{dispute.disputeNo} - {dispute.customerName}</p>
@@ -323,7 +323,7 @@ export function FinanceControlsWorkspace({
             {data.periods.length === 0 ? (
               <EmptyState icon={LockKeyhole} title="No closed periods" description="Finance month closes will appear here." />
             ) : data.periods.map((period) => (
-              <div key={period.id} className="rounded-2xl border border-border p-3">
+              <div key={period.id} className="rounded-lg border border-border p-3">
                 <p className="font-medium">{period.periodKey} - {period.status}</p>
                 <p className="text-xs text-muted-foreground">
                   AR {formatINR(period.receivablesTotal)} - Bank exceptions {period.bankUnmatchedCount}
@@ -333,7 +333,7 @@ export function FinanceControlsWorkspace({
           </div>
           <div className="space-y-3">
             {data.journals.map((journal) => (
-              <div key={journal.id} className="rounded-2xl border border-border p-3">
+              <div key={journal.id} className="rounded-lg border border-border p-3">
                 <p className="font-medium">{journal.entryNo} - {journal.status}</p>
                 <p className="text-xs text-muted-foreground">{journal.narration}</p>
                 <p className="font-financial text-sm">{formatINR(journal.debitTotal)} / {formatINR(journal.creditTotal)}</p>
@@ -348,7 +348,7 @@ export function FinanceControlsWorkspace({
 
 function Metric({ label, value, icon: Icon }: { label: string; value: string; icon: typeof Landmark }) {
   return (
-    <Card className="rounded-[1.2rem]">
+    <Card className="rounded-lg">
       <CardContent className="flex items-center justify-between gap-3 p-4">
         <div>
           <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
@@ -362,7 +362,7 @@ function Metric({ label, value, icon: Icon }: { label: string; value: string; ic
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <Card className="rounded-[1.35rem]">
+    <Card className="rounded-lg">
       <CardContent className="p-5">
         <h3 className="font-heading text-lg font-semibold">{title}</h3>
         <div className="mt-4 space-y-3">{children}</div>

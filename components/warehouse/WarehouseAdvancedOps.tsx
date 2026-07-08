@@ -279,7 +279,7 @@ export function WarehouseAdvancedOps({
   };
 
   return (
-    <section className="rounded-[1.75rem] border border-border bg-card p-5 shadow-sm">
+    <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="label-caps">Cold-storage ERP controls</p>
@@ -388,7 +388,7 @@ export function WarehouseAdvancedOps({
               <CardHeader><CardTitle>Handheld scan mode</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 <TextInput label="Scan lot / pallet / BL / gate pass" value={scanQuery} onChange={(event) => setScanQuery(event.target.value)} placeholder="Scan or type code" autoFocus />
-                <div className="rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-4">
+                <div className="rounded-lg border border-dashed border-primary/40 bg-primary/5 p-4">
                   {scanResult ? (
                     <>
                       <Badge>{scanResult.type}</Badge>
@@ -406,7 +406,7 @@ export function WarehouseAdvancedOps({
               <CardHeader><CardTitle>Lot labels</CardTitle></CardHeader>
               <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {stock.slice(0, 9).map((lot) => (
-                  <div key={lot.id} className="rounded-2xl border border-border bg-background p-3">
+                  <div key={lot.id} className="rounded-lg border border-border bg-background p-3">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="font-heading font-semibold">{lot.item}</p>
@@ -465,7 +465,7 @@ export function WarehouseAdvancedOps({
             <CardHeader><CardTitle>Cold-room capacity by room / zone / bin</CardTitle></CardHeader>
             <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {capacityRows.map((row) => (
-                <div key={row.id} className="rounded-2xl border border-border bg-background p-4">
+                <div key={row.id} className="rounded-lg border border-border bg-background p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-heading font-semibold">{row.code}</p>
@@ -601,7 +601,7 @@ function PutawayPanel({
         <CardHeader><CardTitle>Directed putaway suggestions</CardTitle></CardHeader>
         <CardContent className="space-y-3">
           {suggestions.map(({ lot, match }) => (
-            <div key={lot.id} className="rounded-2xl border border-border bg-background p-3">
+            <div key={lot.id} className="rounded-lg border border-border bg-background p-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-heading font-semibold">{lot.item} {lot.variety ?? ""}</p>
@@ -712,7 +712,7 @@ function RepackingPanel({ canManage, stock, data, submit, patchAction, submittin
         <CardHeader><CardTitle>Yield and labor tracking</CardTitle></CardHeader>
         <CardContent className="space-y-3">
           {data.repackingWorkOrders.map((row) => (
-            <div key={row.id} className="rounded-2xl border border-border bg-background p-3">
+            <div key={row.id} className="rounded-lg border border-border bg-background p-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-heading font-semibold">{row.workOrderNo} | {row.outputItem}</p>
@@ -792,7 +792,7 @@ function ProductivityPanel({ canManage, warehouses, selectedWarehouseId, data, s
         <CardContent className="space-y-3">
           <div className="grid gap-3 md:grid-cols-3">
             {summary.map((row) => (
-              <div key={row.role} className="rounded-2xl border border-border bg-background p-3">
+              <div key={row.role} className="rounded-lg border border-border bg-background p-3">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">{row.role}</p>
                 <p className="font-financial text-2xl font-bold">{numberFormat(row.uph)}</p>
                 <p className="text-xs text-muted-foreground">units/hr | {row.workers} workers</p>
@@ -974,7 +974,7 @@ function ActionRow({
   actions?: { label: string; onClick: () => void }[];
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-background p-3 md:flex-row md:items-center md:justify-between">
+    <div className="flex flex-col gap-3 rounded-lg border border-border bg-background p-3 md:flex-row md:items-center md:justify-between">
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-heading font-semibold">{title}</p>
@@ -1014,7 +1014,7 @@ function FormField({ label, children }: { label: string; children: ReactNode }) 
 
 function EmptyLine({ text }: { text: string }) {
   return (
-    <div className="rounded-2xl border border-dashed border-border bg-background p-4 text-sm text-muted-foreground">
+    <div className="rounded-lg border border-dashed border-border bg-background p-4 text-sm text-muted-foreground">
       {text}
     </div>
   );

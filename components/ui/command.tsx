@@ -29,7 +29,7 @@ interface CommandDialogProps extends React.ComponentPropsWithoutRef<typeof Dialo
 function CommandDialog({ children, ...props }: CommandDialogProps) {
   return (
     <Dialog {...props}>
-      <DialogContent className="max-w-xl overflow-hidden p-0 shadow-lg">
+      <DialogContent className="top-[18%] max-w-xl translate-y-0 gap-0 overflow-hidden p-0 shadow-lg [&>button]:hidden">
         <DialogTitle className="sr-only">Command palette</DialogTitle>
         <Command
           shouldFilter={false}

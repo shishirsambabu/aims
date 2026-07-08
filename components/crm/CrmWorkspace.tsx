@@ -493,7 +493,7 @@ function Metric({ label, value, icon: Icon }: { label: string; value: number; ic
 
 function ForecastCard({ value }: { value: number }) {
   return (
-    <div className="rounded-2xl border border-border bg-surface-alt/30 p-4">
+    <div className="rounded-lg border border-border bg-surface-alt/30 p-4">
       <p className="text-xs uppercase tracking-wide text-muted-foreground">Weighted forecast</p>
       <p className="font-financial mt-2 text-4xl font-semibold">{formatINR(value)}</p>
       <p className="mt-1 text-sm text-muted-foreground">Pipeline-weighted sales estimate</p>

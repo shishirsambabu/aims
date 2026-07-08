@@ -37,6 +37,8 @@ export function ContainerFilters({
         if (!value || value === ALL) params.delete(key);
         else params.set(key, value);
       }
+      // Filter changes always restart from page 1.
+      params.delete("page");
       router.push(`/containers?${params.toString()}`);
     },
     [router, searchParams]

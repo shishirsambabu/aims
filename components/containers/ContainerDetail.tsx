@@ -352,7 +352,7 @@ function LifecycleTimeline({
   });
 
   return (
-    <Card className="command-surface rounded-[1.5rem]">
+    <Card className="rounded-lg">
       <CardContent className="pt-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -380,7 +380,7 @@ function LifecycleTimeline({
                 <div className="relative z-10 flex flex-col items-center text-center">
                   <div
                     className={cn(
-                      "flex h-11 w-11 items-center justify-center rounded-2xl border bg-card shadow-sm",
+                      "flex h-11 w-11 items-center justify-center rounded-lg border bg-card shadow-sm",
                       isDone && "border-success/30 bg-success/10 text-success",
                       isCurrent && "border-primary/40 bg-primary text-white shadow-primary/25",
                       isBlocked && "border-warning/30 bg-warning/10 text-[#9A6212]"
@@ -437,7 +437,7 @@ function TimelineFact({
   value: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-border/70 bg-background/70 p-3">
+    <div className="rounded-lg border border-border/70 bg-background/70 p-3">
       <p className="label-caps">{label}</p>
       <div className="mt-1 text-sm font-semibold">{value}</div>
     </div>

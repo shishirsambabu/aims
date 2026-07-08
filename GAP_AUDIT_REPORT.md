@@ -53,10 +53,9 @@ The current UI reads as an AI-generated marketing site: gradient hero panels, gl
 - Every page is `force-dynamic` with server fetches and **no `loading.tsx` anywhere** — clicking a nav item freezes the current screen until the DB answers. This alone makes the app feel broken.
 - **Fix:** skeleton `loading.tsx` at the dashboard route group level (covers all module pages).
 
-### D8. Remaining design debt (not in this pass — listed for follow-up)
-- ~50 hardcoded gradient/rounded-[…] instances inside module workspaces (`sales/page.tsx`, `warehouse/*`, `customers/[id]`, `finance/*`, `sop`). The token change quiets them, but they should be swept to the new primitives.
-- `AnalyticsCharts` colors should be re-checked against the new palette.
-- Auth layout still uses one brand panel gradient (toned down, acceptable).
+### D8. Remaining design debt ⟵ **swept on 2026-07-08**
+- All hardcoded gradient/glow/rounded-[…] instances inside module workspaces replaced with flat primitives; dark heroes (SOP, warehouse SOP) flattened to the navy token; off-token slate chips moved to `bg-muted`.
+- `AnalyticsCharts` verified: already uses the brand palette (#0070D2 / #2E844A / #C23934 / #FFB75D / #16325C). No change needed.
 
 ---
 
@@ -104,13 +103,13 @@ Sidebar drawer exists, but dense tables have no card-list fallback; kanban unusa
 
 | # | Item | Effort | Impact |
 |---|---|---|---|
-| 1 | Design system overhaul (D1–D7) | done in this pass | Transforms perceived quality |
-| 2 | Loading skeletons + error/not-found routes | done (skeleton) / small | App feels fast & stable |
-| 3 | Pagination on containers/documents/payments | 1–2 days | Survives real data volume |
-| 4 | Command palette (Ctrl+K) | 1 day | "Modern ERP" feel, navigation speed |
-| 5 | Shared DataTable (columns, bulk, export) | 2–3 days | Table parity with Lightning/Odoo |
-| 6 | Nav-count caching | 0.5 day | Every click gets faster |
-| 7 | Sweep module workspaces onto new primitives | 1–2 days | Full visual consistency |
+| 1 | Design system overhaul (D1–D7) | ✅ done (2026-07-08) | Transforms perceived quality |
+| 2 | Loading skeletons + error/not-found routes | ✅ done (2026-07-08) | App feels fast & stable |
+| 3 | Pagination on containers/documents/payments | ✅ done (2026-07-08) | Survives real data volume |
+| 4 | Command palette (Ctrl+K) | ✅ done (2026-07-08) | "Modern ERP" feel, navigation speed |
+| 5 | Table upgrades (columns/density/views on containers; export-all on documents & payments) | ✅ done (2026-07-08) | Table parity with Lightning/Odoo |
+| 6 | Nav-count caching (60s TTL + invalidation on alert actions) | ✅ done (2026-07-08) | Every click gets faster |
+| 7 | Sweep module workspaces onto new primitives | ✅ done (2026-07-08) | Full visual consistency |
 | 8 | Secrets rotation + repo cleanup | 0.5 day | Security hygiene |
 | 9 | Provider decisions (email/OCR/Tally/ICEGATE) | user decision | Unblocks automation phases |
 | 10 | Mobile card fallbacks for top 3 lists | 1–2 days | Field usability |

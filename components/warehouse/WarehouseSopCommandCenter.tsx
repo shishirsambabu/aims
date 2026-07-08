@@ -186,18 +186,17 @@ export function WarehouseSopCommandCenter({
 
   return (
     <div className="space-y-5">
-      <section className="overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-card">
-        <div className="relative overflow-hidden bg-slate-950 p-6 text-white">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(14,165,233,0.32),transparent_24rem),radial-gradient(circle_at_82%_10%,rgba(46,132,74,0.28),transparent_18rem)]" />
-          <div className="relative grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+      <section className="overflow-hidden rounded-lg border border-border bg-card shadow-card">
+        <div className="overflow-hidden bg-sidebar p-6 text-white">
+          <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-200">
+              <p className="label-caps text-sky-200">
                 Warehouse SOP operating layer
               </p>
-              <h2 className="mt-4 font-heading text-3xl font-bold">
+              <h2 className="mt-3 font-heading text-xl font-bold">
                 Every movement needs a record, every record needs a physical check.
               </h2>
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-200">
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-white/70">
                 The current paper SOP is now mapped into ERP checkpoints: GRN,
                 grading, repacking, cold-room logging, dispatch matching, stock
                 reconciliation, non-conformance, and gate pass release.
@@ -233,7 +232,7 @@ export function WarehouseSopCommandCenter({
       </section>
 
       <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
-        <Card className="rounded-[1.5rem]">
+        <Card className="rounded-lg">
           <CardContent className="p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -248,7 +247,7 @@ export function WarehouseSopCommandCenter({
               {ROLE_QUEUES.map((role) => {
                 const queue = roleQueues[role];
                 return (
-                  <div key={role} className="rounded-2xl border border-border bg-surface-alt/35 p-4">
+                  <div key={role} className="rounded-lg border border-border bg-surface-alt/35 p-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="font-heading text-base font-semibold">{role}</p>
                       <Badge variant={queue.length > 0 ? "warning" : "outline"}>{queue.length}</Badge>
@@ -276,7 +275,7 @@ export function WarehouseSopCommandCenter({
           </CardContent>
         </Card>
 
-        <Card className="rounded-[1.5rem]">
+        <Card className="rounded-lg">
           <CardContent className="p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -289,7 +288,7 @@ export function WarehouseSopCommandCenter({
             </div>
             <div className="mt-4 space-y-3">
               {sopMetrics.exceptions.length === 0 ? (
-                <div className="rounded-2xl border border-success/25 bg-success/5 p-4 text-sm text-muted-foreground">
+                <div className="rounded-lg border border-success/25 bg-success/5 p-4 text-sm text-muted-foreground">
                   No unresolved SOP exceptions from quality, temperature, variance, or dispatch matching.
                 </div>
               ) : (
@@ -297,7 +296,7 @@ export function WarehouseSopCommandCenter({
                   <Link
                     href={item.href}
                     key={`${item.type}-${item.id}`}
-                    className="block rounded-2xl border border-border bg-surface-alt/40 p-4 transition hover:border-primary/40 hover:bg-primary/5"
+                    className="block rounded-lg border border-border bg-surface-alt/40 p-4 transition hover:border-primary/40 hover:bg-primary/5"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
@@ -316,7 +315,7 @@ export function WarehouseSopCommandCenter({
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
-        <Card className="rounded-[1.5rem]">
+        <Card className="rounded-lg">
           <CardContent className="p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -332,7 +331,7 @@ export function WarehouseSopCommandCenter({
                 <p className="text-sm text-muted-foreground">No stock lots have been received yet.</p>
               ) : (
                 recentLots.map((lot) => (
-                  <div key={lot.id} className="rounded-2xl border border-border p-4">
+                  <div key={lot.id} className="rounded-lg border border-border p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="font-medium">
@@ -359,7 +358,7 @@ export function WarehouseSopCommandCenter({
           </CardContent>
         </Card>
 
-        <Card className="rounded-[1.5rem]">
+        <Card className="rounded-lg">
           <CardContent className="p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -372,7 +371,7 @@ export function WarehouseSopCommandCenter({
             </div>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {SOP_TEMPLATES.map((template) => (
-                <div key={template.id} className="rounded-2xl border border-border bg-surface-alt/35 p-4">
+                <div key={template.id} className="rounded-lg border border-border bg-surface-alt/35 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-medium">{template.title}</p>
@@ -404,7 +403,7 @@ export function WarehouseSopCommandCenter({
         </Card>
       </div>
 
-      <Card className="rounded-[1.5rem] border-primary/20 bg-primary/5">
+      <Card className="rounded-lg border-primary/20 bg-primary/5">
         <CardContent className="p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -526,17 +525,17 @@ function buildRoleQueues({
 
 function DarkMini({ label, value, hint, tone }: { label: string; value: string; hint: string; tone?: string }) {
   return (
-    <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-300">{label}</p>
+    <div className="rounded-lg border border-white/15 bg-white/10 p-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/60">{label}</p>
       <p className={cn("mt-2 font-financial text-2xl font-bold", tone)}>{value}</p>
-      <p className="mt-1 text-xs text-slate-300">{hint}</p>
+      <p className="mt-1 text-xs text-white/60">{hint}</p>
     </div>
   );
 }
 
 function SopKpi({ label, value, target, tone }: { label: string; value: string; target: string; tone?: string }) {
   return (
-    <div className="rounded-2xl border border-border bg-surface-alt/45 p-4">
+    <div className="rounded-lg border border-border bg-surface-alt/45 p-4">
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
       <p className={cn("mt-2 font-financial text-2xl font-bold", tone)}>{value}</p>
       <p className="mt-1 text-sm text-muted-foreground">{target}</p>

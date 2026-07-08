@@ -1567,7 +1567,7 @@ export function StockManager({
       ) : null}
 
       {showStockWorkspace ? (
-        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="grid gap-3 sm:grid-cols-2 lg:flex-1 lg:grid-cols-3">
               <Field label="Search">
@@ -1628,7 +1628,7 @@ export function StockManager({
       ) : null}
 
       {showDispatchWorkspace ? (
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+      <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="label-caps">Fulfilment Board</p>
@@ -1798,7 +1798,7 @@ export function StockManager({
         </div>
 
         <div className="mt-4 grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
-          <div className="rounded-2xl border border-border bg-surface-alt/25 p-4">
+          <div className="rounded-lg border border-border bg-surface-alt/25 p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="label-caps">Mobile scan mode</p>
@@ -1842,7 +1842,7 @@ export function StockManager({
             )}
           </div>
 
-          <div className="rounded-2xl border border-border bg-surface-alt/25 p-4">
+          <div className="rounded-lg border border-border bg-surface-alt/25 p-4">
             <p className="label-caps">Route / beat plan</p>
             <h4 className="font-heading text-base font-semibold">City dispatch planning</h4>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -1862,7 +1862,7 @@ export function StockManager({
           </div>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-border bg-surface-alt/25 p-4">
+        <div className="mt-4 rounded-lg border border-border bg-surface-alt/25 p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="label-caps">Dispatch SLA dashboard</p>
@@ -1895,7 +1895,7 @@ export function StockManager({
               onDragLeave={() => setDragOverStatus(null)}
               onDrop={(event) => handleBoardDrop(column.status, event)}
               className={cn(
-                "min-h-[320px] rounded-2xl border border-border bg-surface-alt/20 p-3 transition",
+                "min-h-[320px] rounded-lg border border-border bg-surface-alt/20 p-3 transition",
                 dragOverStatus === column.status && "border-primary bg-primary/5 shadow-sm"
               )}
             >
@@ -2048,7 +2048,7 @@ export function StockManager({
       ) : null}
 
       {showStockWorkspace ? (
-      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
@@ -2248,7 +2248,7 @@ export function StockManager({
 
       {showStockWorkspace ? (
       <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="label-caps">Movement History</p>
@@ -2318,7 +2318,7 @@ export function StockManager({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
           <p className="label-caps">Lot Snapshot</p>
           {selectedStock ? (
             <div className="mt-3 space-y-3 text-sm">
@@ -2725,7 +2725,7 @@ export function StockManager({
                 </Select>
               </Field>
 
-              <div className="rounded-2xl border border-border bg-surface-alt/40 p-4">
+              <div className="rounded-lg border border-border bg-surface-alt/40 p-4">
                 <p className="label-caps">Selected Container</p>
                 {selectedContainer ? (
                   <div className="mt-2 space-y-1 text-sm">
@@ -2749,7 +2749,7 @@ export function StockManager({
               </div>
             </div>
 
-            <div className="grid gap-3 rounded-2xl border border-border bg-surface-alt/30 p-4 md:grid-cols-3">
+            <div className="grid gap-3 rounded-lg border border-border bg-surface-alt/30 p-4 md:grid-cols-3">
               <div>
                 <p className="label-caps">Receive Total</p>
                 <p className="mt-1 font-financial text-lg font-semibold">
@@ -2771,7 +2771,7 @@ export function StockManager({
             </div>
 
             {rows.map((row, index) => (
-              <div key={index} className="rounded-2xl border border-border p-4">
+              <div key={index} className="rounded-lg border border-border p-4">
                 <div className="mb-3 flex items-center justify-between">
                   <div>
                     <p className="font-medium">Lot line {index + 1}</p>
@@ -3117,7 +3117,7 @@ export function StockManager({
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="rounded-2xl border border-border bg-surface-alt/40 p-4">
+            <div className="rounded-lg border border-border bg-surface-alt/40 p-4">
               <p className="label-caps">Source Lot</p>
               {gradeSource ? (
                 <div className="mt-2 grid gap-1 text-sm md:grid-cols-3">
@@ -3141,7 +3141,7 @@ export function StockManager({
               )}
             </div>
 
-            <div className="grid gap-3 rounded-2xl border border-border bg-surface-alt/30 p-4 md:grid-cols-3">
+            <div className="grid gap-3 rounded-lg border border-border bg-surface-alt/30 p-4 md:grid-cols-3">
               <div>
                 <p className="label-caps">Split Total</p>
                 <p className="mt-1 font-financial text-lg font-semibold">
@@ -3171,7 +3171,7 @@ export function StockManager({
             </Field>
 
             {gradeRows.map((row, index) => (
-              <div key={index} className="rounded-2xl border border-border p-4">
+              <div key={index} className="rounded-lg border border-border p-4">
                 <div className="mb-3 flex items-center justify-between">
                   <div>
                     <p className="font-medium">Grade line {index + 1}</p>
@@ -3429,7 +3429,7 @@ export function StockManager({
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="rounded-2xl border border-border bg-surface-alt/40 p-4">
+            <div className="rounded-lg border border-border bg-surface-alt/40 p-4">
               <p className="label-caps">Source Lot</p>
               {dispatchSource ? (
                 <div className="mt-2 grid gap-1 text-sm md:grid-cols-3">
@@ -3538,7 +3538,7 @@ export function StockManager({
 
           <div className="space-y-4">
             {fleetGatePass ? (
-              <div className="rounded-2xl border border-border bg-surface-alt/40 p-4 text-sm">
+              <div className="rounded-lg border border-border bg-surface-alt/40 p-4 text-sm">
                 <p className="label-caps">Gate pass</p>
                 <div className="mt-2 grid gap-2 md:grid-cols-3">
                   <p className="font-medium">{fleetGatePass.gatePassNo}</p>
@@ -3744,7 +3744,7 @@ export function StockManager({
           </DialogHeader>
           <div className="space-y-4">
             {gateTarget ? (
-              <div className="rounded-2xl border border-border bg-surface-alt/40 p-4 text-sm">
+              <div className="rounded-lg border border-border bg-surface-alt/40 p-4 text-sm">
                 <p className="label-caps">Gate pass</p>
                 <p className="mt-2 font-medium">{gateTarget.gatePassNo}</p>
                 <p className="text-muted-foreground">
@@ -3805,7 +3805,7 @@ export function StockManager({
           </DialogHeader>
           <div className="space-y-4">
             {podTarget ? (
-              <div className="rounded-2xl border border-border bg-surface-alt/40 p-4 text-sm">
+              <div className="rounded-lg border border-border bg-surface-alt/40 p-4 text-sm">
                 <p className="label-caps">Delivery</p>
                 <div className="mt-2 grid gap-2 md:grid-cols-3">
                   <p className="font-medium">{podTarget.gatePassNo}</p>
@@ -3910,7 +3910,7 @@ export function StockManager({
         </DialogContent>
       </Dialog>
 
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+      <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
             <p className="label-caps">Fulfilment Board</p>
@@ -4089,7 +4089,7 @@ function SummaryCard({
           : "border-border bg-card";
 
   return (
-    <div className={cn("rounded-2xl border p-4 shadow-sm", toneClasses)}>
+    <div className={cn("rounded-lg border p-4 shadow-sm", toneClasses)}>
       <p className="label-caps">{label}</p>
       <p className="mt-2 font-financial text-2xl font-semibold">{value}</p>
     </div>
@@ -4141,7 +4141,7 @@ function WarehouseProcessStory({
   ];
 
   return (
-    <section className="overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm">
+    <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
       <div className="grid gap-5 p-5 lg:grid-cols-[0.45fr_1.55fr]">
         <div>
           <p className="label-caps">Active lane</p>
@@ -4161,7 +4161,7 @@ function WarehouseProcessStory({
             <div
               key={step.title}
               className={cn(
-                "rounded-2xl border p-4 transition",
+                "rounded-lg border p-4 transition",
                 step.active
                   ? "border-primary bg-primary/10 shadow-sm"
                   : "border-border bg-surface-alt/30"
@@ -4250,7 +4250,7 @@ function WarehouseInwardBoard({
   const received = Array.from(receivedContainers.values()).slice(0, 12);
 
   return (
-    <section className="rounded-[1.75rem] border border-border bg-card p-5 shadow-sm">
+    <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="label-caps">Inward control board</p>
@@ -4341,7 +4341,7 @@ function InwardColumn({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-surface-alt/25 p-4">
+    <div className="rounded-lg border border-border bg-surface-alt/25 p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="font-heading text-base font-semibold">{title}</h3>

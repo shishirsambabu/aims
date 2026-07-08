@@ -55,12 +55,33 @@ function buildWhere(
   return where;
 }
 
-export async function listDocuments(
+export interface DocumentListOptions {
+  /** 1-based page number; when set, results are paginated. */
+  page?: number;
+  pageSize?: number;
+}
+
+export async function countDocuments(
   orgId: string,
   filters: DocumentFilters = {}
+): Promise<number> {
+  return prisma.document.count({ where: buildWhere(orgId, filters) });
+}
+
+export async function listDocuments(
+  orgId: string,
+  filters: DocumentFilters = {},
+  options: DocumentListOptions = {}
 ): Promise<DocumentRow[]> {
+  const pagination: { skip?: number; take?: number } = {};
+  if (options.page != null) {
+    const pageSize = options.pageSize ?? 50;
+    pagination.skip = (options.page - 1) * pageSize;
+    pagination.take = pageSize;
+  }
   const rows = await prisma.document.findMany({
     where: buildWhere(orgId, filters),
+    ...pagination,
     orderBy: [{ expiryDate: "asc" }, { createdAt: "desc" }],
     select: {
       id: true,

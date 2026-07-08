@@ -2,15 +2,19 @@ import { AlertTriangle } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DocumentFilters } from "@/components/documents/DocumentFilters";
+import { DocumentsExportButton } from "@/components/documents/DocumentsExportButton";
 import { DocumentsTable } from "@/components/documents/DocumentsTable";
 import { DocumentUpload } from "@/components/documents/DocumentUpload";
 import { requireSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import {
   listDocuments,
+  countDocuments,
   containerOptions,
   type DocumentRow,
 } from "@/lib/data/documents";
+import { DEFAULT_PAGE_SIZE, parsePage } from "@/lib/pagination";
+import { PaginationBar } from "@/components/ui/pagination-bar";
 import type { DocumentStatus, DocumentType } from "@/types";
 import { requirePageAccess } from "@/lib/page-access";
 
@@ -23,6 +27,7 @@ interface PageProps {
     status?: string;
     containerId?: string;
     expiringSoon?: string;
+    page?: string;
   }>;
 }
 
@@ -31,20 +36,27 @@ export default async function DocumentsPage({ searchParams }: PageProps) {
   const session = await requireSession();
   requirePageAccess(session.role, ["doc.view"]);
   const editable = can(session.role, "doc.write");
+  const page = parsePage(params.page);
+  const filters = {
+    q: params.q,
+    type: params.type as DocumentType | undefined,
+    status: params.status as DocumentStatus | undefined,
+    containerId: params.containerId,
+    expiringSoon: params.expiringSoon === "1",
+  };
 
   let rows: DocumentRow[] = [];
+  let total = 0;
   let containers: Awaited<ReturnType<typeof containerOptions>> = [];
   let loadError = false;
 
   try {
-    [rows, containers] = await Promise.all([
-      listDocuments(session.orgId, {
-        q: params.q,
-        type: params.type as DocumentType | undefined,
-        status: params.status as DocumentStatus | undefined,
-        containerId: params.containerId,
-        expiringSoon: params.expiringSoon === "1",
+    [rows, total, containers] = await Promise.all([
+      listDocuments(session.orgId, filters, {
+        page,
+        pageSize: DEFAULT_PAGE_SIZE,
       }),
+      countDocuments(session.orgId, filters),
       containerOptions(session.orgId),
     ]);
   } catch (err) {
@@ -58,9 +70,12 @@ export default async function DocumentsPage({ searchParams }: PageProps) {
         title="Documents"
         description="Bills of lading, invoices, certificates — linked to every container by Container No and BL No."
         actions={
-          editable && (
-            <DocumentUpload orgId={session.orgId} containers={containers} />
-          )
+          <div className="flex items-center gap-2">
+            <DocumentsExportButton total={total} />
+            {editable && (
+              <DocumentUpload orgId={session.orgId} containers={containers} />
+            )}
+          </div>
         }
       />
 
@@ -80,10 +95,8 @@ export default async function DocumentsPage({ searchParams }: PageProps) {
           </div>
         ) : (
           <>
-            <p className="text-sm text-muted-foreground">
-              {rows.length} document{rows.length === 1 ? "" : "s"}
-            </p>
             <DocumentsTable data={rows} canEdit={editable} />
+            <PaginationBar total={total} page={page} itemLabel="documents" />
           </>
         )}
       </div>

@@ -326,7 +326,7 @@ export function ReceivablesWorkspace({
       </div>
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-1 items-center gap-2 rounded-2xl border border-border bg-card px-3 py-2 shadow-sm">
+        <div className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 shadow-sm">
           <Search className="h-4 w-4 text-muted-foreground" />
           <Input
             value={query}
@@ -356,7 +356,7 @@ export function ReceivablesWorkspace({
                 {canViewFinancials ? "Financial view enabled" : "Operational view"}
               </div>
             </div>
-            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">

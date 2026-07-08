@@ -169,7 +169,7 @@ export function ColdChainWorkspace({
   }
 
   return (
-    <Card className="rounded-[1.5rem]">
+    <Card className="rounded-lg">
       <CardContent className="space-y-5 p-6">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -187,7 +187,7 @@ export function ColdChainWorkspace({
         </div>
 
         {canManage ? (
-          <div className="grid gap-3 rounded-2xl border border-border bg-surface-alt/30 p-4 md:grid-cols-3">
+          <div className="grid gap-3 rounded-lg border border-border bg-surface-alt/30 p-4 md:grid-cols-3">
             <Select
               value={form.warehouseId}
               onValueChange={(value) => setForm({ ...form, warehouseId: value, locationId: "" })}
@@ -223,7 +223,7 @@ export function ColdChainWorkspace({
             {data.tasks.length === 0 ? (
               <EmptyState icon={ShieldAlert} title="No breach tasks" description="Temperature exceptions will appear here." />
             ) : data.tasks.map((task) => (
-              <div key={task.id} className="rounded-2xl border border-border p-3">
+              <div key={task.id} className="rounded-lg border border-border p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-medium">{task.taskNo} - {task.title}</p>
@@ -249,7 +249,7 @@ export function ColdChainWorkspace({
           <div className="space-y-3">
             <h4 className="font-heading text-base font-semibold">Recent readings</h4>
             {data.readings.slice(0, 10).map((reading) => (
-              <div key={reading.id} className="rounded-2xl border border-border p-3">
+              <div key={reading.id} className="rounded-lg border border-border p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-medium">{reading.warehouseName}</p>
@@ -304,7 +304,7 @@ export function ColdChainWorkspace({
 
 function Mini({ label, value, tone }: { label: string; value: number; tone?: string }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-3">
+    <div className="rounded-lg border border-border bg-card p-3">
       <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className={`font-financial mt-1 text-2xl font-bold ${tone ?? ""}`}>{value}</p>
     </div>

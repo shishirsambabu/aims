@@ -27,7 +27,7 @@ export default function ProcurementModulePage() {
       />
 
       <div className="space-y-6 p-6">
-        <Card className="command-surface rounded-[1.5rem]">
+        <Card className="rounded-lg">
           <CardContent className="grid gap-4 p-6 md:grid-cols-[1.2fr_0.8fr] md:items-center">
             <div className="space-y-3">
               <div className="inline-flex rounded-full border border-warning/20 bg-warning/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#9A6212]">
@@ -74,7 +74,7 @@ export default function ProcurementModulePage() {
 
 function QuickStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-border/70 bg-surface px-4 py-3">
+    <div className="rounded-lg border border-border/70 bg-surface px-4 py-3">
       <p className="label-caps">{label}</p>
       <p className="mt-1 font-heading text-lg font-semibold">{value}</p>
     </div>
@@ -91,9 +91,9 @@ function Feature({
   text: string;
 }) {
   return (
-    <Card className="rounded-[1.35rem]">
+    <Card className="rounded-lg">
       <CardContent className="p-6">
-        <div className="rounded-2xl bg-warning/10 p-3 text-[#9A6212] ring-1 ring-warning/15">
+        <div className="rounded-lg bg-warning/10 p-3 text-[#9A6212] ring-1 ring-warning/15">
           <Icon className="h-5 w-5" />
         </div>
         <h3 className="mt-4 font-heading text-lg font-semibold">{title}</h3>

@@ -5,11 +5,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PaymentFilters } from "@/components/payments/PaymentFilters";
 import { PaymentForm } from "@/components/payments/PaymentForm";
+import { PaymentsExportButton } from "@/components/payments/PaymentsExportButton";
 import { PaymentsTable } from "@/components/payments/PaymentsTable";
 import { requireSession } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import {
   listPayments,
+  countPayments,
   paymentAgingByCurrency,
   paymentSummaryByCurrency,
   type PaymentRow,
@@ -17,6 +19,8 @@ import {
   type PaymentAgingRow,
 } from "@/lib/data/payments";
 import { containerOptions } from "@/lib/data/documents";
+import { DEFAULT_PAGE_SIZE, parsePage } from "@/lib/pagination";
+import { PaginationBar } from "@/components/ui/pagination-bar";
 import { formatMoney } from "@/lib/utils";
 import type { PaymentStatus } from "@/types";
 import { requirePageAccess } from "@/lib/page-access";
@@ -24,7 +28,12 @@ import { requirePageAccess } from "@/lib/page-access";
 export const dynamic = "force-dynamic";
 
 interface PageProps {
-  searchParams: Promise<{ q?: string; status?: string; containerId?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    status?: string;
+    containerId?: string;
+    page?: string;
+  }>;
 }
 
 export default async function PaymentsPage({ searchParams }: PageProps) {
@@ -43,16 +52,22 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
     status: params.status as PaymentStatus | undefined,
     containerId: params.containerId,
   };
+  const page = parsePage(params.page);
 
   let rows: PaymentRow[] = [];
+  let total = 0;
   let byCurrency: CurrencySummary[] = [];
   let agingByCurrency: PaymentAgingRow[] = [];
   let containers: Awaited<ReturnType<typeof containerOptions>> = [];
   let loadError = false;
 
   try {
-    [rows, byCurrency, agingByCurrency, containers] = await Promise.all([
-      listPayments(session.orgId, filters),
+    [rows, total, byCurrency, agingByCurrency, containers] = await Promise.all([
+      listPayments(session.orgId, filters, {
+        page,
+        pageSize: DEFAULT_PAGE_SIZE,
+      }),
+      countPayments(session.orgId, filters),
       paymentSummaryByCurrency(session.orgId, filters),
       paymentAgingByCurrency(session.orgId, filters),
       containerOptions(session.orgId),
@@ -67,7 +82,14 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
       <PageHeader
         title="Payments"
         description="Supplier payment requests and settlement tracking."
-        actions={editable && <PaymentForm containers={containers} />}
+        actions={
+          <div className="flex items-center gap-2">
+            {can(session.role, "financials.view") && (
+              <PaymentsExportButton total={total} />
+            )}
+            {editable && <PaymentForm containers={containers} />}
+          </div>
+        }
       />
 
       <div className="space-y-4 p-6">
@@ -86,7 +108,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
                 return (
                   <div
                     key={s.currency}
-                    className="space-y-3 rounded-2xl border border-border bg-card p-4 shadow-sm"
+                    className="space-y-3 rounded-lg border border-border bg-card p-4 shadow-sm"
                   >
                     <div className="grid gap-4 sm:grid-cols-3">
                       <SummaryCard
@@ -142,14 +164,16 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
           </div>
         ) : (
           <>
-            <p className="text-sm text-muted-foreground">
-              {rows.length} payment request{rows.length === 1 ? "" : "s"} - totals grouped by currency
-            </p>
             <PaymentsTable
               data={rows}
               canPay={perms.canPay}
               canApprove={perms.canApprove}
               currentUserId={perms.userId}
+            />
+            <PaginationBar
+              total={total}
+              page={page}
+              itemLabel="payment requests"
             />
           </>
         )}

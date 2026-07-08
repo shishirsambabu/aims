@@ -165,7 +165,7 @@ export function FinanceDocumentsWorkspace({
         <Metric label="Open invoice count" value={data.summary.openInvoiceCount.toString()} icon={ShieldCheck} />
       </div>
 
-      <Card className="rounded-[1.35rem]">
+      <Card className="rounded-lg">
         <CardContent className="p-6">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
@@ -190,7 +190,7 @@ export function FinanceDocumentsWorkspace({
             </div>
           </div>
 
-          <div className="mt-5 overflow-hidden rounded-2xl border border-border">
+          <div className="mt-5 overflow-hidden rounded-lg border border-border">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -248,7 +248,7 @@ export function FinanceDocumentsWorkspace({
       </Card>
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card className="rounded-[1.35rem]">
+        <Card className="rounded-lg">
           <CardContent className="p-6">
             <div className="mb-4">
               <p className="label-caps">Issued invoices</p>
@@ -261,7 +261,7 @@ export function FinanceDocumentsWorkspace({
                 data.invoices.map((invoice) => {
                   const remaining = Math.max(invoice.totalAmount - invoice.creditedAmount, 0);
                   return (
-                    <div key={invoice.id} className="rounded-2xl border border-border p-4">
+                    <div key={invoice.id} className="rounded-lg border border-border p-4">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <div className="flex items-center gap-2">
@@ -312,7 +312,7 @@ export function FinanceDocumentsWorkspace({
           </CardContent>
         </Card>
 
-        <Card className="rounded-[1.35rem]">
+        <Card className="rounded-lg">
           <CardContent className="p-6">
             <div className="mb-4">
               <p className="label-caps">Returns desk</p>
@@ -379,7 +379,7 @@ export function FinanceDocumentsWorkspace({
                 <EmptyState icon={RotateCcw} title="No returns posted" description="Customer returns will appear here with reason and value." />
               ) : (
                 data.returns.map((row) => (
-                  <div key={row.id} className="rounded-2xl border border-border p-4">
+                  <div key={row.id} className="rounded-lg border border-border p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="font-medium">{row.returnNo}</p>
@@ -401,7 +401,7 @@ export function FinanceDocumentsWorkspace({
         </Card>
       </div>
 
-      <Card className="rounded-[1.35rem]">
+      <Card className="rounded-lg">
         <CardContent className="p-6">
           <div className="mb-4">
             <p className="label-caps">Credit trail</p>
@@ -412,7 +412,7 @@ export function FinanceDocumentsWorkspace({
               <EmptyState icon={WalletCards} title="No credit notes" description="Credits issued against invoices or orders appear here." />
             ) : (
               data.creditNotes.map((note) => (
-                <div key={note.id} className="rounded-2xl border border-border p-4">
+                <div key={note.id} className="rounded-lg border border-border p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2">
@@ -465,7 +465,7 @@ function Metric({
           <p className="text-sm text-muted-foreground">{label}</p>
           <p className="font-financial mt-1 text-2xl font-bold">{value}</p>
         </div>
-        <div className="rounded-2xl bg-primary/10 p-3 text-primary">
+        <div className="rounded-lg bg-primary/10 p-3 text-primary">
           <Icon className="h-5 w-5" />
         </div>
       </CardContent>

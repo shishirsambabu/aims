@@ -4,7 +4,7 @@ import type { ContainerStatus, DocumentStatus, PaymentStatus } from "@/types";
 
 // Each pipeline stage gets a distinct, on-brand colour treatment.
 const CONTAINER_STATUS_STYLES: Record<ContainerStatus, string> = {
-  Booked: "bg-slate-100 text-slate-700",
+  Booked: "bg-muted text-muted-foreground",
   InTransit: "bg-sky-100 text-sky-800",
   AtPort: "bg-indigo-100 text-indigo-800",
   CustomsClearance: "bg-amber-100 text-amber-800",
@@ -26,7 +26,7 @@ export function StatusBadge({
     <span
       className={cn(
         "inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium",
-        CONTAINER_STATUS_STYLES[status] ?? "bg-slate-100 text-slate-700",
+        CONTAINER_STATUS_STYLES[status] ?? "bg-muted text-muted-foreground",
         className
       )}
     >
@@ -36,7 +36,7 @@ export function StatusBadge({
 }
 
 const DOC_STATUS_STYLES: Record<DocumentStatus, string> = {
-  Pending: "bg-slate-100 text-slate-700",
+  Pending: "bg-muted text-muted-foreground",
   Uploaded: "bg-sky-100 text-sky-800",
   Verified: "bg-success/15 text-success",
   Expired: "bg-danger/10 text-danger",

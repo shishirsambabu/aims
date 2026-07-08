@@ -17,6 +17,13 @@ export async function GET(request: NextRequest) {
     }
     const sp = request.nextUrl.searchParams;
 
+    // Optional row cap for typeahead consumers (command palette).
+    const rawLimit = Number(sp.get("limit"));
+    const take =
+      Number.isInteger(rawLimit) && rawLimit > 0
+        ? Math.min(rawLimit, 50)
+        : undefined;
+
     const rows = await listContainers(session.orgId, {
       q: sp.get("q") ?? undefined,
       port: sp.get("port") ?? undefined,
@@ -24,7 +31,7 @@ export async function GET(request: NextRequest) {
       status: (sp.get("status") as ContainerStatus) ?? undefined,
       dateFrom: sp.get("dateFrom") ?? undefined,
       dateTo: sp.get("dateTo") ?? undefined,
-    }, { includeFinancials: can(session.role, "financials.view") });
+    }, { includeFinancials: can(session.role, "financials.view"), take });
 
     return NextResponse.json({ data: rows });
   } catch (err) {

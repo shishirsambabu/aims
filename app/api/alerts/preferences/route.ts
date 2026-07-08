@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { invalidateNavCounts } from "@/lib/data/notifications";
 
 const preferenceSchema = z.object({
   category: z.enum([
@@ -39,6 +40,9 @@ export async function PATCH(request: Request) {
       },
       update: { enabled },
     });
+
+    // Category toggles change what counts toward the badges.
+    invalidateNavCounts(session.userId);
 
     return NextResponse.json({ ok: true });
   } catch (err) {

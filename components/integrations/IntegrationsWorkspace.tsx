@@ -539,7 +539,7 @@ export function IntegrationsWorkspace({
           </div>
 
           <div className="mt-5 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-            <div className="space-y-4 rounded-2xl border border-border bg-surface-alt/30 p-4">
+            <div className="space-y-4 rounded-lg border border-border bg-surface-alt/30 p-4">
               <Field label="Provider">
                 <Select
                   value={refForm.provider}
@@ -622,7 +622,7 @@ export function IntegrationsWorkspace({
                 </Card>
               ) : (
                 refs.map((row) => (
-                  <div key={row.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                  <div key={row.id} className="rounded-lg border border-border bg-card p-4 shadow-sm">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-xs uppercase tracking-wide text-muted-foreground">

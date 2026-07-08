@@ -985,7 +985,7 @@ export function SalesWorkspace({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-1 items-center gap-2 rounded-2xl border border-border bg-card px-3 py-2 shadow-sm">
+        <div className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 shadow-sm">
           <Search className="h-4 w-4 text-muted-foreground" />
           <Input
             value={query}
@@ -1012,7 +1012,7 @@ export function SalesWorkspace({
                 <RefreshCw className="h-4 w-4" /> Refresh
               </Button>
             </div>
-            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">

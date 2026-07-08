@@ -22,7 +22,7 @@ const APPROVAL_STYLE: Record<string, string> = {
   PendingApproval: "bg-warning/20 text-[#9A6212]",
   Approved: "bg-success/15 text-success",
   Rejected: "bg-danger/10 text-danger",
-  Draft: "bg-slate-100 text-slate-700",
+  Draft: "bg-muted text-muted-foreground",
 };
 const APPROVAL_LABEL: Record<string, string> = {
   PendingApproval: "Pending Approval",

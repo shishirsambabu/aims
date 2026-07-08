@@ -70,7 +70,7 @@ export default async function FinanceModulePage() {
       />
 
       <div className="space-y-6 p-6">
-        <Card className="command-surface rounded-[1.5rem]">
+        <Card className="rounded-lg">
           <CardContent className="grid gap-4 p-6 md:grid-cols-[1.3fr_0.7fr] md:items-center">
             <div className="space-y-3">
               <div className="inline-flex rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
@@ -100,10 +100,10 @@ export default async function FinanceModulePage() {
               <Link
                 key={tile.title}
                 href={tile.href}
-                className="group rounded-[1.35rem] border border-border/70 bg-card p-5 shadow-card transition-all hover:-translate-y-0.5 hover:shadow-lg"
+                className="group rounded-lg border border-border/70 bg-card p-5 shadow-card transition-all hover:-translate-y-0.5 hover:shadow-lg"
               >
                 <div className="flex items-start justify-between">
-                  <div className="rounded-2xl bg-primary/10 p-3 text-primary ring-1 ring-primary/15">
+                  <div className="rounded-lg bg-primary/10 p-3 text-primary ring-1 ring-primary/15">
                     <Icon className="h-5 w-5" />
                   </div>
                   <ArrowRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
@@ -120,7 +120,7 @@ export default async function FinanceModulePage() {
           })}
         </div>
 
-        <Card className="rounded-[1.35rem]">
+        <Card className="rounded-lg">
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
               <Landmark className="h-5 w-5 text-primary" />
@@ -160,7 +160,7 @@ export default async function FinanceModulePage() {
 
 function QuickStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-border/70 bg-surface px-4 py-3">
+    <div className="rounded-lg border border-border/70 bg-surface px-4 py-3">
       <p className="label-caps">{label}</p>
       <p className="mt-1 font-heading text-lg font-semibold">{value}</p>
     </div>

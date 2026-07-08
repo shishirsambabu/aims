@@ -609,7 +609,7 @@ export function CustomerManager({
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-1 items-center gap-2 rounded-2xl border border-border bg-card px-3 py-2 shadow-sm">
+        <div className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 shadow-sm">
           <Search className="h-4 w-4 text-muted-foreground" />
           <Input
             value={query}
@@ -787,7 +787,7 @@ export function CustomerManager({
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.3fr_1fr]">
-        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
@@ -926,7 +926,7 @@ export function CustomerManager({
           </Table>
         </div>
 
-        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+        <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
           {detailBusy ? (
             <div className="flex h-full min-h-[520px] items-center justify-center text-muted-foreground">
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -1121,7 +1121,7 @@ export function CustomerManager({
                 </Badge>
               </div>
 
-              <div className="rounded-2xl border border-border bg-surface-alt/30 p-4">
+              <div className="rounded-lg border border-border bg-surface-alt/30 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="label-caps">Onboarding SOP</p>

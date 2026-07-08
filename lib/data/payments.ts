@@ -91,12 +91,33 @@ function createBuckets(): AgingBucket[] {
   ];
 }
 
-export async function listPayments(
+export interface PaymentListOptions {
+  /** 1-based page number; when set, results are paginated. */
+  page?: number;
+  pageSize?: number;
+}
+
+export async function countPayments(
   orgId: string,
   filters: PaymentFilters = {}
+): Promise<number> {
+  return prisma.payment.count({ where: buildWhere(orgId, filters) });
+}
+
+export async function listPayments(
+  orgId: string,
+  filters: PaymentFilters = {},
+  options: PaymentListOptions = {}
 ): Promise<PaymentRow[]> {
+  const pagination: { skip?: number; take?: number } = {};
+  if (options.page != null) {
+    const pageSize = options.pageSize ?? 50;
+    pagination.skip = (options.page - 1) * pageSize;
+    pagination.take = pageSize;
+  }
   const rows = await prisma.payment.findMany({
     where: buildWhere(orgId, filters),
+    ...pagination,
     orderBy: [{ status: "asc" }, { dueDate: "asc" }, { createdAt: "desc" }],
     include: {
       container: { select: { containerNo: true, blNo: true } },
