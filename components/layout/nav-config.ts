@@ -116,6 +116,7 @@ export const GROUPS: SidebarGroup[] = [
     links: [
       { label: "Settings", href: "/settings", icon: Settings },
       { label: "Team", href: "/settings/team", icon: Users2 },
+      { label: "Items", href: "/settings/items", icon: Package },
       { label: "Warehouses", href: "/settings/warehouses", icon: Warehouse },
       { label: "Suppliers", href: "/settings/suppliers", icon: Package },
     ],
