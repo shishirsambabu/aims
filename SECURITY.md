@@ -14,6 +14,10 @@
 - Private document storage with signed reads and validated upload metadata.
 - RLS denial of direct `anon` and `authenticated` table access.
 - Transactional audit entries for critical sales, receipt, reservation, and numbering workflows.
+- Optional MFA enforcement for admin, GM, and finance roles through Supabase AAL2.
+- Redis-backed rate limiting for expensive routes when Upstash credentials are configured.
+- Sentry-compatible error reporting through `SENTRY_DSN`.
+- Transactional email outbox for invoice, receipt, and credit-note communication.
 
 ## Required production configuration
 
@@ -23,8 +27,11 @@
 4. Enable Supabase point-in-time recovery and perform a documented restore drill.
 5. Connect application logs and `/api/health` to an external alerting provider.
 6. Add malware scanning before allowing untrusted external uploads.
+7. Set `ENFORCE_MFA=true` after admin, GM, and finance users enroll factors.
+8. Set `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `RESEND_API_KEY`,
+   `EMAIL_FROM`, `SENTRY_DSN`, `AEDEN_GSTIN`, and `DEFAULT_FRUIT_HSN_CODE`.
 
 ## Known residual controls
 
-- Expensive-route rate limiting is currently per server instance. Replace it with a shared Redis or database-backed limiter before exposing bulk endpoints outside the internal network.
 - Audit coverage is strongest for financial and inventory-critical paths; continue moving older CRUD logs into their mutation transactions.
+- WhatsApp Business, e-invoice GSP, OCR jobs, and external WMS/Tally sync still need live vendor credentials and staging contracts before production enablement.

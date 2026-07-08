@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { requireSession } from "@/lib/auth";
+import { reportError } from "@/lib/observability";
 import { can } from "@/lib/permissions";
 import { releaseExpiredReservations } from "@/lib/reservations";
 
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
     if (error instanceof Error && error.message === "UNAUTHENTICATED") {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
-    console.error("[release-expired-reservations]", error);
+    await reportError(error, { route: "sales-orders/release-expired" });
     return NextResponse.json({ error: "Unable to release expired reservations" }, { status: 500 });
   }
 }

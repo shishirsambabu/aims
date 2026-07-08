@@ -321,6 +321,16 @@ model Organization {
   integrationRuns             IntegrationRun[]
   integrationErrors           IntegrationError[]
   externalReferences          ExternalReference[]
+  emailOutbox                 EmailOutbox[]
+  fxRates                     FxRate[]
+  purchaseOrders              PurchaseOrder[]
+  purchaseOrderLines          PurchaseOrderLine[]
+  crmActivities               CrmActivity[]
+  items                       Item[]
+  featureFlags                FeatureFlag[]
+  idempotencyKeys             IdempotencyKey[]
+  approvalDelegations         ApprovalDelegation[]
+  dataDeletionRequests        DataDeletionRequest[]
 
   @@map("organizations")
 }
@@ -370,6 +380,7 @@ model User {
   ownedCrmLeads             CrmLead[]               @relation("CrmLeadOwner")
   ownedCrmOpportunities     CrmOpportunity[]        @relation("CrmOpportunityOwner")
   assignedCrmTasks          CrmTask[]               @relation("CrmTaskAssignee")
+  ownedCrmActivities        CrmActivity[]
 
   @@index([orgId])
   @@map("users")
@@ -398,6 +409,7 @@ model Supplier {
   organization   Organization    @relation(fields: [orgId], references: [id], onDelete: Cascade)
   containers     Container[]
   supplierClaims SupplierClaim[]
+  purchaseOrders PurchaseOrder[]
 
   @@index([orgId])
   @@map("suppliers")
@@ -460,6 +472,7 @@ model Container {
   port                  String?
   portCode              String?         @map("port_code")
   item                  String?
+  itemId                String?         @map("item_id")
   variety               String?
   noOfBoxes             Int?            @map("no_of_boxes")
   status                ContainerStatus @default(Booked)
@@ -493,6 +506,7 @@ model Container {
   organization     Organization      @relation(fields: [orgId], references: [id], onDelete: Cascade)
   supplier         Supplier?         @relation(fields: [supplierId], references: [id])
   warehouse        Warehouse?        @relation(fields: [warehouseId], references: [id], onDelete: SetNull)
+  itemMaster       Item?             @relation(fields: [itemId], references: [id], onDelete: SetNull)
   shipmentItem     ShipmentItem?
   cost             ContainerCost?
   sale             Sale?
@@ -500,6 +514,7 @@ model Container {
   gatePasses       GatePass[]
   dockAppointments DockAppointment[]
   supplierClaims   SupplierClaim[]
+  purchaseOrders   PurchaseOrder[]
   documents        Document[]
   payments         Payment[]
 
@@ -508,6 +523,7 @@ model Container {
   @@index([containerNo])
   @@index([blNo])
   @@index([status])
+  @@index([itemId])
   @@map("containers")
 }
 
@@ -519,6 +535,7 @@ model StockItem {
   locationId            String?            @map("location_id")
   parentStockItemId     String?            @map("parent_stock_item_id")
   item                  String
+  itemId                String?            @map("item_id")
   variety               String?
   grade                 String?
   uom                   StockUom
@@ -549,6 +566,7 @@ model StockItem {
   organization             Organization              @relation(fields: [orgId], references: [id], onDelete: Cascade)
   container                Container                 @relation(fields: [containerId], references: [id], onDelete: Cascade)
   warehouse                Warehouse                 @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  itemMaster               Item?                     @relation(fields: [itemId], references: [id], onDelete: SetNull)
   location                 WarehouseLocation?        @relation(fields: [locationId], references: [id], onDelete: SetNull)
   parentStockItem          StockItem?                @relation("StockLotSplit", fields: [parentStockItemId], references: [id], onDelete: SetNull)
   childStockItems          StockItem[]               @relation("StockLotSplit")
@@ -569,6 +587,7 @@ model StockItem {
   @@index([containerId])
   @@index([parentStockItemId])
   @@index([item, grade, warehouseId])
+  @@index([itemId])
   @@map("stock_items")
 }
 
@@ -716,6 +735,7 @@ model Customer {
   crmLeads           CrmLead[]
   crmOpportunities   CrmOpportunity[]
   crmTasks           CrmTask[]
+  crmActivities      CrmActivity[]
 
   @@unique([orgId, code])
   @@index([orgId])
@@ -804,6 +824,7 @@ model PriceListItem {
   orgId          String   @map("org_id")
   priceListId    String   @map("price_list_id")
   item           String
+  itemId         String?  @map("item_id")
   variety        String?
   grade          String?
   uom            StockUom
@@ -817,12 +838,14 @@ model PriceListItem {
 
   organization    Organization     @relation(fields: [orgId], references: [id], onDelete: Cascade)
   priceList       PriceList        @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+  itemMaster      Item?            @relation(fields: [itemId], references: [id], onDelete: SetNull)
   salesOrderLines SalesOrderLine[]
   salesQuoteLines SalesQuoteLine[]
 
   @@index([orgId])
   @@index([priceListId])
   @@index([item, grade, uom])
+  @@index([itemId])
   @@map("price_list_items")
 }
 
@@ -925,6 +948,7 @@ model CrmLead {
   owner         User?            @relation("CrmLeadOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   opportunities CrmOpportunity[]
   tasks         CrmTask[]
+  activities    CrmActivity[]
 
   @@unique([orgId, leadNo])
   @@index([orgId])
@@ -949,11 +973,12 @@ model CrmOpportunity {
   createdAt         DateTime            @default(now()) @map("created_at")
   updatedAt         DateTime            @updatedAt @map("updated_at")
 
-  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  lead         CrmLead?     @relation(fields: [leadId], references: [id], onDelete: SetNull)
-  customer     Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  owner        User?        @relation("CrmOpportunityOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  organization Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  lead         CrmLead?      @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  customer     Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  owner        User?         @relation("CrmOpportunityOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   tasks        CrmTask[]
+  activities   CrmActivity[]
 
   @@unique([orgId, opportunityNo])
   @@index([orgId])
@@ -992,6 +1017,38 @@ model CrmTask {
   @@index([status])
   @@index([assigneeId])
   @@map("crm_tasks")
+}
+
+model CrmActivity {
+  id            String    @id @default(uuid())
+  orgId         String    @map("org_id")
+  customerId    String?   @map("customer_id")
+  leadId        String?   @map("lead_id")
+  opportunityId String?   @map("opportunity_id")
+  ownerId       String?   @map("owner_id")
+  kind          String
+  direction     String?   @default("Outbound")
+  subject       String
+  body          String?
+  occurredAt    DateTime  @default(now()) @map("occurred_at")
+  nextActionAt  DateTime? @map("next_action_at")
+  externalRef   String?   @map("external_ref")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  organization Organization    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  customer     Customer?       @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  lead         CrmLead?        @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  opportunity  CrmOpportunity? @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  owner        User?           @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+
+  @@index([orgId])
+  @@index([customerId])
+  @@index([leadId])
+  @@index([opportunityId])
+  @@index([ownerId])
+  @@index([occurredAt])
+  @@map("crm_activities")
 }
 
 model SalesQuote {
@@ -1371,6 +1428,112 @@ model SupplierClaim {
   @@map("supplier_claims")
 }
 
+model EmailOutbox {
+  id          String    @id @default(uuid())
+  orgId       String    @map("org_id")
+  toEmail     String    @map("to_email")
+  ccEmail     String?   @map("cc_email")
+  subject     String
+  textBody    String?   @map("text_body")
+  htmlBody    String?   @map("html_body")
+  category    String
+  status      String    @default("Pending")
+  attempts    Int       @default(0)
+  lastError   String?   @map("last_error")
+  provider    String?
+  providerId  String?   @map("provider_id")
+  scheduledAt DateTime  @default(now()) @map("scheduled_at")
+  sentAt      DateTime? @map("sent_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([status, scheduledAt])
+  @@index([category])
+  @@map("email_outbox")
+}
+
+model FxRate {
+  id           String   @id @default(uuid())
+  orgId        String   @map("org_id")
+  rateDate     DateTime @map("rate_date")
+  fromCurrency Currency @map("from_currency")
+  toCurrency   Currency @map("to_currency")
+  rate         Decimal  @db.Decimal(14, 6)
+  source       String   @default("Manual")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, rateDate, fromCurrency, toCurrency])
+  @@index([orgId])
+  @@index([rateDate])
+  @@map("fx_rates")
+}
+
+model PurchaseOrder {
+  id                  String    @id @default(uuid())
+  orgId               String    @map("org_id")
+  poNo                String    @map("po_no")
+  supplierId          String    @map("supplier_id")
+  containerId         String?   @map("container_id")
+  poDate              DateTime  @map("po_date")
+  status              String    @default("Draft")
+  currency            Currency  @default(USD)
+  estimatedGoodsValue Decimal   @default(0) @map("estimated_goods_value") @db.Decimal(14, 2)
+  estimatedFreight    Decimal   @default(0) @map("estimated_freight") @db.Decimal(14, 2)
+  estimatedDuties     Decimal   @default(0) @map("estimated_duties") @db.Decimal(14, 2)
+  estimatedLocalCosts Decimal   @default(0) @map("estimated_local_costs") @db.Decimal(14, 2)
+  actualLandedCost    Decimal?  @map("actual_landed_cost") @db.Decimal(14, 2)
+  varianceAmount      Decimal?  @map("variance_amount") @db.Decimal(14, 2)
+  advancePaidAmount   Decimal?  @map("advance_paid_amount") @db.Decimal(14, 2)
+  notes               String?
+  createdById         String?   @map("created_by_id")
+  approvedAt          DateTime? @map("approved_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  organization Organization        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  supplier     Supplier            @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  container    Container?          @relation(fields: [containerId], references: [id], onDelete: SetNull)
+  lines        PurchaseOrderLine[]
+
+  @@unique([orgId, poNo])
+  @@index([orgId])
+  @@index([supplierId])
+  @@index([containerId])
+  @@index([status])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderLine {
+  id              String   @id @default(uuid())
+  orgId           String   @map("org_id")
+  purchaseOrderId String   @map("purchase_order_id")
+  lineNo          Int      @map("line_no")
+  item            String
+  variety         String?
+  packSpec        String?  @map("pack_spec")
+  qty             Decimal  @db.Decimal(14, 3)
+  uom             String   @default("Box")
+  unitCost        Decimal  @map("unit_cost") @db.Decimal(14, 2)
+  lineTotal       Decimal  @map("line_total") @db.Decimal(14, 2)
+  hsnCode         String?  @map("hsn_code")
+  notes           String?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  organization  Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+
+  @@unique([purchaseOrderId, lineNo])
+  @@index([orgId])
+  @@index([purchaseOrderId])
+  @@map("purchase_order_lines")
+}
+
 model CustomerReceipt {
   id            String                @id @default(uuid())
   orgId         String                @map("org_id")
@@ -1427,25 +1590,32 @@ model CustomerReceiptAllocation {
 }
 
 model SalesInvoice {
-  id            String             @id @default(uuid())
-  orgId         String             @map("org_id")
-  invoiceNo     String             @map("invoice_no")
-  customerId    String             @map("customer_id")
-  salesOrderId  String?            @map("sales_order_id")
-  invoiceDate   DateTime           @map("invoice_date")
-  dueDate       DateTime?          @map("due_date")
-  status        SalesInvoiceStatus @default(Issued)
-  currency      Currency           @default(INR)
-  taxableAmount Decimal            @default(0) @map("taxable_amount") @db.Decimal(14, 2)
-  taxAmount     Decimal            @default(0) @map("tax_amount") @db.Decimal(14, 2)
-  totalAmount   Decimal            @default(0) @map("total_amount") @db.Decimal(14, 2)
-  notes         String?
-  createdById   String?            @map("created_by_id")
-  cancelledAt   DateTime?          @map("cancelled_at")
-  cancelledById String?            @map("cancelled_by_id")
-  cancelReason  String?            @map("cancel_reason")
-  createdAt     DateTime           @default(now()) @map("created_at")
-  updatedAt     DateTime           @updatedAt @map("updated_at")
+  id              String             @id @default(uuid())
+  orgId           String             @map("org_id")
+  invoiceNo       String             @map("invoice_no")
+  customerId      String             @map("customer_id")
+  salesOrderId    String?            @map("sales_order_id")
+  invoiceDate     DateTime           @map("invoice_date")
+  dueDate         DateTime?          @map("due_date")
+  status          SalesInvoiceStatus @default(Issued)
+  currency        Currency           @default(INR)
+  supplierGstin   String?            @map("supplier_gstin")
+  customerGstin   String?            @map("customer_gstin")
+  placeOfSupply   String?            @map("place_of_supply")
+  irn             String?
+  eInvoiceAckNo   String?            @map("e_invoice_ack_no")
+  eInvoiceQr      String?            @map("e_invoice_qr")
+  taxableAmount   Decimal            @default(0) @map("taxable_amount") @db.Decimal(14, 2)
+  taxAmount       Decimal            @default(0) @map("tax_amount") @db.Decimal(14, 2)
+  totalAmount     Decimal            @default(0) @map("total_amount") @db.Decimal(14, 2)
+  tallyExportedAt DateTime?          @map("tally_exported_at")
+  notes           String?
+  createdById     String?            @map("created_by_id")
+  cancelledAt     DateTime?          @map("cancelled_at")
+  cancelledById   String?            @map("cancelled_by_id")
+  cancelReason    String?            @map("cancel_reason")
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
 
   organization     Organization       @relation(fields: [orgId], references: [id], onDelete: Cascade)
   customer         Customer           @relation(fields: [customerId], references: [id], onDelete: Restrict)
@@ -1476,6 +1646,7 @@ model SalesInvoiceLine {
   item             String
   variety          String?
   grade            String?
+  hsnCode          String?  @map("hsn_code")
   uom              StockUom
   qty              Decimal  @db.Decimal(14, 3)
   unitPrice        Decimal  @map("unit_price") @db.Decimal(14, 2)
@@ -1567,24 +1738,27 @@ model SalesReturnLine {
 }
 
 model CreditNote {
-  id             String           @id @default(uuid())
-  orgId          String           @map("org_id")
-  creditNoteNo   String           @map("credit_note_no")
-  customerId     String           @map("customer_id")
-  salesOrderId   String?          @map("sales_order_id")
-  salesInvoiceId String?          @map("sales_invoice_id")
-  creditDate     DateTime         @map("credit_date")
-  status         CreditNoteStatus @default(Issued)
-  currency       Currency         @default(INR)
-  amount         Decimal          @db.Decimal(14, 2)
-  reason         String
-  notes          String?
-  createdById    String?          @map("created_by_id")
-  cancelledAt    DateTime?        @map("cancelled_at")
-  cancelledById  String?          @map("cancelled_by_id")
-  cancelReason   String?          @map("cancel_reason")
-  createdAt      DateTime         @default(now()) @map("created_at")
-  updatedAt      DateTime         @updatedAt @map("updated_at")
+  id              String           @id @default(uuid())
+  orgId           String           @map("org_id")
+  creditNoteNo    String           @map("credit_note_no")
+  customerId      String           @map("customer_id")
+  salesOrderId    String?          @map("sales_order_id")
+  salesInvoiceId  String?          @map("sales_invoice_id")
+  creditDate      DateTime         @map("credit_date")
+  status          CreditNoteStatus @default(Issued)
+  currency        Currency         @default(INR)
+  irn             String?
+  eInvoiceQr      String?          @map("e_invoice_qr")
+  tallyExportedAt DateTime?        @map("tally_exported_at")
+  amount          Decimal          @db.Decimal(14, 2)
+  reason          String
+  notes           String?
+  createdById     String?          @map("created_by_id")
+  cancelledAt     DateTime?        @map("cancelled_at")
+  cancelledById   String?          @map("cancelled_by_id")
+  cancelReason    String?          @map("cancel_reason")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
 
   organization     Organization      @relation(fields: [orgId], references: [id], onDelete: Cascade)
   customer         Customer          @relation(fields: [customerId], references: [id], onDelete: Restrict)
@@ -2192,4 +2366,118 @@ model ExternalReference {
   @@index([orgId])
   @@index([provider, externalId])
   @@map("external_references")
+}
+
+// ---------------------------------------------------------------------------
+// Deep-gaps foundation (DEEP_GAPS_AUDIT.md): item master, feature flags,
+// idempotency, approval delegation, DPDP deletion requests.
+// ---------------------------------------------------------------------------
+
+// A1 — Product/item master. Free-text `item` strings on containers, stock
+// lots, and price lists link here via nullable itemId (backfilled by name).
+model Item {
+  id          String    @id @default(uuid())
+  orgId       String    @map("org_id")
+  code        String
+  name        String
+  variety     String?
+  grade       String?
+  hsnCode     String?   @map("hsn_code")
+  defaultUom  StockUom  @default(Box) @map("default_uom")
+  packSpec    String?   @map("pack_spec")
+  description String?
+  isActive    Boolean   @default(true) @map("is_active")
+  deletedAt   DateTime? @map("deleted_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  organization   Organization    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  containers     Container[]
+  stockItems     StockItem[]
+  priceListItems PriceListItem[]
+
+  @@unique([orgId, code])
+  @@index([orgId, name])
+  @@index([orgId, isActive])
+  @@map("items")
+}
+
+// D3 — org-scoped feature flags / kill switches (includes maintenance_mode).
+model FeatureFlag {
+  id          String   @id @default(uuid())
+  orgId       String   @map("org_id")
+  key         String
+  enabled     Boolean  @default(false)
+  description String?
+  updatedById String?  @map("updated_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, key])
+  @@map("feature_flags")
+}
+
+// B1 — duplicate-submission guard for money-touching POST routes. The
+// unique(org, scope, key) insert inside the request transaction is the guard.
+model IdempotencyKey {
+  id             String   @id @default(uuid())
+  orgId          String   @map("org_id")
+  userId         String   @map("user_id")
+  scope          String
+  key            String
+  responseStatus Int?     @map("response_status")
+  responseBody   Json?    @map("response_body")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, scope, key])
+  @@index([createdAt])
+  @@map("idempotency_keys")
+}
+
+// E2 — out-of-office approval delegation, checked by approval routes.
+model ApprovalDelegation {
+  id          String    @id @default(uuid())
+  orgId       String    @map("org_id")
+  fromUserId  String    @map("from_user_id")
+  toUserId    String    @map("to_user_id")
+  scope       String    @default("all")
+  startsAt    DateTime  @map("starts_at")
+  endsAt      DateTime  @map("ends_at")
+  reason      String?
+  revokedAt   DateTime? @map("revoked_at")
+  createdById String?   @map("created_by_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, toUserId, endsAt])
+  @@index([orgId, fromUserId, endsAt])
+  @@map("approval_delegations")
+}
+
+// E5 — DPDP Act data-deletion request log with admin fulfillment trail.
+model DataDeletionRequest {
+  id              String    @id @default(uuid())
+  orgId           String    @map("org_id")
+  customerId      String?   @map("customer_id")
+  subjectName     String    @map("subject_name")
+  subjectContact  String?   @map("subject_contact")
+  reason          String?
+  status          String    @default("Open")
+  requestedAt     DateTime  @default(now()) @map("requested_at")
+  resolvedById    String?   @map("resolved_by_id")
+  resolvedAt      DateTime? @map("resolved_at")
+  resolutionNotes String?   @map("resolution_notes")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, status])
+  @@map("data_deletion_requests")
 }

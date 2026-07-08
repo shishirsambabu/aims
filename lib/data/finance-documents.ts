@@ -3,7 +3,12 @@ import "server-only";
 import { Prisma, type Currency } from "@prisma/client";
 
 import { writeActivity } from "@/lib/activity";
+import {
+  postJournalForCreditNote,
+  postJournalForSalesInvoice,
+} from "@/lib/data/ledger-posting";
 import { nextDocumentNumber } from "@/lib/document-sequence";
+import { enqueueEmail } from "@/lib/email/outbox";
 import { prisma } from "@/lib/prisma";
 import type {
   IssueCreditNoteInput,
@@ -172,7 +177,7 @@ async function listDispatchedOrders(
     },
     orderBy: [{ orderDate: "desc" }, { createdAt: "desc" }],
     include: {
-      customer: { select: { name: true } },
+      customer: { select: { name: true, email: true, gstin: true, state: true } },
       warehouse: { select: { name: true } },
       lines: { orderBy: { lineNo: "asc" } },
     },
@@ -204,7 +209,7 @@ export async function listSalesInvoices(orgId: string): Promise<SalesInvoiceRow[
     where: { orgId },
     orderBy: [{ invoiceDate: "desc" }, { createdAt: "desc" }],
     include: {
-      customer: { select: { name: true } },
+      customer: { select: { name: true, email: true, gstin: true, state: true } },
       salesOrder: { select: { orderNo: true } },
       lines: { select: { id: true } },
       creditNotes: {
@@ -300,7 +305,7 @@ export async function issueSalesInvoice(
   const order = await prisma.salesOrder.findFirst({
     where: { id: input.salesOrderId, orgId },
     include: {
-      customer: { select: { name: true } },
+      customer: { select: { name: true, email: true, gstin: true, state: true } },
       lines: { orderBy: { lineNo: "asc" } },
       salesInvoices: { where: { status: { not: "Cancelled" } }, select: { id: true, invoiceNo: true } },
     },
@@ -345,6 +350,9 @@ export async function issueSalesInvoice(
         dueDate: input.dueDate ?? order.dueDate,
         status: "Issued",
         currency: "INR",
+        supplierGstin: process.env.AEDEN_GSTIN ?? null,
+        customerGstin: order.customer.gstin ?? null,
+        placeOfSupply: order.customer.state ?? null,
         taxableAmount,
         taxAmount,
         totalAmount,
@@ -359,6 +367,7 @@ export async function issueSalesInvoice(
             item: line.item,
             variety: line.variety,
             grade: line.grade,
+            hsnCode: process.env.DEFAULT_FRUIT_HSN_CODE ?? "0810",
             uom: line.uom,
             qty: line.qty,
             unitPrice: line.unitPrice,
@@ -380,6 +389,26 @@ export async function issueSalesInvoice(
       entityId: invoice.id,
       summary: `Issued invoice ${invoiceNo} for order ${order.orderNo}`,
       metadata: { salesOrderId: order.id, invoiceNo, totalAmount },
+    });
+
+    await postJournalForSalesInvoice(tx, {
+      orgId,
+      userId,
+      invoiceId: invoice.id,
+      invoiceNo,
+      invoiceDate: input.invoiceDate ?? new Date(),
+      taxableAmount,
+      taxAmount,
+      totalAmount,
+    });
+
+    await enqueueEmail(tx, {
+      orgId,
+      toEmail: order.customer.email,
+      subject: `AIMS invoice ${invoiceNo}`,
+      textBody: `Invoice ${invoiceNo} has been issued for order ${order.orderNo}. Total: INR ${totalAmount.toFixed(2)}.`,
+      htmlBody: `<p>Invoice <strong>${invoiceNo}</strong> has been issued for order <strong>${order.orderNo}</strong>.</p><p>Total: INR ${totalAmount.toFixed(2)}</p>`,
+      category: "sales_invoice",
     });
 
     return invoice;
@@ -422,7 +451,7 @@ export async function issueCreditNote(
 
   const customer = await prisma.customer.findFirst({
     where: { id: customerId, orgId, deletedAt: null },
-    select: { id: true, name: true },
+    select: { id: true, name: true, email: true },
   });
   if (!customer) throw new FinanceDocumentError("Customer not found", 404);
 
@@ -453,6 +482,24 @@ export async function issueCreditNote(
       entityId: creditNote.id,
       summary: `Issued credit note ${creditNoteNo} for ${customer.name}`,
       metadata: { customerId: customer.id, amount: input.amount, reason: input.reason },
+    });
+
+    await postJournalForCreditNote(tx, {
+      orgId,
+      userId,
+      creditNoteId: creditNote.id,
+      creditNoteNo,
+      creditDate: input.creditDate ?? new Date(),
+      amount: Number(input.amount),
+    });
+
+    await enqueueEmail(tx, {
+      orgId,
+      toEmail: customer.email,
+      subject: `AIMS credit note ${creditNoteNo}`,
+      textBody: `Credit note ${creditNoteNo} has been issued for ${customer.name}. Amount: ${currency} ${Number(input.amount).toFixed(2)}. Reason: ${input.reason}.`,
+      htmlBody: `<p>Credit note <strong>${creditNoteNo}</strong> has been issued for <strong>${customer.name}</strong>.</p><p>Amount: ${currency} ${Number(input.amount).toFixed(2)}</p><p>Reason: ${input.reason}</p>`,
+      category: "credit_note",
     });
 
     return creditNote;

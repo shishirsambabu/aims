@@ -2,6 +2,7 @@ import "server-only";
 
 import { prisma } from "@/lib/prisma";
 import { CONTAINER_STATUS_LABELS, DOCUMENT_TYPE_LABELS } from "@/lib/constants";
+import { endOfTodayIst, istDayBoundary } from "@/lib/dates";
 import { daysUntil } from "@/lib/utils";
 import type { SessionContext } from "@/lib/auth";
 import type { ContainerStatus, DocumentType, Role } from "@/types";
@@ -124,11 +125,10 @@ function visibleForRole<T extends AlertItem>(alerts: T[], role: Role): T[] {
 /** Counts for sidebar / bell badges. Safe-fails to zeros. */
 export async function getNavCounts(orgId: string): Promise<NavCounts> {
   try {
-    const in30 = new Date();
-    in30.setDate(in30.getDate() + 30);
-    const in7 = new Date();
-    in7.setDate(in7.getDate() + 7);
-    const now = new Date();
+    // Alert windows use IST business-day boundaries, not server-UTC time.
+    const in30 = istDayBoundary(30);
+    const in7 = istDayBoundary(7);
+    const now = endOfTodayIst();
 
     const [
       expiringDocs,
@@ -244,11 +244,9 @@ async function computePersonalNavCounts(
 /** Full alert feed for the Alerts page, grouped by category. */
 export async function getAlerts(orgId: string): Promise<AlertItem[]> {
   try {
-    const in30 = new Date();
-    in30.setDate(in30.getDate() + 30);
-    const in7 = new Date();
-    in7.setDate(in7.getDate() + 7);
-    const now = new Date();
+    const in30 = istDayBoundary(30);
+    const in7 = istDayBoundary(7);
+    const now = endOfTodayIst();
 
     const [arrivals, demurrage, docs, approvals, overdue, lossMaking, flagged] =
       await Promise.all([

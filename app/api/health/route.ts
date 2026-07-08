@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { reportError } from "@/lib/observability";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,7 @@ export async function GET() {
       checkedAt: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("[health] database check failed", error);
+    await reportError(error, { route: "health", check: "database" });
     return NextResponse.json(
       {
         status: "degraded",

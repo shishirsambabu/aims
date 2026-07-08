@@ -1,6 +1,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
+import { istDayBoundary } from "@/lib/dates";
 import type { DocumentStatus, DocumentType } from "@/types";
 
 export interface DocumentFilters {
@@ -48,9 +49,8 @@ function buildWhere(
   if (filters.status) where.status = filters.status;
   if (filters.containerId) where.containerId = filters.containerId;
   if (filters.expiringSoon) {
-    const in30 = new Date();
-    in30.setDate(in30.getDate() + 30);
-    where.expiryDate = { not: null, lte: in30 };
+    // 30 business days from IST midnight, not server-UTC midnight.
+    where.expiryDate = { not: null, lte: istDayBoundary(30) };
   }
   return where;
 }
@@ -147,9 +147,7 @@ export async function containerOptions(orgId: string) {
 
 /** Count of documents expiring within 30 days — for nav/badges. */
 export async function expiringCount(orgId: string): Promise<number> {
-  const in30 = new Date();
-  in30.setDate(in30.getDate() + 30);
   return prisma.document.count({
-    where: { orgId, deletedAt: null, expiryDate: { not: null, lte: in30 } },
+    where: { orgId, deletedAt: null, expiryDate: { not: null, lte: istDayBoundary(30) } },
   });
 }

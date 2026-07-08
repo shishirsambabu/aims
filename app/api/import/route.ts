@@ -7,7 +7,7 @@ import { requireSession } from "@/lib/auth";
 import { getWarehouseOptions } from "@/lib/data/warehouses";
 import { prisma } from "@/lib/prisma";
 import { can } from "@/lib/permissions";
-import { rateLimit } from "@/lib/ratelimit";
+import { rateLimitAsync } from "@/lib/ratelimit";
 import type { MappedRow } from "@/lib/import/mapping";
 
 interface ImportResult {
@@ -75,7 +75,7 @@ function resolveStatus(value: string | null | undefined): string | null {
 export async function POST(request: NextRequest) {
   try {
     const session = await requireSession();
-    const rl = rateLimit(`import:${session.userId}`, 5, 60_000);
+    const rl = await rateLimitAsync(`import:${session.userId}`, 5, 60_000);
     if (!rl.ok) {
       return NextResponse.json(
         { error: `Too many imports - retry in ${rl.retryAfter}s` },

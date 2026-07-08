@@ -1,5 +1,6 @@
 import "server-only";
 
+import { istDaysOverdue } from "@/lib/dates";
 import { prisma } from "@/lib/prisma";
 import type { Currency, ReceiptMethod, CustomerReceiptStatus } from "@/types";
 
@@ -13,12 +14,12 @@ function iso(value: Date | null | undefined): string | null {
 
 function daysSince(date: Date | null | undefined): number | null {
   if (!date) return null;
-  return Math.max(0, Math.ceil((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24)));
+  return Math.max(0, istDaysOverdue(date));
 }
 
 function overdueDays(date: Date | null | undefined): number | null {
   if (!date) return null;
-  return Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
+  return istDaysOverdue(date);
 }
 
 function ageBucketIndex(date: Date | null | undefined): number {

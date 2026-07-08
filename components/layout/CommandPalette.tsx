@@ -62,25 +62,31 @@ export function CommandPalette({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [open, onOpenChange]);
 
-  // Reset when closing.
-  useEffect(() => {
-    if (!open) {
-      setQuery("");
-      setHits([]);
-    }
-  }, [open]);
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (!nextOpen) {
+        setQuery("");
+        setHits([]);
+        setSearching(false);
+      }
+      onOpenChange(nextOpen);
+    },
+    [onOpenChange]
+  );
 
   // Debounced live container / BL search.
   useEffect(() => {
     if (!open) return;
     const q = query.trim();
     if (q.length < 2 || !can(role, "container.view")) {
-      setHits([]);
-      setSearching(false);
-      return;
+      const resetTimer = window.setTimeout(() => {
+        setHits([]);
+        setSearching(false);
+      }, 0);
+      return () => window.clearTimeout(resetTimer);
     }
-    setSearching(true);
     const timer = setTimeout(async () => {
+      setSearching(true);
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
@@ -100,15 +106,15 @@ export function CommandPalette({
         setSearching(false);
       }
     }, 250);
-    return () => clearTimeout(timer);
+    return () => window.clearTimeout(timer);
   }, [query, open, role]);
 
   const run = useCallback(
     (href: string) => {
-      onOpenChange(false);
+      handleOpenChange(false);
       router.push(href);
     },
-    [onOpenChange, router]
+    [handleOpenChange, router]
   );
 
   const q = query.trim().toLowerCase();
@@ -159,7 +165,7 @@ export function CommandPalette({
   }, [role, q]);
 
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange}>
+    <CommandDialog open={open} onOpenChange={handleOpenChange}>
       <CommandInput
         value={query}
         onValueChange={setQuery}

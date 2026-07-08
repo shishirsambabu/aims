@@ -35,7 +35,12 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const PUBLIC_PATH_PREFIXES = ["/login", "/signup", "/auth", "/forgot-password"];
-  const PUBLIC_API_PATHS = ["/api/health", "/api/sales-orders/release-expired"];
+  const PUBLIC_API_PATHS = [
+    "/api/health",
+    "/api/jobs/daily",
+    "/api/jobs/email-outbox",
+    "/api/sales-orders/release-expired",
+  ];
   const isPublic =
     PUBLIC_PATH_PREFIXES.some((path) => request.nextUrl.pathname.startsWith(path)) ||
     PUBLIC_API_PATHS.includes(request.nextUrl.pathname);

@@ -28,7 +28,15 @@ begin
     'container_costs','sales','payments','documents','activity_log',
     'user_alert_preferences','user_alert_states','document_automation_jobs',
     'integration_connections','integration_runs','integration_errors',
-    'external_references'
+    'external_references',
+    -- Warehouse ops / masters added in later phases
+    'dock_appointments','warehouse_putaway_rules','repacking_work_orders',
+    'qc_sampling_plans','warehouse_productivity_logs','warehouse_exception_approvals',
+    'supplier_claims','document_sequences',
+    -- Production ERP foundations (Part 1 fixes)
+    'crm_activities','email_outbox','fx_rates','purchase_orders','purchase_order_lines',
+    -- Deep-gaps foundation (Part 2 fixes)
+    'items','feature_flags','idempotency_keys','approval_delegations','data_deletion_requests'
   ]
   loop
     execute format('alter table public.%I enable row level security;', t);

@@ -1,23 +1,38 @@
 # AIMS Operations Runbook
 
-This runbook defines the minimum production operating procedures for Aeden
-Imports Management System (AIMS).
+This runbook defines the minimum production operating procedures for AIMS -
+Aeden International Management System.
 
 ## Error Monitoring
 
-1. Enable platform log retention for the production deployment.
-2. Route application logs containing `[monitoring:error]` to the incident channel.
+1. Set `SENTRY_DSN` in Vercel and verify a test error reaches the incident channel.
+2. Enable platform log retention for the production deployment.
 3. Treat repeated errors in payment, document, import or supplier approval routes
    as priority incidents.
-4. When a provider is selected, connect `lib/monitoring.ts` to Sentry, Datadog,
-   OpenTelemetry or the chosen logging platform.
-5. Poll `/api/health` every minute and alert after two consecutive `503` responses.
+4. Poll `/api/health` every minute and alert after two consecutive `503` responses.
 
 ## Reservation Release
 
-1. Set `CRON_SECRET` in Vercel; the scheduled job calls `/api/sales-orders/release-expired` every 15 minutes.
-2. Investigate any `EXPIRED_RESERVATION_STATE_CONFLICT` as an inventory incident.
-3. Managers can invoke the same endpoint while authenticated if an immediate release is required.
+1. Set `CRON_SECRET` in Vercel; the scheduled job calls `/api/jobs/daily`.
+2. The daily job releases expired reservations and flushes the email outbox.
+3. Investigate any `EXPIRED_RESERVATION_STATE_CONFLICT` as an inventory incident.
+4. Managers can invoke `/api/sales-orders/release-expired` while authenticated if an immediate release is required.
+
+## Email Outbox
+
+1. Set `RESEND_API_KEY` and `EMAIL_FROM` in Vercel.
+2. Invoice, credit-note and receipt workflows enqueue email inside the same
+   transaction as the business document.
+3. `/api/jobs/email-outbox` can be invoked with `Authorization: Bearer <CRON_SECRET>`
+   to retry pending communication immediately.
+4. Messages older than one hour in `Retry` or `Sending` status are operational
+   incidents because customers may not have received finance communication.
+
+## Shared Rate Limiting
+
+1. Set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in Vercel.
+2. Bulk/import routes use Redis when configured and fall back to local memory
+   only for development.
 
 ## Slow Query Monitoring
 
@@ -53,6 +68,14 @@ Imports Management System (AIMS).
 6. Switch production traffic only after finance and operations approve the
    restored data snapshot.
 7. Document the incident cause, data loss window and prevention action.
+
+## Restore Drill Evidence
+
+1. Run a restore into a temporary Supabase project at least once per quarter.
+2. Apply migrations with `npx prisma migrate deploy` against the restored target.
+3. Smoke test login, dashboard, CRM, warehouse, sales, finance, document upload,
+   invoice print, receipt posting and Tally day-book export.
+4. Record tester, restore timestamp, RPO/RTO achieved, failed checks and fixes.
 
 ## Credential Rotation SOP
 

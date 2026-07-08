@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { requireSession } from "@/lib/auth";
-import { rateLimit } from "@/lib/ratelimit";
+import { rateLimitAsync } from "@/lib/ratelimit";
 import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/activity";
@@ -18,7 +18,7 @@ interface BulkBody {
 export async function PATCH(request: NextRequest) {
   try {
     const session = await requireSession();
-    const rl = rateLimit(`bulk:${session.userId}`, 20, 60_000);
+    const rl = await rateLimitAsync(`bulk:${session.userId}`, 20, 60_000);
     if (!rl.ok) {
       return NextResponse.json({ error: `Too many requests — retry in ${rl.retryAfter}s` }, { status: 429 });
     }

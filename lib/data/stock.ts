@@ -1,5 +1,6 @@
 import "server-only";
 
+import { istDaysOverdue } from "@/lib/dates";
 import { daysUntil, expiryLevel } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import type { StockQualityStatus, StockUom } from "@prisma/client";
@@ -97,7 +98,7 @@ function fefoBaseDate(row: {
 }
 
 function daysSince(value: Date) {
-  return Math.max(0, Math.ceil((Date.now() - value.getTime()) / (1000 * 60 * 60 * 24)));
+  return Math.max(0, istDaysOverdue(value));
 }
 
 function fefoSortKey(row: {

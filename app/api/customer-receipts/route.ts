@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 
 import { writeActivity } from "@/lib/activity";
 import { requireSession } from "@/lib/auth";
+import { postJournalForCustomerReceipt } from "@/lib/data/ledger-posting";
 import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import {
@@ -12,6 +13,8 @@ import {
 } from "@/lib/data/receivables";
 import { customerReceiptSchema } from "@/lib/validations/receipts";
 import { nextDocumentNumber } from "@/lib/document-sequence";
+import { enqueueEmail } from "@/lib/email/outbox";
+import { reportError } from "@/lib/observability";
 
 export async function GET(request: NextRequest) {
   try {
@@ -39,7 +42,7 @@ export async function GET(request: NextRequest) {
     if (err instanceof Error && err.message === "UNAUTHENTICATED") {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
-    console.error("[api/customer-receipts]", err);
+    await reportError(err, { route: "customer-receipts", method: "GET" });
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }
@@ -65,7 +68,7 @@ export async function POST(request: NextRequest) {
     const input = parsed.data;
     const customer = await prisma.customer.findFirst({
       where: { id: input.customerId, orgId: session.orgId, deletedAt: null },
-      select: { id: true, name: true, approvalStatus: true, kycStatus: true },
+      select: { id: true, name: true, email: true, approvalStatus: true, kycStatus: true },
     });
     if (!customer) {
       return NextResponse.json({ error: "Customer not found" }, { status: 404 });
@@ -175,6 +178,25 @@ export async function POST(request: NextRequest) {
         metadata: { customerId: customer.id, receiptNo, amount: input.amount, allocations: input.allocations.length },
       });
 
+      await postJournalForCustomerReceipt(tx, {
+        orgId: session.orgId,
+        userId: session.userId,
+        receiptId: receipt.id,
+        receiptNo,
+        receiptDate: input.receiptDate ?? new Date(),
+        method: input.method,
+        amount: Number(input.amount),
+      });
+
+      await enqueueEmail(tx, {
+        orgId: session.orgId,
+        toEmail: customer.email,
+        subject: `AIMS receipt ${receiptNo}`,
+        textBody: `Receipt ${receiptNo} has been recorded for ${customer.name}. Amount: ${input.currency} ${Number(input.amount).toFixed(2)}.`,
+        htmlBody: `<p>Receipt <strong>${receiptNo}</strong> has been recorded for <strong>${customer.name}</strong>.</p><p>Amount: ${input.currency} ${Number(input.amount).toFixed(2)}</p>`,
+        category: "customer_receipt",
+      });
+
       return receipt;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
@@ -183,7 +205,7 @@ export async function POST(request: NextRequest) {
     if (err instanceof Error && err.message === "UNAUTHENTICATED") {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
-    console.error("[api/customer-receipts POST]", err);
+    await reportError(err, { route: "customer-receipts", method: "POST" });
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }

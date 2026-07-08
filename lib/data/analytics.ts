@@ -62,7 +62,31 @@ function monthKey(d: Date): string {
   return `${MONTHS[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`;
 }
 
+// The dashboard renders analytics for every user on every visit, and the
+// aggregation below loads full container/payment row sets. A short TTL cache
+// per org keeps the hot path off the database (same pattern as nav counts).
+const ANALYTICS_TTL_MS = 60_000;
+const analyticsCache = new Map<string, { at: number; value: Promise<Analytics> }>();
+
+export function invalidateAnalytics(orgId?: string) {
+  if (!orgId) analyticsCache.clear();
+  else analyticsCache.delete(orgId);
+}
+
 export async function getAnalytics(orgId: string): Promise<Analytics> {
+  const hit = analyticsCache.get(orgId);
+  const now = Date.now();
+  if (hit && now - hit.at < ANALYTICS_TTL_MS) return hit.value;
+  const value = computeAnalytics(orgId).catch((err) => {
+    // Never cache a failure.
+    analyticsCache.delete(orgId);
+    throw err;
+  });
+  analyticsCache.set(orgId, { at: now, value });
+  return value;
+}
+
+async function computeAnalytics(orgId: string): Promise<Analytics> {
   const [containers, pendingDocs, paymentRows] = await Promise.all([
     prisma.container.findMany({
       where: { orgId, deletedAt: null },

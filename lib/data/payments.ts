@@ -1,6 +1,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
+import { istDaysOverdue } from "@/lib/dates";
 import type { ApprovalStatus, Currency, PaymentStatus } from "@/types";
 
 export interface PaymentFilters {
@@ -73,7 +74,7 @@ function buildWhere(
 
 function ageBucketIndex(dueDate: Date | null): number {
   if (!dueDate) return 0;
-  const days = Math.floor((Date.now() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+  const days = istDaysOverdue(dueDate);
   if (days <= 0) return 0;
   if (days <= 30) return 1;
   if (days <= 60) return 2;
@@ -161,9 +162,7 @@ export async function listPayments(
       dueDate: r.dueDate ? r.dueDate.toISOString() : null,
       paidDate: r.paidDate ? r.paidDate.toISOString() : null,
       reference: r.reference,
-      dueAgeDays: r.dueDate
-        ? Math.floor((Date.now() - r.dueDate.getTime()) / (1000 * 60 * 60 * 24))
-        : null,
+      dueAgeDays: r.dueDate ? istDaysOverdue(r.dueDate) : null,
     };
   });
 }
